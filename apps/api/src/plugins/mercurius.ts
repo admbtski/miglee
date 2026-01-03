@@ -294,13 +294,65 @@ export const mercuriusPlugin = fastifyPlugin(async (fastify) => {
   // GraphQL Hooks
   // =============================================================================
 
-  // ✅ Pre-execution hook for suspended user check
+  // ✅ Pre-execution hook for suspended user check & auto-unsuspend
   fastify.graphql.addHook(
     'preExecution',
     async (_schema, document, context) => {
       const user = context.user;
 
-      // If user is suspended, block all operations except a whitelist
+      // Auto-unsuspend if suspension period has expired
+      if (user?.suspendedAt && user?.suspendedUntil) {
+        const now = new Date();
+        const suspendedUntil = new Date(user.suspendedUntil);
+
+        if (now >= suspendedUntil) {
+          // Automatically unsuspend the user
+          await context.prisma.user.update({
+            where: { id: user.id },
+            data: {
+              suspendedAt: null,
+              suspendedUntil: null,
+              suspensionReason: null,
+              suspendedById: null,
+            },
+          });
+
+          // Audit the auto-unsuspend
+          await context.prisma.userAuditLog.create({
+            data: {
+              targetUserId: user.id,
+              action: 'UNSUSPEND',
+              actorId: null, // SYSTEM action
+              reason: 'Automatic unsuspension - suspension period expired',
+              before: {
+                suspendedAt: user.suspendedAt,
+                suspendedUntil: user.suspendedUntil,
+                suspensionReason: user.suspensionReason,
+              },
+              after: {
+                suspendedAt: null,
+                suspendedUntil: null,
+                suspensionReason: null,
+              },
+              severity: 2, // info
+            },
+          });
+
+          // Update context user to reflect unsuspension
+          context.user = {
+            ...user,
+            suspendedAt: null,
+            suspendedUntil: null,
+            suspensionReason: null,
+            suspendedById: null,
+          };
+
+          // Allow request to proceed
+          return;
+        }
+      }
+
+      // If user is still suspended, block all operations except a whitelist
       if (user?.suspendedAt) {
         // Extract operation name
         const operationName = document.definitions.find(
@@ -318,9 +370,10 @@ export const mercuriusPlugin = fastifyPlugin(async (fastify) => {
             'Your account has been suspended. Please contact support.',
             {
               extensions: {
-                code: 'FORBIDDEN',
+                code: 'ACCOUNT_SUSPENDED',
                 reason: user.suspensionReason || 'Account suspended',
                 suspendedAt: user.suspendedAt,
+                suspendedUntil: user.suspendedUntil,
               },
             }
           );

@@ -98,7 +98,8 @@ export const ModelName = {
   EventAgendaItem: 'EventAgendaItem',
   EventAgendaItemHost: 'EventAgendaItemHost',
   EventCheckinLog: 'EventCheckinLog',
-  EventAuditLog: 'EventAuditLog'
+  EventAuditLog: 'EventAuditLog',
+  UserAuditLog: 'UserAuditLog'
 } as const
 
 export type ModelName = (typeof ModelName)[keyof typeof ModelName]
@@ -125,8 +126,11 @@ export const UserScalarFieldEnum = {
   role: 'role',
   verifiedAt: 'verifiedAt',
   suspendedAt: 'suspendedAt',
+  suspendedUntil: 'suspendedUntil',
+  suspendedById: 'suspendedById',
   suspensionReason: 'suspensionReason',
   deletedAt: 'deletedAt',
+  deletedById: 'deletedById',
   deletedReason: 'deletedReason',
   restorationToken: 'restorationToken',
   restorationTokenExpiry: 'restorationTokenExpiry',
@@ -888,6 +892,25 @@ export const EventAuditLogScalarFieldEnum = {
 } as const
 
 export type EventAuditLogScalarFieldEnum = (typeof EventAuditLogScalarFieldEnum)[keyof typeof EventAuditLogScalarFieldEnum]
+
+
+export const UserAuditLogScalarFieldEnum = {
+  id: 'id',
+  targetUserId: 'targetUserId',
+  action: 'action',
+  actorId: 'actorId',
+  before: 'before',
+  after: 'after',
+  diff: 'diff',
+  reason: 'reason',
+  meta: 'meta',
+  severity: 'severity',
+  ipAddress: 'ipAddress',
+  userAgent: 'userAgent',
+  createdAt: 'createdAt'
+} as const
+
+export type UserAuditLogScalarFieldEnum = (typeof UserAuditLogScalarFieldEnum)[keyof typeof UserAuditLogScalarFieldEnum]
 
 
 export const SortOrder = {

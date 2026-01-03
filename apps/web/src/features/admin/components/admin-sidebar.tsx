@@ -1,22 +1,22 @@
 'use client';
 
-import Link from 'next/link';
-import { usePathname } from 'next/navigation';
+import clsx from 'clsx';
 import {
-  LayoutDashboard,
-  Users,
-  Flag,
-  MessageSquare,
+  BarChart3,
   Bell,
-  Tag,
   Calendar,
   DollarSign,
-  Shield,
-  BarChart3,
+  Flag,
   Folder,
+  LayoutDashboard,
+  MessageSquare,
+  Shield,
   Star,
+  Tag,
+  Users,
 } from 'lucide-react';
-import clsx from 'clsx';
+import Link from 'next/link';
+import { usePathname } from 'next/navigation';
 
 const navigation = [
   {
@@ -39,7 +39,7 @@ const navigation = [
     name: 'Raporty',
     href: '/admin/reports',
     icon: Flag,
-    badge: 'TODO', // TODO: Replace with actual count
+    badge: 'ready',
   },
   {
     name: 'Komentarze',
@@ -55,21 +55,18 @@ const navigation = [
     name: 'Kategorie',
     href: '/admin/categories',
     icon: Folder,
+    badge: 'ready',
   },
   {
     name: 'Tagi',
     href: '/admin/tags',
     icon: Tag,
+    badge: 'ready',
   },
   {
     name: 'Powiadomienia',
     href: '/admin/notifications',
     icon: Bell,
-  },
-  {
-    name: 'Wiadomości DM',
-    href: '/admin/dm',
-    icon: MessageSquare,
   },
   {
     name: 'Sponsoring',

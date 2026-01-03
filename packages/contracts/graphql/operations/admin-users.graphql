@@ -21,8 +21,8 @@ mutation AdminUpdateUser($id: ID!, $input: AdminUpdateUserInput!) {
   }
 }
 
-mutation AdminDeleteUser($id: ID!, $anonymize: Boolean, $deleteReason: String) {
-  adminDeleteUser(id: $id, anonymize: $anonymize, deleteReason: $deleteReason)
+mutation AdminDeleteUser($id: ID!, $input: AdminDeleteUserInput!) {
+  adminDeleteUser(id: $id, input: $input)
 }
 
 mutation AdminInviteUser($input: AdminInviteUserInput!) {
@@ -150,23 +150,27 @@ query AdminUserEvents($userId: ID!, $limit: Int, $offset: Int) {
 # MUTATIONS - Suspension
 # ============================================
 
-mutation AdminSuspendUser($id: ID!, $reason: String) {
-  adminSuspendUser(id: $id, reason: $reason) {
+mutation AdminSuspendUser($id: ID!, $input: AdminSuspendUserInput!) {
+  adminSuspendUser(id: $id, input: $input) {
     id
     name
     email
     suspendedAt
+    suspendedUntil
+    suspensionReason
     avatarKey
     avatarBlurhash
   }
 }
 
-mutation AdminUnsuspendUser($id: ID!) {
-  adminUnsuspendUser(id: $id) {
+mutation AdminUnsuspendUser($id: ID!, $reason: String) {
+  adminUnsuspendUser(id: $id, reason: $reason) {
     id
     name
     email
     suspendedAt
+    suspendedUntil
+    suspensionReason
     avatarKey
     avatarBlurhash
   }

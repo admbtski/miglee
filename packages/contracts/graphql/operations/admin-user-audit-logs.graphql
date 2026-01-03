@@ -1,0 +1,37 @@
+# Admin User Audit Logs Operations
+
+query AdminUserAuditLogs($userId: ID!, $limit: Int, $offset: Int) {
+  adminUserAuditLogs(userId: $userId, limit: $limit, offset: $offset) {
+    items {
+      id
+      targetUserId
+      action
+      actorId
+      before
+      after
+      diff
+      reason
+      meta
+      severity
+      ipAddress
+      userAgent
+      createdAt
+      actor {
+        id
+        name
+        email
+        avatarKey
+        avatarBlurhash
+        role
+      }
+    }
+    pageInfo {
+      total
+      hasNext
+      hasPrev
+      limit
+      offset
+    }
+  }
+}
+

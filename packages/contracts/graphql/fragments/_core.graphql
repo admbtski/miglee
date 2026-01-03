@@ -16,6 +16,9 @@ fragment SessionUserCore on SessionUser {
   avatarKey
   avatarBlurhash
   verifiedAt
+  suspendedAt
+  suspendedUntil
+  suspensionReason
   effectivePlan
 }
 
@@ -28,7 +31,12 @@ fragment UserCore on User {
   avatarBlurhash
   verifiedAt
   suspendedAt
+  suspendedUntil
+  suspendedById
   suspensionReason
+  deletedAt
+  deletedById
+  deletedReason
   createdAt
   updatedAt
   lastSeenAt

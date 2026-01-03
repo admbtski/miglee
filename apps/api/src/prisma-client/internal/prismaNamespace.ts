@@ -431,7 +431,8 @@ export const ModelName = {
   EventAgendaItem: 'EventAgendaItem',
   EventAgendaItemHost: 'EventAgendaItemHost',
   EventCheckinLog: 'EventCheckinLog',
-  EventAuditLog: 'EventAuditLog'
+  EventAuditLog: 'EventAuditLog',
+  UserAuditLog: 'UserAuditLog'
 } as const
 
 export type ModelName = (typeof ModelName)[keyof typeof ModelName]
@@ -447,7 +448,7 @@ export type TypeMap<ExtArgs extends runtime.Types.Extensions.InternalArgs = runt
     omit: GlobalOmitOptions
   }
   meta: {
-    modelProps: "user" | "category" | "tag" | "event" | "eventMember" | "eventMemberEvent" | "comment" | "review" | "dmThread" | "dmMessage" | "dmMessageReaction" | "notification" | "eventChatMessage" | "eventChatMessageReaction" | "eventChatRead" | "dmRead" | "userBlock" | "report" | "userSubscription" | "userPlanPeriod" | "eventSponsorship" | "eventSponsorshipPeriod" | "paymentEvent" | "eventInviteLink" | "eventInviteLinkUsage" | "eventFavourite" | "notificationPreference" | "eventMute" | "dmMute" | "eventOwnershipTransfer" | "userProfile" | "userPrivacy" | "userStats" | "userSocialLink" | "userCategoryLevel" | "userAvailability" | "userBadge" | "eventJoinQuestion" | "eventJoinAnswer" | "eventFeedbackQuestion" | "eventFeedbackAnswer" | "eventFaq" | "mediaAsset" | "eventAppearance" | "eventAgendaItem" | "eventAgendaItemHost" | "eventCheckinLog" | "eventAuditLog"
+    modelProps: "user" | "category" | "tag" | "event" | "eventMember" | "eventMemberEvent" | "comment" | "review" | "dmThread" | "dmMessage" | "dmMessageReaction" | "notification" | "eventChatMessage" | "eventChatMessageReaction" | "eventChatRead" | "dmRead" | "userBlock" | "report" | "userSubscription" | "userPlanPeriod" | "eventSponsorship" | "eventSponsorshipPeriod" | "paymentEvent" | "eventInviteLink" | "eventInviteLinkUsage" | "eventFavourite" | "notificationPreference" | "eventMute" | "dmMute" | "eventOwnershipTransfer" | "userProfile" | "userPrivacy" | "userStats" | "userSocialLink" | "userCategoryLevel" | "userAvailability" | "userBadge" | "eventJoinQuestion" | "eventJoinAnswer" | "eventFeedbackQuestion" | "eventFeedbackAnswer" | "eventFaq" | "mediaAsset" | "eventAppearance" | "eventAgendaItem" | "eventAgendaItemHost" | "eventCheckinLog" | "eventAuditLog" | "userAuditLog"
     txIsolationLevel: TransactionIsolationLevel
   }
   model: {
@@ -4003,6 +4004,80 @@ export type TypeMap<ExtArgs extends runtime.Types.Extensions.InternalArgs = runt
         }
       }
     }
+    UserAuditLog: {
+      payload: Prisma.$UserAuditLogPayload<ExtArgs>
+      fields: Prisma.UserAuditLogFieldRefs
+      operations: {
+        findUnique: {
+          args: Prisma.UserAuditLogFindUniqueArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$UserAuditLogPayload> | null
+        }
+        findUniqueOrThrow: {
+          args: Prisma.UserAuditLogFindUniqueOrThrowArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$UserAuditLogPayload>
+        }
+        findFirst: {
+          args: Prisma.UserAuditLogFindFirstArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$UserAuditLogPayload> | null
+        }
+        findFirstOrThrow: {
+          args: Prisma.UserAuditLogFindFirstOrThrowArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$UserAuditLogPayload>
+        }
+        findMany: {
+          args: Prisma.UserAuditLogFindManyArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$UserAuditLogPayload>[]
+        }
+        create: {
+          args: Prisma.UserAuditLogCreateArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$UserAuditLogPayload>
+        }
+        createMany: {
+          args: Prisma.UserAuditLogCreateManyArgs<ExtArgs>
+          result: BatchPayload
+        }
+        createManyAndReturn: {
+          args: Prisma.UserAuditLogCreateManyAndReturnArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$UserAuditLogPayload>[]
+        }
+        delete: {
+          args: Prisma.UserAuditLogDeleteArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$UserAuditLogPayload>
+        }
+        update: {
+          args: Prisma.UserAuditLogUpdateArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$UserAuditLogPayload>
+        }
+        deleteMany: {
+          args: Prisma.UserAuditLogDeleteManyArgs<ExtArgs>
+          result: BatchPayload
+        }
+        updateMany: {
+          args: Prisma.UserAuditLogUpdateManyArgs<ExtArgs>
+          result: BatchPayload
+        }
+        updateManyAndReturn: {
+          args: Prisma.UserAuditLogUpdateManyAndReturnArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$UserAuditLogPayload>[]
+        }
+        upsert: {
+          args: Prisma.UserAuditLogUpsertArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$UserAuditLogPayload>
+        }
+        aggregate: {
+          args: Prisma.UserAuditLogAggregateArgs<ExtArgs>
+          result: runtime.Types.Utils.Optional<Prisma.AggregateUserAuditLog>
+        }
+        groupBy: {
+          args: Prisma.UserAuditLogGroupByArgs<ExtArgs>
+          result: runtime.Types.Utils.Optional<Prisma.UserAuditLogGroupByOutputType>[]
+        }
+        count: {
+          args: Prisma.UserAuditLogCountArgs<ExtArgs>
+          result: runtime.Types.Utils.Optional<Prisma.UserAuditLogCountAggregateOutputType> | number
+        }
+      }
+    }
   }
 } & {
   other: {
@@ -4050,8 +4125,11 @@ export const UserScalarFieldEnum = {
   role: 'role',
   verifiedAt: 'verifiedAt',
   suspendedAt: 'suspendedAt',
+  suspendedUntil: 'suspendedUntil',
+  suspendedById: 'suspendedById',
   suspensionReason: 'suspensionReason',
   deletedAt: 'deletedAt',
+  deletedById: 'deletedById',
   deletedReason: 'deletedReason',
   restorationToken: 'restorationToken',
   restorationTokenExpiry: 'restorationTokenExpiry',
@@ -4815,6 +4893,25 @@ export const EventAuditLogScalarFieldEnum = {
 export type EventAuditLogScalarFieldEnum = (typeof EventAuditLogScalarFieldEnum)[keyof typeof EventAuditLogScalarFieldEnum]
 
 
+export const UserAuditLogScalarFieldEnum = {
+  id: 'id',
+  targetUserId: 'targetUserId',
+  action: 'action',
+  actorId: 'actorId',
+  before: 'before',
+  after: 'after',
+  diff: 'diff',
+  reason: 'reason',
+  meta: 'meta',
+  severity: 'severity',
+  ipAddress: 'ipAddress',
+  userAgent: 'userAgent',
+  createdAt: 'createdAt'
+} as const
+
+export type UserAuditLogScalarFieldEnum = (typeof UserAuditLogScalarFieldEnum)[keyof typeof UserAuditLogScalarFieldEnum]
+
+
 export const SortOrder = {
   asc: 'asc',
   desc: 'desc'
@@ -5379,6 +5476,20 @@ export type EnumAuditActorTypeFieldRefInput<$PrismaModel> = FieldRefInputType<$P
 export type ListEnumAuditActorTypeFieldRefInput<$PrismaModel> = FieldRefInputType<$PrismaModel, 'AuditActorType[]'>
     
 
+
+/**
+ * Reference to a field of type 'UserAuditAction'
+ */
+export type EnumUserAuditActionFieldRefInput<$PrismaModel> = FieldRefInputType<$PrismaModel, 'UserAuditAction'>
+    
+
+
+/**
+ * Reference to a field of type 'UserAuditAction[]'
+ */
+export type ListEnumUserAuditActionFieldRefInput<$PrismaModel> = FieldRefInputType<$PrismaModel, 'UserAuditAction[]'>
+    
+
 /**
  * Batch Payload for updateMany & deleteMany & createMany
  */
@@ -5522,6 +5633,7 @@ export type GlobalOmitConfig = {
   eventAgendaItemHost?: Prisma.EventAgendaItemHostOmit
   eventCheckinLog?: Prisma.EventCheckinLogOmit
   eventAuditLog?: Prisma.EventAuditLogOmit
+  userAuditLog?: Prisma.UserAuditLogOmit
 }
 
 /* Types for Logging */

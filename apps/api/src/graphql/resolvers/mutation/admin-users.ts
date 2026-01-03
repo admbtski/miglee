@@ -20,7 +20,7 @@ import {
 } from '../../../lib/observability';
 
 /**
- * Mutation: Admin update user
+ * Mutation: Admin update user (with SUPERADMIN control for role changes)
  */
 export const adminUpdateUserMutation: MutationResolvers['adminUpdateUser'] =
   resolverWithMetrics(
@@ -48,9 +48,44 @@ export const adminUpdateUserMutation: MutationResolvers['adminUpdateUser'] =
         input.role !== currentUser.role
       ) {
         throw new GraphQLError('Cannot change your own role.', {
-          extensions: { code: 'BAD_USER_INPUT' },
+          extensions: { code: 'FORBIDDEN' },
         });
       }
+
+      // ✅ SECURITY: Only ADMIN can grant ADMIN role
+      // TODO: Add SUPERADMIN role for better granularity
+      if (input.role === 'ADMIN' && currentUser.role !== 'ADMIN') {
+        throw new GraphQLError(
+          'Only administrators can grant ADMIN role. Contact a superadmin.',
+          {
+            extensions: { code: 'FORBIDDEN' },
+          }
+        );
+      }
+
+      // ✅ SECURITY: Prevent downgrading other ADMINs (unless you are ADMIN)
+      if (
+        targetUser.role === 'ADMIN' &&
+        input.role &&
+        input.role !== 'ADMIN' &&
+        currentUser.role !== 'ADMIN'
+      ) {
+        throw new GraphQLError(
+          'Only administrators can change roles of other administrators.',
+          {
+            extensions: { code: 'FORBIDDEN' },
+          }
+        );
+      }
+
+      // Snapshot before update
+      const before = {
+        name: targetUser.name,
+        email: targetUser.email,
+        role: targetUser.role,
+        verifiedAt: targetUser.verifiedAt,
+        locale: targetUser.locale,
+      };
 
       // Build update data
       const updateData: Record<string, unknown> = {};
@@ -70,7 +105,40 @@ export const adminUpdateUserMutation: MutationResolvers['adminUpdateUser'] =
         data: updateData,
       });
 
-      // Track admin action
+      const after = {
+        name: updated.name,
+        email: updated.email,
+        role: updated.role,
+        verifiedAt: updated.verifiedAt,
+        locale: updated.locale,
+      };
+
+      // ✅ AUDIT: Critical fields changed (role, verifiedAt)
+      const isCriticalChange =
+        input.role !== undefined || input.verifiedAt !== undefined;
+
+      if (isCriticalChange) {
+        await prisma.userAuditLog.create({
+          data: {
+            targetUserId: id,
+            action:
+              input.role !== undefined ? 'UPDATE_ROLE' : 'UPDATE_VERIFIED',
+            actorId: currentUser.id,
+            reason:
+              input.role !== undefined
+                ? `Role changed from ${before.role} to ${after.role}`
+                : `Verification status changed`,
+            before: before as never,
+            after: after as never,
+            diff: updateData as never,
+            severity: input.role !== undefined ? 4 : 3, // Role change is high severity
+            ipAddress: ctx.request.ip,
+            userAgent: ctx.request.headers['user-agent'] || null,
+          },
+        });
+      }
+
+      // Track admin action (legacy telemetry)
       trackAdminAction({
         adminId: currentUser.id,
         action: 'update_user',
@@ -84,15 +152,17 @@ export const adminUpdateUserMutation: MutationResolvers['adminUpdateUser'] =
   );
 
 /**
- * Mutation: Admin delete user
+ * Mutation: Admin delete user (with mandatory reason and optional anonymization)
  */
 export const adminDeleteUserMutation: MutationResolvers['adminDeleteUser'] =
   resolverWithMetrics(
     'Mutation',
     'adminDeleteUser',
-    async (_p, { id, anonymize, deleteReason }, ctx: MercuriusContext) => {
+    async (_p, { id, input }, ctx: MercuriusContext) => {
       const currentUser = requireAuthUser(ctx);
       requireAdmin(currentUser);
+
+      const { deleteReason, anonymize = true } = input;
 
       // Check if target user exists
       const targetUser = await prisma.user.findUnique({
@@ -112,35 +182,82 @@ export const adminDeleteUserMutation: MutationResolvers['adminDeleteUser'] =
         });
       }
 
+      // Snapshot before deletion
+      const before = {
+        email: targetUser.email,
+        name: targetUser.name,
+        avatarKey: targetUser.avatarKey,
+        verifiedAt: targetUser.verifiedAt,
+        deletedAt: targetUser.deletedAt,
+      };
+
+      let after: Record<string, unknown>;
+
       if (anonymize) {
-        // Anonymize user data (soft delete with anonymization)
-        await prisma.user.update({
+        // Anonymize user data (soft delete with PII removal)
+        const updated = await prisma.user.update({
           where: { id },
           data: {
             email: `deleted_${id}@anonymized.local`,
-            name: 'Deleted User',
+            name: `deleted_user_${id.substring(0, 8)}`,
             avatarKey: null,
             verifiedAt: null,
             acceptedMarketingAt: null,
             acceptedTermsAt: null,
+            suspendedAt: null,
+            suspendedUntil: null,
+            suspensionReason: null,
+            suspendedById: null,
             locale: 'en', // Reset to default
             timezone: 'UTC', // Reset to default
             deletedAt: new Date(),
-            deletedReason: deleteReason || null,
+            deletedById: currentUser.id,
+            deletedReason: deleteReason,
           },
         });
+
+        after = {
+          email: updated.email,
+          name: updated.name,
+          avatarKey: null,
+          verifiedAt: null,
+          deletedAt: updated.deletedAt,
+        };
       } else {
-        // Soft delete with reason
-        await prisma.user.update({
+        // Soft delete with reason (retain PII for compliance/recovery)
+        const updated = await prisma.user.update({
           where: { id },
           data: {
             deletedAt: new Date(),
-            deletedReason: deleteReason || null,
+            deletedById: currentUser.id,
+            deletedReason: deleteReason,
           },
         });
+
+        after = {
+          email: updated.email,
+          name: updated.name,
+          deletedAt: updated.deletedAt,
+        };
       }
 
-      // Track admin action
+      // ✅ AUDIT: User deletion (mandatory for compliance)
+      await prisma.userAuditLog.create({
+        data: {
+          targetUserId: id,
+          action: 'DELETE',
+          actorId: currentUser.id,
+          reason: deleteReason,
+          before: before as never,
+          after: after as never,
+          meta: { anonymize: anonymize ? true : false } as never,
+          severity: 5, // Critical action
+          ipAddress: ctx.request.ip,
+          userAgent: ctx.request.headers['user-agent'] || null,
+        },
+      });
+
+      // Track admin action (legacy telemetry)
       trackAdminAction({
         adminId: currentUser.id,
         action: 'delete_user',
@@ -154,7 +271,7 @@ export const adminDeleteUserMutation: MutationResolvers['adminDeleteUser'] =
         userId: id,
         deletionType: 'admin',
         actorId: currentUser.id,
-        anonymize: anonymize ?? false,
+        anonymize: anonymize ? true : false,
       });
 
       return true;
@@ -258,15 +375,17 @@ export const adminCreateUserMutation: MutationResolvers['adminCreateUser'] =
   );
 
 /**
- * Mutation: Admin suspend user
+ * Mutation: Admin suspend user (with mandatory reason and optional expiry)
  */
 export const adminSuspendUserMutation: MutationResolvers['adminSuspendUser'] =
   resolverWithMetrics(
     'Mutation',
     'adminSuspendUser',
-    async (_p, { id, reason }, ctx: MercuriusContext) => {
+    async (_p, { id, input }, ctx: MercuriusContext) => {
       const currentUser = requireAuthUser(ctx);
       requireAdmin(currentUser);
+
+      const { reason, suspendedUntil } = input;
 
       // Prevent self-suspension
       if (id === currentUser.id) {
@@ -286,29 +405,90 @@ export const adminSuspendUserMutation: MutationResolvers['adminSuspendUser'] =
         });
       }
 
+      // Validate suspendedUntil (must be in the future)
+      if (suspendedUntil) {
+        const futureDate = new Date(suspendedUntil);
+        const now = new Date();
+        if (futureDate <= now) {
+          throw new GraphQLError(
+            'suspendedUntil must be a future date. Use null for permanent suspension.',
+            {
+              extensions: { code: 'BAD_USER_INPUT' },
+            }
+          );
+        }
+      }
+
+      // Snapshot before suspension
+      const before = {
+        suspendedAt: targetUser.suspendedAt,
+        suspendedUntil: targetUser.suspendedUntil,
+        suspensionReason: targetUser.suspensionReason,
+        suspendedById: targetUser.suspendedById,
+      };
+
       // Suspend user
+      const now = new Date();
       const updatedUser = await prisma.user.update({
         where: { id },
         data: {
-          suspendedAt: new Date(),
-          suspensionReason: reason || null,
+          suspendedAt: now,
+          suspendedUntil: suspendedUntil ? new Date(suspendedUntil) : null,
+          suspensionReason: reason,
+          suspendedById: currentUser.id,
         },
       });
 
-      // Track admin action
+      const after = {
+        suspendedAt: updatedUser.suspendedAt,
+        suspendedUntil: updatedUser.suspendedUntil,
+        suspensionReason: updatedUser.suspensionReason,
+        suspendedById: updatedUser.suspendedById,
+      };
+
+      // ✅ AUDIT: User suspension (mandatory for compliance)
+      await prisma.userAuditLog.create({
+        data: {
+          targetUserId: id,
+          action: 'SUSPEND',
+          actorId: currentUser.id,
+          reason,
+          before: before as never,
+          after: after as never,
+          diff: {
+            suspendedAt: { from: before.suspendedAt, to: after.suspendedAt },
+            suspendedUntil: {
+              from: before.suspendedUntil,
+              to: after.suspendedUntil,
+            },
+            suspensionReason: {
+              from: before.suspensionReason,
+              to: after.suspensionReason,
+            },
+          } as never,
+          meta: {
+            suspensionType: suspendedUntil ? 'temporary' : 'permanent',
+          } as never,
+          severity: 4, // High severity
+          ipAddress: ctx.request.ip,
+          userAgent: ctx.request.headers['user-agent'] || null,
+        },
+      });
+
+      // Track admin action (legacy telemetry)
       trackAdminAction({
         adminId: currentUser.id,
         action: 'suspend_user',
         targetType: 'user',
         targetId: id,
-        reason: reason || undefined,
+        reason,
       });
 
       // Track account suspension specifically
       trackAccountSuspended({
         userId: id,
         adminId: currentUser.id,
-        reason: reason || undefined,
+        reason,
       });
 
       return mapUser(updatedUser);
@@ -316,13 +496,13 @@ export const adminSuspendUserMutation: MutationResolvers['adminSuspendUser'] =
   );
 
 /**
- * Mutation: Admin unsuspend user
+ * Mutation: Admin unsuspend user (with optional reason)
  */
 export const adminUnsuspendUserMutation: MutationResolvers['adminUnsuspendUser'] =
   resolverWithMetrics(
     'Mutation',
     'adminUnsuspendUser',
-    async (_p, { id }, ctx: MercuriusContext) => {
+    async (_p, { id, reason }, ctx: MercuriusContext) => {
       const currentUser = requireAuthUser(ctx);
       requireAdmin(currentUser);
 
@@ -337,21 +517,59 @@ export const adminUnsuspendUserMutation: MutationResolvers['adminUnsuspendUser']
         });
       }
 
+      // Snapshot before unsuspension
+      const before = {
+        suspendedAt: targetUser.suspendedAt,
+        suspendedUntil: targetUser.suspendedUntil,
+        suspensionReason: targetUser.suspensionReason,
+        suspendedById: targetUser.suspendedById,
+      };
+
       // Unsuspend user
       const updatedUser = await prisma.user.update({
         where: { id },
         data: {
           suspendedAt: null,
+          suspendedUntil: null,
           suspensionReason: null,
+          suspendedById: null,
         },
       });
 
-      // Track admin action
+      const after = {
+        suspendedAt: null,
+        suspendedUntil: null,
+        suspensionReason: null,
+        suspendedById: null,
+      };
+
+      // ✅ AUDIT: User unsuspension (mandatory for compliance)
+      await prisma.userAuditLog.create({
+        data: {
+          targetUserId: id,
+          action: 'UNSUSPEND',
+          actorId: currentUser.id,
+          reason: reason || 'Manual unsuspension by admin',
+          before: before as never,
+          after: after as never,
+          diff: {
+            suspendedAt: { from: before.suspendedAt, to: null },
+            suspendedUntil: { from: before.suspendedUntil, to: null },
+            suspensionReason: { from: before.suspensionReason, to: null },
+          } as never,
+          severity: 3, // Moderate severity
+          ipAddress: ctx.request.ip,
+          userAgent: ctx.request.headers['user-agent'] || null,
+        },
+      });
+
+      // Track admin action (legacy telemetry)
       trackAdminAction({
         adminId: currentUser.id,
         action: 'unsuspend_user',
         targetType: 'user',
         targetId: id,
+        reason: reason || undefined,
       });
 
       // Track account unsuspension specifically

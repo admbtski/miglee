@@ -6,6 +6,7 @@ import { Loader2, ShieldAlert } from 'lucide-react';
 
 import { useMeQuery } from '@/features/auth';
 import { useLocalePath } from '@/hooks';
+import { SuspendedAccountScreen } from './suspended-account-screen';
 
 interface AccountGuardProps {
   children: React.ReactNode;
@@ -56,8 +57,9 @@ function UnauthorizedState() {
 /**
  * Account Guard
  * 
- * Protects account routes by checking if user is authenticated.
+ * Protects account routes by checking if user is authenticated and not suspended.
  * Redirects to home page if user is not logged in.
+ * Shows suspended screen if user's account is suspended.
  * 
  * @example
  * ```tsx
@@ -71,7 +73,9 @@ export function AccountGuard({ children }: AccountGuardProps) {
   const { localePath } = useLocalePath();
   const { data, isLoading } = useMeQuery();
 
-  const isAuthenticated = !!data?.me;
+  const user = data?.me;
+  const isAuthenticated = !!user;
+  const isSuspended = !!user?.suspendedAt;
 
   // Redirect if user is not authenticated
   useEffect(() => {
@@ -96,7 +100,18 @@ export function AccountGuard({ children }: AccountGuardProps) {
     return <UnauthorizedState />;
   }
 
-  // User is authenticated, render children
+  // ✅ SECURITY: Show suspended screen if user's account is suspended
+  if (isSuspended) {
+    return (
+      <SuspendedAccountScreen
+        suspendedAt={user.suspendedAt}
+        suspendedUntil={user.suspendedUntil}
+        suspensionReason={user.suspensionReason}
+      />
+    );
+  }
+
+  // User is authenticated and not suspended, render children
   return <>{children}</>;
 }
 

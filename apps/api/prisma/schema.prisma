@@ -273,10 +273,13 @@ model User {
   avatarKey              String? // Key to MediaAsset for avatar
   role                   Role      @default(USER)
   verifiedAt             DateTime?
-  suspendedAt            DateTime? // Admin suspension
-  suspensionReason       String? // Reason for suspension
+  suspendedAt            DateTime? // Admin suspension timestamp
+  suspendedUntil         DateTime? // Auto-unsuspend at this time (null = permanent)
+  suspendedById          String? // Admin who suspended the account
+  suspensionReason       String? // Reason for suspension (mandatory for UI)
   deletedAt              DateTime? // Soft delete timestamp
-  deletedReason          String? // Reason for account deletion
+  deletedById            String? // Admin who deleted the account
+  deletedReason          String? // Reason for account deletion (mandatory for UI)
   restorationToken       String? // Token for self-service restoration
   restorationTokenExpiry DateTime? // Expiry for restoration token
   createdAt              DateTime  @default(now())
@@ -333,6 +336,12 @@ model User {
   blocksInitiated UserBlock[] @relation("Blocker")
   blocksReceived  UserBlock[] @relation("Blocked")
 
+  // Admin actions
+  suspendedBy         User?  @relation("UserSuspendedBy", fields: [suspendedById], references: [id], onDelete: SetNull)
+  suspendedUsers      User[] @relation("UserSuspendedBy")
+  deletedBy           User?  @relation("UserDeletedBy", fields: [deletedById], references: [id], onDelete: SetNull)
+  deletedUsers        User[] @relation("UserDeletedBy")
+
   // Ownership transfers
   ownershipTransfersFrom  EventOwnershipTransfer[] @relation("IotFrom")
   ownershipTransfersTo    EventOwnershipTransfer[] @relation("IotTo")
@@ -354,7 +363,8 @@ model User {
   checkinRejections  EventMember[]     @relation("EventMemberCheckinRejectedBy")
 
   // Audit logs
-  auditLogsAsActor EventAuditLog[] @relation("AuditLogActor")
+  auditLogsAsActor     EventAuditLog[] @relation("AuditLogActor")
+  userAuditLogsAsActor UserAuditLog[]  @relation("UserAuditLogActor")
 
   // Monetization
   subscriptions           UserSubscription[]
@@ -1728,4 +1738,59 @@ model EventAuditLog {
   @@index([eventId, scope, action, createdAt(sort: Desc)]) // Filtered by scope+action
   @@index([actorId, createdAt(sort: Desc)]) // Actor's action history
   @@map("event_audit_logs")
+}
+
+// =============================================================================
+/**
+ * User Audit Log System
+ * Tracks all administrative actions on user accounts
+ * Required for compliance, security, and accountability
+ */
+// =============================================================================
+
+enum UserAuditAction {
+  UPDATE_ROLE // Role change (USER/MODERATOR/ADMIN)
+  UPDATE_VERIFIED // Verification status change
+  SUSPEND // Account suspension
+  UNSUSPEND // Account unsuspension (manual or automatic)
+  DELETE // Account deletion/anonymization
+  UPDATE_PROFILE // Admin-initiated profile updates
+  CREATE // Admin-created account
+}
+
+model UserAuditLog {
+  id String @id @default(cuid())
+
+  // Target user
+  targetUserId String
+
+  // Action details
+  action UserAuditAction
+
+  // Actor (admin who performed the action)
+  actorId String? // null for SYSTEM actions (e.g., auto-unsuspend)
+
+  // Change details
+  before Json? // Snapshot of fields before change
+  after  Json? // Snapshot of fields after change
+  diff   Json? // { field: { from, to } } for specific changes
+
+  // Metadata
+  reason     String? // Mandatory for high-risk operations (suspend, delete, role changes)
+  meta       Json? // Additional context (e.g., suspendedUntil, IP address, user agent)
+  severity   Int     @default(3) // 1=info, 3=moderate, 5=critical
+  ipAddress  String? // IP of the admin performing the action
+  userAgent  String? // User agent of the admin
+
+  createdAt DateTime @default(now())
+
+  // Relations (no cascade - audit logs must be immutable)
+  actor User? @relation("UserAuditLogActor", fields: [actorId], references: [id], onDelete: SetNull)
+
+  // Indexes for efficient querying
+  @@index([targetUserId, createdAt(sort: Desc)]) // User's audit history
+  @@index([actorId, createdAt(sort: Desc)]) // Admin's action history
+  @@index([action, createdAt(sort: Desc)]) // Filter by action type
+  @@index([createdAt(sort: Desc)]) // Global timeline
+  @@map("user_audit_logs")
 }

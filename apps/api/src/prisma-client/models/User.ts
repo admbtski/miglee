@@ -32,8 +32,11 @@ export type UserMinAggregateOutputType = {
   role: $Enums.Role | null
   verifiedAt: Date | null
   suspendedAt: Date | null
+  suspendedUntil: Date | null
+  suspendedById: string | null
   suspensionReason: string | null
   deletedAt: Date | null
+  deletedById: string | null
   deletedReason: string | null
   restorationToken: string | null
   restorationTokenExpiry: Date | null
@@ -54,8 +57,11 @@ export type UserMaxAggregateOutputType = {
   role: $Enums.Role | null
   verifiedAt: Date | null
   suspendedAt: Date | null
+  suspendedUntil: Date | null
+  suspendedById: string | null
   suspensionReason: string | null
   deletedAt: Date | null
+  deletedById: string | null
   deletedReason: string | null
   restorationToken: string | null
   restorationTokenExpiry: Date | null
@@ -76,8 +82,11 @@ export type UserCountAggregateOutputType = {
   role: number
   verifiedAt: number
   suspendedAt: number
+  suspendedUntil: number
+  suspendedById: number
   suspensionReason: number
   deletedAt: number
+  deletedById: number
   deletedReason: number
   restorationToken: number
   restorationTokenExpiry: number
@@ -100,8 +109,11 @@ export type UserMinAggregateInputType = {
   role?: true
   verifiedAt?: true
   suspendedAt?: true
+  suspendedUntil?: true
+  suspendedById?: true
   suspensionReason?: true
   deletedAt?: true
+  deletedById?: true
   deletedReason?: true
   restorationToken?: true
   restorationTokenExpiry?: true
@@ -122,8 +134,11 @@ export type UserMaxAggregateInputType = {
   role?: true
   verifiedAt?: true
   suspendedAt?: true
+  suspendedUntil?: true
+  suspendedById?: true
   suspensionReason?: true
   deletedAt?: true
+  deletedById?: true
   deletedReason?: true
   restorationToken?: true
   restorationTokenExpiry?: true
@@ -144,8 +159,11 @@ export type UserCountAggregateInputType = {
   role?: true
   verifiedAt?: true
   suspendedAt?: true
+  suspendedUntil?: true
+  suspendedById?: true
   suspensionReason?: true
   deletedAt?: true
+  deletedById?: true
   deletedReason?: true
   restorationToken?: true
   restorationTokenExpiry?: true
@@ -239,8 +257,11 @@ export type UserGroupByOutputType = {
   role: $Enums.Role
   verifiedAt: Date | null
   suspendedAt: Date | null
+  suspendedUntil: Date | null
+  suspendedById: string | null
   suspensionReason: string | null
   deletedAt: Date | null
+  deletedById: string | null
   deletedReason: string | null
   restorationToken: string | null
   restorationTokenExpiry: Date | null
@@ -282,8 +303,11 @@ export type UserWhereInput = {
   role?: Prisma.EnumRoleFilter<"User"> | $Enums.Role
   verifiedAt?: Prisma.DateTimeNullableFilter<"User"> | Date | string | null
   suspendedAt?: Prisma.DateTimeNullableFilter<"User"> | Date | string | null
+  suspendedUntil?: Prisma.DateTimeNullableFilter<"User"> | Date | string | null
+  suspendedById?: Prisma.StringNullableFilter<"User"> | string | null
   suspensionReason?: Prisma.StringNullableFilter<"User"> | string | null
   deletedAt?: Prisma.DateTimeNullableFilter<"User"> | Date | string | null
+  deletedById?: Prisma.StringNullableFilter<"User"> | string | null
   deletedReason?: Prisma.StringNullableFilter<"User"> | string | null
   restorationToken?: Prisma.StringNullableFilter<"User"> | string | null
   restorationTokenExpiry?: Prisma.DateTimeNullableFilter<"User"> | Date | string | null
@@ -324,6 +348,10 @@ export type UserWhereInput = {
   reportsFiled?: Prisma.ReportListRelationFilter
   blocksInitiated?: Prisma.UserBlockListRelationFilter
   blocksReceived?: Prisma.UserBlockListRelationFilter
+  suspendedBy?: Prisma.XOR<Prisma.UserNullableScalarRelationFilter, Prisma.UserWhereInput> | null
+  suspendedUsers?: Prisma.UserListRelationFilter
+  deletedBy?: Prisma.XOR<Prisma.UserNullableScalarRelationFilter, Prisma.UserWhereInput> | null
+  deletedUsers?: Prisma.UserListRelationFilter
   ownershipTransfersFrom?: Prisma.EventOwnershipTransferListRelationFilter
   ownershipTransfersTo?: Prisma.EventOwnershipTransferListRelationFilter
   ownershipTransfersActed?: Prisma.EventOwnershipTransferListRelationFilter
@@ -335,6 +363,7 @@ export type UserWhereInput = {
   checkinLogsAsActor?: Prisma.EventCheckinLogListRelationFilter
   checkinRejections?: Prisma.EventMemberListRelationFilter
   auditLogsAsActor?: Prisma.EventAuditLogListRelationFilter
+  userAuditLogsAsActor?: Prisma.UserAuditLogListRelationFilter
   subscriptions?: Prisma.UserSubscriptionListRelationFilter
   planPeriods?: Prisma.UserPlanPeriodListRelationFilter
   eventSponsorships?: Prisma.EventSponsorshipListRelationFilter
@@ -356,8 +385,11 @@ export type UserOrderByWithRelationInput = {
   role?: Prisma.SortOrder
   verifiedAt?: Prisma.SortOrderInput | Prisma.SortOrder
   suspendedAt?: Prisma.SortOrderInput | Prisma.SortOrder
+  suspendedUntil?: Prisma.SortOrderInput | Prisma.SortOrder
+  suspendedById?: Prisma.SortOrderInput | Prisma.SortOrder
   suspensionReason?: Prisma.SortOrderInput | Prisma.SortOrder
   deletedAt?: Prisma.SortOrderInput | Prisma.SortOrder
+  deletedById?: Prisma.SortOrderInput | Prisma.SortOrder
   deletedReason?: Prisma.SortOrderInput | Prisma.SortOrder
   restorationToken?: Prisma.SortOrderInput | Prisma.SortOrder
   restorationTokenExpiry?: Prisma.SortOrderInput | Prisma.SortOrder
@@ -398,6 +430,10 @@ export type UserOrderByWithRelationInput = {
   reportsFiled?: Prisma.ReportOrderByRelationAggregateInput
   blocksInitiated?: Prisma.UserBlockOrderByRelationAggregateInput
   blocksReceived?: Prisma.UserBlockOrderByRelationAggregateInput
+  suspendedBy?: Prisma.UserOrderByWithRelationInput
+  suspendedUsers?: Prisma.UserOrderByRelationAggregateInput
+  deletedBy?: Prisma.UserOrderByWithRelationInput
+  deletedUsers?: Prisma.UserOrderByRelationAggregateInput
   ownershipTransfersFrom?: Prisma.EventOwnershipTransferOrderByRelationAggregateInput
   ownershipTransfersTo?: Prisma.EventOwnershipTransferOrderByRelationAggregateInput
   ownershipTransfersActed?: Prisma.EventOwnershipTransferOrderByRelationAggregateInput
@@ -409,6 +445,7 @@ export type UserOrderByWithRelationInput = {
   checkinLogsAsActor?: Prisma.EventCheckinLogOrderByRelationAggregateInput
   checkinRejections?: Prisma.EventMemberOrderByRelationAggregateInput
   auditLogsAsActor?: Prisma.EventAuditLogOrderByRelationAggregateInput
+  userAuditLogsAsActor?: Prisma.UserAuditLogOrderByRelationAggregateInput
   subscriptions?: Prisma.UserSubscriptionOrderByRelationAggregateInput
   planPeriods?: Prisma.UserPlanPeriodOrderByRelationAggregateInput
   eventSponsorships?: Prisma.EventSponsorshipOrderByRelationAggregateInput
@@ -433,8 +470,11 @@ export type UserWhereUniqueInput = Prisma.AtLeast<{
   role?: Prisma.EnumRoleFilter<"User"> | $Enums.Role
   verifiedAt?: Prisma.DateTimeNullableFilter<"User"> | Date | string | null
   suspendedAt?: Prisma.DateTimeNullableFilter<"User"> | Date | string | null
+  suspendedUntil?: Prisma.DateTimeNullableFilter<"User"> | Date | string | null
+  suspendedById?: Prisma.StringNullableFilter<"User"> | string | null
   suspensionReason?: Prisma.StringNullableFilter<"User"> | string | null
   deletedAt?: Prisma.DateTimeNullableFilter<"User"> | Date | string | null
+  deletedById?: Prisma.StringNullableFilter<"User"> | string | null
   deletedReason?: Prisma.StringNullableFilter<"User"> | string | null
   restorationToken?: Prisma.StringNullableFilter<"User"> | string | null
   restorationTokenExpiry?: Prisma.DateTimeNullableFilter<"User"> | Date | string | null
@@ -475,6 +515,10 @@ export type UserWhereUniqueInput = Prisma.AtLeast<{
   reportsFiled?: Prisma.ReportListRelationFilter
   blocksInitiated?: Prisma.UserBlockListRelationFilter
   blocksReceived?: Prisma.UserBlockListRelationFilter
+  suspendedBy?: Prisma.XOR<Prisma.UserNullableScalarRelationFilter, Prisma.UserWhereInput> | null
+  suspendedUsers?: Prisma.UserListRelationFilter
+  deletedBy?: Prisma.XOR<Prisma.UserNullableScalarRelationFilter, Prisma.UserWhereInput> | null
+  deletedUsers?: Prisma.UserListRelationFilter
   ownershipTransfersFrom?: Prisma.EventOwnershipTransferListRelationFilter
   ownershipTransfersTo?: Prisma.EventOwnershipTransferListRelationFilter
   ownershipTransfersActed?: Prisma.EventOwnershipTransferListRelationFilter
@@ -486,6 +530,7 @@ export type UserWhereUniqueInput = Prisma.AtLeast<{
   checkinLogsAsActor?: Prisma.EventCheckinLogListRelationFilter
   checkinRejections?: Prisma.EventMemberListRelationFilter
   auditLogsAsActor?: Prisma.EventAuditLogListRelationFilter
+  userAuditLogsAsActor?: Prisma.UserAuditLogListRelationFilter
   subscriptions?: Prisma.UserSubscriptionListRelationFilter
   planPeriods?: Prisma.UserPlanPeriodListRelationFilter
   eventSponsorships?: Prisma.EventSponsorshipListRelationFilter
@@ -507,8 +552,11 @@ export type UserOrderByWithAggregationInput = {
   role?: Prisma.SortOrder
   verifiedAt?: Prisma.SortOrderInput | Prisma.SortOrder
   suspendedAt?: Prisma.SortOrderInput | Prisma.SortOrder
+  suspendedUntil?: Prisma.SortOrderInput | Prisma.SortOrder
+  suspendedById?: Prisma.SortOrderInput | Prisma.SortOrder
   suspensionReason?: Prisma.SortOrderInput | Prisma.SortOrder
   deletedAt?: Prisma.SortOrderInput | Prisma.SortOrder
+  deletedById?: Prisma.SortOrderInput | Prisma.SortOrder
   deletedReason?: Prisma.SortOrderInput | Prisma.SortOrder
   restorationToken?: Prisma.SortOrderInput | Prisma.SortOrder
   restorationTokenExpiry?: Prisma.SortOrderInput | Prisma.SortOrder
@@ -535,8 +583,11 @@ export type UserScalarWhereWithAggregatesInput = {
   role?: Prisma.EnumRoleWithAggregatesFilter<"User"> | $Enums.Role
   verifiedAt?: Prisma.DateTimeNullableWithAggregatesFilter<"User"> | Date | string | null
   suspendedAt?: Prisma.DateTimeNullableWithAggregatesFilter<"User"> | Date | string | null
+  suspendedUntil?: Prisma.DateTimeNullableWithAggregatesFilter<"User"> | Date | string | null
+  suspendedById?: Prisma.StringNullableWithAggregatesFilter<"User"> | string | null
   suspensionReason?: Prisma.StringNullableWithAggregatesFilter<"User"> | string | null
   deletedAt?: Prisma.DateTimeNullableWithAggregatesFilter<"User"> | Date | string | null
+  deletedById?: Prisma.StringNullableWithAggregatesFilter<"User"> | string | null
   deletedReason?: Prisma.StringNullableWithAggregatesFilter<"User"> | string | null
   restorationToken?: Prisma.StringNullableWithAggregatesFilter<"User"> | string | null
   restorationTokenExpiry?: Prisma.DateTimeNullableWithAggregatesFilter<"User"> | Date | string | null
@@ -557,6 +608,7 @@ export type UserCreateInput = {
   role?: $Enums.Role
   verifiedAt?: Date | string | null
   suspendedAt?: Date | string | null
+  suspendedUntil?: Date | string | null
   suspensionReason?: string | null
   deletedAt?: Date | string | null
   deletedReason?: string | null
@@ -599,6 +651,10 @@ export type UserCreateInput = {
   reportsFiled?: Prisma.ReportCreateNestedManyWithoutReporterInput
   blocksInitiated?: Prisma.UserBlockCreateNestedManyWithoutBlockerInput
   blocksReceived?: Prisma.UserBlockCreateNestedManyWithoutBlockedInput
+  suspendedBy?: Prisma.UserCreateNestedOneWithoutSuspendedUsersInput
+  suspendedUsers?: Prisma.UserCreateNestedManyWithoutSuspendedByInput
+  deletedBy?: Prisma.UserCreateNestedOneWithoutDeletedUsersInput
+  deletedUsers?: Prisma.UserCreateNestedManyWithoutDeletedByInput
   ownershipTransfersFrom?: Prisma.EventOwnershipTransferCreateNestedManyWithoutFromUserInput
   ownershipTransfersTo?: Prisma.EventOwnershipTransferCreateNestedManyWithoutToUserInput
   ownershipTransfersActed?: Prisma.EventOwnershipTransferCreateNestedManyWithoutActorInput
@@ -610,6 +666,7 @@ export type UserCreateInput = {
   checkinLogsAsActor?: Prisma.EventCheckinLogCreateNestedManyWithoutActorInput
   checkinRejections?: Prisma.EventMemberCreateNestedManyWithoutLastCheckinRejectedByInput
   auditLogsAsActor?: Prisma.EventAuditLogCreateNestedManyWithoutActorInput
+  userAuditLogsAsActor?: Prisma.UserAuditLogCreateNestedManyWithoutActorInput
   subscriptions?: Prisma.UserSubscriptionCreateNestedManyWithoutUserInput
   planPeriods?: Prisma.UserPlanPeriodCreateNestedManyWithoutUserInput
   eventSponsorships?: Prisma.EventSponsorshipCreateNestedManyWithoutSponsorInput
@@ -631,8 +688,11 @@ export type UserUncheckedCreateInput = {
   role?: $Enums.Role
   verifiedAt?: Date | string | null
   suspendedAt?: Date | string | null
+  suspendedUntil?: Date | string | null
+  suspendedById?: string | null
   suspensionReason?: string | null
   deletedAt?: Date | string | null
+  deletedById?: string | null
   deletedReason?: string | null
   restorationToken?: string | null
   restorationTokenExpiry?: Date | string | null
@@ -673,6 +733,8 @@ export type UserUncheckedCreateInput = {
   reportsFiled?: Prisma.ReportUncheckedCreateNestedManyWithoutReporterInput
   blocksInitiated?: Prisma.UserBlockUncheckedCreateNestedManyWithoutBlockerInput
   blocksReceived?: Prisma.UserBlockUncheckedCreateNestedManyWithoutBlockedInput
+  suspendedUsers?: Prisma.UserUncheckedCreateNestedManyWithoutSuspendedByInput
+  deletedUsers?: Prisma.UserUncheckedCreateNestedManyWithoutDeletedByInput
   ownershipTransfersFrom?: Prisma.EventOwnershipTransferUncheckedCreateNestedManyWithoutFromUserInput
   ownershipTransfersTo?: Prisma.EventOwnershipTransferUncheckedCreateNestedManyWithoutToUserInput
   ownershipTransfersActed?: Prisma.EventOwnershipTransferUncheckedCreateNestedManyWithoutActorInput
@@ -684,6 +746,7 @@ export type UserUncheckedCreateInput = {
   checkinLogsAsActor?: Prisma.EventCheckinLogUncheckedCreateNestedManyWithoutActorInput
   checkinRejections?: Prisma.EventMemberUncheckedCreateNestedManyWithoutLastCheckinRejectedByInput
   auditLogsAsActor?: Prisma.EventAuditLogUncheckedCreateNestedManyWithoutActorInput
+  userAuditLogsAsActor?: Prisma.UserAuditLogUncheckedCreateNestedManyWithoutActorInput
   subscriptions?: Prisma.UserSubscriptionUncheckedCreateNestedManyWithoutUserInput
   planPeriods?: Prisma.UserPlanPeriodUncheckedCreateNestedManyWithoutUserInput
   eventSponsorships?: Prisma.EventSponsorshipUncheckedCreateNestedManyWithoutSponsorInput
@@ -705,6 +768,7 @@ export type UserUpdateInput = {
   role?: Prisma.EnumRoleFieldUpdateOperationsInput | $Enums.Role
   verifiedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   suspendedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  suspendedUntil?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   suspensionReason?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   deletedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   deletedReason?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
@@ -747,6 +811,10 @@ export type UserUpdateInput = {
   reportsFiled?: Prisma.ReportUpdateManyWithoutReporterNestedInput
   blocksInitiated?: Prisma.UserBlockUpdateManyWithoutBlockerNestedInput
   blocksReceived?: Prisma.UserBlockUpdateManyWithoutBlockedNestedInput
+  suspendedBy?: Prisma.UserUpdateOneWithoutSuspendedUsersNestedInput
+  suspendedUsers?: Prisma.UserUpdateManyWithoutSuspendedByNestedInput
+  deletedBy?: Prisma.UserUpdateOneWithoutDeletedUsersNestedInput
+  deletedUsers?: Prisma.UserUpdateManyWithoutDeletedByNestedInput
   ownershipTransfersFrom?: Prisma.EventOwnershipTransferUpdateManyWithoutFromUserNestedInput
   ownershipTransfersTo?: Prisma.EventOwnershipTransferUpdateManyWithoutToUserNestedInput
   ownershipTransfersActed?: Prisma.EventOwnershipTransferUpdateManyWithoutActorNestedInput
@@ -758,6 +826,7 @@ export type UserUpdateInput = {
   checkinLogsAsActor?: Prisma.EventCheckinLogUpdateManyWithoutActorNestedInput
   checkinRejections?: Prisma.EventMemberUpdateManyWithoutLastCheckinRejectedByNestedInput
   auditLogsAsActor?: Prisma.EventAuditLogUpdateManyWithoutActorNestedInput
+  userAuditLogsAsActor?: Prisma.UserAuditLogUpdateManyWithoutActorNestedInput
   subscriptions?: Prisma.UserSubscriptionUpdateManyWithoutUserNestedInput
   planPeriods?: Prisma.UserPlanPeriodUpdateManyWithoutUserNestedInput
   eventSponsorships?: Prisma.EventSponsorshipUpdateManyWithoutSponsorNestedInput
@@ -779,8 +848,11 @@ export type UserUncheckedUpdateInput = {
   role?: Prisma.EnumRoleFieldUpdateOperationsInput | $Enums.Role
   verifiedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   suspendedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  suspendedUntil?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  suspendedById?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   suspensionReason?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   deletedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  deletedById?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   deletedReason?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   restorationToken?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   restorationTokenExpiry?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
@@ -821,6 +893,8 @@ export type UserUncheckedUpdateInput = {
   reportsFiled?: Prisma.ReportUncheckedUpdateManyWithoutReporterNestedInput
   blocksInitiated?: Prisma.UserBlockUncheckedUpdateManyWithoutBlockerNestedInput
   blocksReceived?: Prisma.UserBlockUncheckedUpdateManyWithoutBlockedNestedInput
+  suspendedUsers?: Prisma.UserUncheckedUpdateManyWithoutSuspendedByNestedInput
+  deletedUsers?: Prisma.UserUncheckedUpdateManyWithoutDeletedByNestedInput
   ownershipTransfersFrom?: Prisma.EventOwnershipTransferUncheckedUpdateManyWithoutFromUserNestedInput
   ownershipTransfersTo?: Prisma.EventOwnershipTransferUncheckedUpdateManyWithoutToUserNestedInput
   ownershipTransfersActed?: Prisma.EventOwnershipTransferUncheckedUpdateManyWithoutActorNestedInput
@@ -832,6 +906,7 @@ export type UserUncheckedUpdateInput = {
   checkinLogsAsActor?: Prisma.EventCheckinLogUncheckedUpdateManyWithoutActorNestedInput
   checkinRejections?: Prisma.EventMemberUncheckedUpdateManyWithoutLastCheckinRejectedByNestedInput
   auditLogsAsActor?: Prisma.EventAuditLogUncheckedUpdateManyWithoutActorNestedInput
+  userAuditLogsAsActor?: Prisma.UserAuditLogUncheckedUpdateManyWithoutActorNestedInput
   subscriptions?: Prisma.UserSubscriptionUncheckedUpdateManyWithoutUserNestedInput
   planPeriods?: Prisma.UserPlanPeriodUncheckedUpdateManyWithoutUserNestedInput
   eventSponsorships?: Prisma.EventSponsorshipUncheckedUpdateManyWithoutSponsorNestedInput
@@ -853,8 +928,11 @@ export type UserCreateManyInput = {
   role?: $Enums.Role
   verifiedAt?: Date | string | null
   suspendedAt?: Date | string | null
+  suspendedUntil?: Date | string | null
+  suspendedById?: string | null
   suspensionReason?: string | null
   deletedAt?: Date | string | null
+  deletedById?: string | null
   deletedReason?: string | null
   restorationToken?: string | null
   restorationTokenExpiry?: Date | string | null
@@ -875,6 +953,7 @@ export type UserUpdateManyMutationInput = {
   role?: Prisma.EnumRoleFieldUpdateOperationsInput | $Enums.Role
   verifiedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   suspendedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  suspendedUntil?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   suspensionReason?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   deletedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   deletedReason?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
@@ -897,8 +976,11 @@ export type UserUncheckedUpdateManyInput = {
   role?: Prisma.EnumRoleFieldUpdateOperationsInput | $Enums.Role
   verifiedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   suspendedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  suspendedUntil?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  suspendedById?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   suspensionReason?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   deletedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  deletedById?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   deletedReason?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   restorationToken?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   restorationTokenExpiry?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
@@ -911,6 +993,21 @@ export type UserUncheckedUpdateManyInput = {
   acceptedMarketingAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
 }
 
+export type UserNullableScalarRelationFilter = {
+  is?: Prisma.UserWhereInput | null
+  isNot?: Prisma.UserWhereInput | null
+}
+
+export type UserListRelationFilter = {
+  every?: Prisma.UserWhereInput
+  some?: Prisma.UserWhereInput
+  none?: Prisma.UserWhereInput
+}
+
+export type UserOrderByRelationAggregateInput = {
+  _count?: Prisma.SortOrder
+}
+
 export type UserCountOrderByAggregateInput = {
   id?: Prisma.SortOrder
   email?: Prisma.SortOrder
@@ -919,8 +1016,11 @@ export type UserCountOrderByAggregateInput = {
   role?: Prisma.SortOrder
   verifiedAt?: Prisma.SortOrder
   suspendedAt?: Prisma.SortOrder
+  suspendedUntil?: Prisma.SortOrder
+  suspendedById?: Prisma.SortOrder
   suspensionReason?: Prisma.SortOrder
   deletedAt?: Prisma.SortOrder
+  deletedById?: Prisma.SortOrder
   deletedReason?: Prisma.SortOrder
   restorationToken?: Prisma.SortOrder
   restorationTokenExpiry?: Prisma.SortOrder
@@ -941,8 +1041,11 @@ export type UserMaxOrderByAggregateInput = {
   role?: Prisma.SortOrder
   verifiedAt?: Prisma.SortOrder
   suspendedAt?: Prisma.SortOrder
+  suspendedUntil?: Prisma.SortOrder
+  suspendedById?: Prisma.SortOrder
   suspensionReason?: Prisma.SortOrder
   deletedAt?: Prisma.SortOrder
+  deletedById?: Prisma.SortOrder
   deletedReason?: Prisma.SortOrder
   restorationToken?: Prisma.SortOrder
   restorationTokenExpiry?: Prisma.SortOrder
@@ -963,8 +1066,11 @@ export type UserMinOrderByAggregateInput = {
   role?: Prisma.SortOrder
   verifiedAt?: Prisma.SortOrder
   suspendedAt?: Prisma.SortOrder
+  suspendedUntil?: Prisma.SortOrder
+  suspendedById?: Prisma.SortOrder
   suspensionReason?: Prisma.SortOrder
   deletedAt?: Prisma.SortOrder
+  deletedById?: Prisma.SortOrder
   deletedReason?: Prisma.SortOrder
   restorationToken?: Prisma.SortOrder
   restorationTokenExpiry?: Prisma.SortOrder
@@ -977,14 +1083,49 @@ export type UserMinOrderByAggregateInput = {
   acceptedMarketingAt?: Prisma.SortOrder
 }
 
-export type UserNullableScalarRelationFilter = {
-  is?: Prisma.UserWhereInput | null
-  isNot?: Prisma.UserWhereInput | null
-}
-
 export type UserScalarRelationFilter = {
   is?: Prisma.UserWhereInput
   isNot?: Prisma.UserWhereInput
+}
+
+export type UserCreateNestedOneWithoutSuspendedUsersInput = {
+  create?: Prisma.XOR<Prisma.UserCreateWithoutSuspendedUsersInput, Prisma.UserUncheckedCreateWithoutSuspendedUsersInput>
+  connectOrCreate?: Prisma.UserCreateOrConnectWithoutSuspendedUsersInput
+  connect?: Prisma.UserWhereUniqueInput
+}
+
+export type UserCreateNestedManyWithoutSuspendedByInput = {
+  create?: Prisma.XOR<Prisma.UserCreateWithoutSuspendedByInput, Prisma.UserUncheckedCreateWithoutSuspendedByInput> | Prisma.UserCreateWithoutSuspendedByInput[] | Prisma.UserUncheckedCreateWithoutSuspendedByInput[]
+  connectOrCreate?: Prisma.UserCreateOrConnectWithoutSuspendedByInput | Prisma.UserCreateOrConnectWithoutSuspendedByInput[]
+  createMany?: Prisma.UserCreateManySuspendedByInputEnvelope
+  connect?: Prisma.UserWhereUniqueInput | Prisma.UserWhereUniqueInput[]
+}
+
+export type UserCreateNestedOneWithoutDeletedUsersInput = {
+  create?: Prisma.XOR<Prisma.UserCreateWithoutDeletedUsersInput, Prisma.UserUncheckedCreateWithoutDeletedUsersInput>
+  connectOrCreate?: Prisma.UserCreateOrConnectWithoutDeletedUsersInput
+  connect?: Prisma.UserWhereUniqueInput
+}
+
+export type UserCreateNestedManyWithoutDeletedByInput = {
+  create?: Prisma.XOR<Prisma.UserCreateWithoutDeletedByInput, Prisma.UserUncheckedCreateWithoutDeletedByInput> | Prisma.UserCreateWithoutDeletedByInput[] | Prisma.UserUncheckedCreateWithoutDeletedByInput[]
+  connectOrCreate?: Prisma.UserCreateOrConnectWithoutDeletedByInput | Prisma.UserCreateOrConnectWithoutDeletedByInput[]
+  createMany?: Prisma.UserCreateManyDeletedByInputEnvelope
+  connect?: Prisma.UserWhereUniqueInput | Prisma.UserWhereUniqueInput[]
+}
+
+export type UserUncheckedCreateNestedManyWithoutSuspendedByInput = {
+  create?: Prisma.XOR<Prisma.UserCreateWithoutSuspendedByInput, Prisma.UserUncheckedCreateWithoutSuspendedByInput> | Prisma.UserCreateWithoutSuspendedByInput[] | Prisma.UserUncheckedCreateWithoutSuspendedByInput[]
+  connectOrCreate?: Prisma.UserCreateOrConnectWithoutSuspendedByInput | Prisma.UserCreateOrConnectWithoutSuspendedByInput[]
+  createMany?: Prisma.UserCreateManySuspendedByInputEnvelope
+  connect?: Prisma.UserWhereUniqueInput | Prisma.UserWhereUniqueInput[]
+}
+
+export type UserUncheckedCreateNestedManyWithoutDeletedByInput = {
+  create?: Prisma.XOR<Prisma.UserCreateWithoutDeletedByInput, Prisma.UserUncheckedCreateWithoutDeletedByInput> | Prisma.UserCreateWithoutDeletedByInput[] | Prisma.UserUncheckedCreateWithoutDeletedByInput[]
+  connectOrCreate?: Prisma.UserCreateOrConnectWithoutDeletedByInput | Prisma.UserCreateOrConnectWithoutDeletedByInput[]
+  createMany?: Prisma.UserCreateManyDeletedByInputEnvelope
+  connect?: Prisma.UserWhereUniqueInput | Prisma.UserWhereUniqueInput[]
 }
 
 export type StringFieldUpdateOperationsInput = {
@@ -1005,6 +1146,82 @@ export type NullableDateTimeFieldUpdateOperationsInput = {
 
 export type DateTimeFieldUpdateOperationsInput = {
   set?: Date | string
+}
+
+export type UserUpdateOneWithoutSuspendedUsersNestedInput = {
+  create?: Prisma.XOR<Prisma.UserCreateWithoutSuspendedUsersInput, Prisma.UserUncheckedCreateWithoutSuspendedUsersInput>
+  connectOrCreate?: Prisma.UserCreateOrConnectWithoutSuspendedUsersInput
+  upsert?: Prisma.UserUpsertWithoutSuspendedUsersInput
+  disconnect?: Prisma.UserWhereInput | boolean
+  delete?: Prisma.UserWhereInput | boolean
+  connect?: Prisma.UserWhereUniqueInput
+  update?: Prisma.XOR<Prisma.XOR<Prisma.UserUpdateToOneWithWhereWithoutSuspendedUsersInput, Prisma.UserUpdateWithoutSuspendedUsersInput>, Prisma.UserUncheckedUpdateWithoutSuspendedUsersInput>
+}
+
+export type UserUpdateManyWithoutSuspendedByNestedInput = {
+  create?: Prisma.XOR<Prisma.UserCreateWithoutSuspendedByInput, Prisma.UserUncheckedCreateWithoutSuspendedByInput> | Prisma.UserCreateWithoutSuspendedByInput[] | Prisma.UserUncheckedCreateWithoutSuspendedByInput[]
+  connectOrCreate?: Prisma.UserCreateOrConnectWithoutSuspendedByInput | Prisma.UserCreateOrConnectWithoutSuspendedByInput[]
+  upsert?: Prisma.UserUpsertWithWhereUniqueWithoutSuspendedByInput | Prisma.UserUpsertWithWhereUniqueWithoutSuspendedByInput[]
+  createMany?: Prisma.UserCreateManySuspendedByInputEnvelope
+  set?: Prisma.UserWhereUniqueInput | Prisma.UserWhereUniqueInput[]
+  disconnect?: Prisma.UserWhereUniqueInput | Prisma.UserWhereUniqueInput[]
+  delete?: Prisma.UserWhereUniqueInput | Prisma.UserWhereUniqueInput[]
+  connect?: Prisma.UserWhereUniqueInput | Prisma.UserWhereUniqueInput[]
+  update?: Prisma.UserUpdateWithWhereUniqueWithoutSuspendedByInput | Prisma.UserUpdateWithWhereUniqueWithoutSuspendedByInput[]
+  updateMany?: Prisma.UserUpdateManyWithWhereWithoutSuspendedByInput | Prisma.UserUpdateManyWithWhereWithoutSuspendedByInput[]
+  deleteMany?: Prisma.UserScalarWhereInput | Prisma.UserScalarWhereInput[]
+}
+
+export type UserUpdateOneWithoutDeletedUsersNestedInput = {
+  create?: Prisma.XOR<Prisma.UserCreateWithoutDeletedUsersInput, Prisma.UserUncheckedCreateWithoutDeletedUsersInput>
+  connectOrCreate?: Prisma.UserCreateOrConnectWithoutDeletedUsersInput
+  upsert?: Prisma.UserUpsertWithoutDeletedUsersInput
+  disconnect?: Prisma.UserWhereInput | boolean
+  delete?: Prisma.UserWhereInput | boolean
+  connect?: Prisma.UserWhereUniqueInput
+  update?: Prisma.XOR<Prisma.XOR<Prisma.UserUpdateToOneWithWhereWithoutDeletedUsersInput, Prisma.UserUpdateWithoutDeletedUsersInput>, Prisma.UserUncheckedUpdateWithoutDeletedUsersInput>
+}
+
+export type UserUpdateManyWithoutDeletedByNestedInput = {
+  create?: Prisma.XOR<Prisma.UserCreateWithoutDeletedByInput, Prisma.UserUncheckedCreateWithoutDeletedByInput> | Prisma.UserCreateWithoutDeletedByInput[] | Prisma.UserUncheckedCreateWithoutDeletedByInput[]
+  connectOrCreate?: Prisma.UserCreateOrConnectWithoutDeletedByInput | Prisma.UserCreateOrConnectWithoutDeletedByInput[]
+  upsert?: Prisma.UserUpsertWithWhereUniqueWithoutDeletedByInput | Prisma.UserUpsertWithWhereUniqueWithoutDeletedByInput[]
+  createMany?: Prisma.UserCreateManyDeletedByInputEnvelope
+  set?: Prisma.UserWhereUniqueInput | Prisma.UserWhereUniqueInput[]
+  disconnect?: Prisma.UserWhereUniqueInput | Prisma.UserWhereUniqueInput[]
+  delete?: Prisma.UserWhereUniqueInput | Prisma.UserWhereUniqueInput[]
+  connect?: Prisma.UserWhereUniqueInput | Prisma.UserWhereUniqueInput[]
+  update?: Prisma.UserUpdateWithWhereUniqueWithoutDeletedByInput | Prisma.UserUpdateWithWhereUniqueWithoutDeletedByInput[]
+  updateMany?: Prisma.UserUpdateManyWithWhereWithoutDeletedByInput | Prisma.UserUpdateManyWithWhereWithoutDeletedByInput[]
+  deleteMany?: Prisma.UserScalarWhereInput | Prisma.UserScalarWhereInput[]
+}
+
+export type UserUncheckedUpdateManyWithoutSuspendedByNestedInput = {
+  create?: Prisma.XOR<Prisma.UserCreateWithoutSuspendedByInput, Prisma.UserUncheckedCreateWithoutSuspendedByInput> | Prisma.UserCreateWithoutSuspendedByInput[] | Prisma.UserUncheckedCreateWithoutSuspendedByInput[]
+  connectOrCreate?: Prisma.UserCreateOrConnectWithoutSuspendedByInput | Prisma.UserCreateOrConnectWithoutSuspendedByInput[]
+  upsert?: Prisma.UserUpsertWithWhereUniqueWithoutSuspendedByInput | Prisma.UserUpsertWithWhereUniqueWithoutSuspendedByInput[]
+  createMany?: Prisma.UserCreateManySuspendedByInputEnvelope
+  set?: Prisma.UserWhereUniqueInput | Prisma.UserWhereUniqueInput[]
+  disconnect?: Prisma.UserWhereUniqueInput | Prisma.UserWhereUniqueInput[]
+  delete?: Prisma.UserWhereUniqueInput | Prisma.UserWhereUniqueInput[]
+  connect?: Prisma.UserWhereUniqueInput | Prisma.UserWhereUniqueInput[]
+  update?: Prisma.UserUpdateWithWhereUniqueWithoutSuspendedByInput | Prisma.UserUpdateWithWhereUniqueWithoutSuspendedByInput[]
+  updateMany?: Prisma.UserUpdateManyWithWhereWithoutSuspendedByInput | Prisma.UserUpdateManyWithWhereWithoutSuspendedByInput[]
+  deleteMany?: Prisma.UserScalarWhereInput | Prisma.UserScalarWhereInput[]
+}
+
+export type UserUncheckedUpdateManyWithoutDeletedByNestedInput = {
+  create?: Prisma.XOR<Prisma.UserCreateWithoutDeletedByInput, Prisma.UserUncheckedCreateWithoutDeletedByInput> | Prisma.UserCreateWithoutDeletedByInput[] | Prisma.UserUncheckedCreateWithoutDeletedByInput[]
+  connectOrCreate?: Prisma.UserCreateOrConnectWithoutDeletedByInput | Prisma.UserCreateOrConnectWithoutDeletedByInput[]
+  upsert?: Prisma.UserUpsertWithWhereUniqueWithoutDeletedByInput | Prisma.UserUpsertWithWhereUniqueWithoutDeletedByInput[]
+  createMany?: Prisma.UserCreateManyDeletedByInputEnvelope
+  set?: Prisma.UserWhereUniqueInput | Prisma.UserWhereUniqueInput[]
+  disconnect?: Prisma.UserWhereUniqueInput | Prisma.UserWhereUniqueInput[]
+  delete?: Prisma.UserWhereUniqueInput | Prisma.UserWhereUniqueInput[]
+  connect?: Prisma.UserWhereUniqueInput | Prisma.UserWhereUniqueInput[]
+  update?: Prisma.UserUpdateWithWhereUniqueWithoutDeletedByInput | Prisma.UserUpdateWithWhereUniqueWithoutDeletedByInput[]
+  updateMany?: Prisma.UserUpdateManyWithWhereWithoutDeletedByInput | Prisma.UserUpdateManyWithWhereWithoutDeletedByInput[]
+  deleteMany?: Prisma.UserScalarWhereInput | Prisma.UserScalarWhereInput[]
 }
 
 export type UserCreateNestedOneWithoutJoinClosedEventsInput = {
@@ -1771,6 +1988,1082 @@ export type UserUpdateOneWithoutAuditLogsAsActorNestedInput = {
   update?: Prisma.XOR<Prisma.XOR<Prisma.UserUpdateToOneWithWhereWithoutAuditLogsAsActorInput, Prisma.UserUpdateWithoutAuditLogsAsActorInput>, Prisma.UserUncheckedUpdateWithoutAuditLogsAsActorInput>
 }
 
+export type UserCreateNestedOneWithoutUserAuditLogsAsActorInput = {
+  create?: Prisma.XOR<Prisma.UserCreateWithoutUserAuditLogsAsActorInput, Prisma.UserUncheckedCreateWithoutUserAuditLogsAsActorInput>
+  connectOrCreate?: Prisma.UserCreateOrConnectWithoutUserAuditLogsAsActorInput
+  connect?: Prisma.UserWhereUniqueInput
+}
+
+export type UserUpdateOneWithoutUserAuditLogsAsActorNestedInput = {
+  create?: Prisma.XOR<Prisma.UserCreateWithoutUserAuditLogsAsActorInput, Prisma.UserUncheckedCreateWithoutUserAuditLogsAsActorInput>
+  connectOrCreate?: Prisma.UserCreateOrConnectWithoutUserAuditLogsAsActorInput
+  upsert?: Prisma.UserUpsertWithoutUserAuditLogsAsActorInput
+  disconnect?: Prisma.UserWhereInput | boolean
+  delete?: Prisma.UserWhereInput | boolean
+  connect?: Prisma.UserWhereUniqueInput
+  update?: Prisma.XOR<Prisma.XOR<Prisma.UserUpdateToOneWithWhereWithoutUserAuditLogsAsActorInput, Prisma.UserUpdateWithoutUserAuditLogsAsActorInput>, Prisma.UserUncheckedUpdateWithoutUserAuditLogsAsActorInput>
+}
+
+export type UserCreateWithoutSuspendedUsersInput = {
+  id?: string
+  email: string
+  name: string
+  avatarKey?: string | null
+  role?: $Enums.Role
+  verifiedAt?: Date | string | null
+  suspendedAt?: Date | string | null
+  suspendedUntil?: Date | string | null
+  suspensionReason?: string | null
+  deletedAt?: Date | string | null
+  deletedReason?: string | null
+  restorationToken?: string | null
+  restorationTokenExpiry?: Date | string | null
+  createdAt?: Date | string
+  updatedAt?: Date | string
+  lastSeenAt?: Date | string | null
+  locale?: string
+  timezone?: string
+  acceptedTermsAt?: Date | string | null
+  acceptedMarketingAt?: Date | string | null
+  notifications?: Prisma.NotificationCreateNestedManyWithoutRecipientInput
+  actedNotifications?: Prisma.NotificationCreateNestedManyWithoutActorInput
+  eventMembers?: Prisma.EventMemberCreateNestedManyWithoutUserInput
+  addedMemberships?: Prisma.EventMemberCreateNestedManyWithoutAddedByInput
+  canceledEvents?: Prisma.EventCreateNestedManyWithoutCanceledByInput
+  deletedEvents?: Prisma.EventCreateNestedManyWithoutDeletedByInput
+  ownedEvents?: Prisma.EventCreateNestedManyWithoutOwnerInput
+  memberEventsAsSubject?: Prisma.EventMemberEventCreateNestedManyWithoutUserInput
+  memberEventsAsActor?: Prisma.EventMemberEventCreateNestedManyWithoutActorInput
+  joinClosedEvents?: Prisma.EventCreateNestedManyWithoutJoinManuallyClosedByInput
+  commentsWritten?: Prisma.CommentCreateNestedManyWithoutAuthorInput
+  commentsDeleted?: Prisma.CommentCreateNestedManyWithoutDeletedByInput
+  commentsHidden?: Prisma.CommentCreateNestedManyWithoutHiddenByInput
+  reviewsWritten?: Prisma.ReviewCreateNestedManyWithoutAuthorInput
+  reviewsDeleted?: Prisma.ReviewCreateNestedManyWithoutDeletedByInput
+  reviewsHidden?: Prisma.ReviewCreateNestedManyWithoutHiddenByInput
+  dmThreadsA?: Prisma.DmThreadCreateNestedManyWithoutAUserInput
+  dmThreadsB?: Prisma.DmThreadCreateNestedManyWithoutBUserInput
+  dmMessages?: Prisma.DmMessageCreateNestedManyWithoutSenderInput
+  dmMutes?: Prisma.DmMuteCreateNestedManyWithoutUserInput
+  dmReads?: Prisma.DmReadCreateNestedManyWithoutUserInput
+  dmMessageReactions?: Prisma.DmMessageReactionCreateNestedManyWithoutUserInput
+  eventChatMessages?: Prisma.EventChatMessageCreateNestedManyWithoutAuthorInput
+  eventChatReads?: Prisma.EventChatReadCreateNestedManyWithoutUserInput
+  eventChatMessageReactions?: Prisma.EventChatMessageReactionCreateNestedManyWithoutUserInput
+  notificationPreference?: Prisma.NotificationPreferenceCreateNestedOneWithoutUserInput
+  eventMutes?: Prisma.EventMuteCreateNestedManyWithoutUserInput
+  reportsFiled?: Prisma.ReportCreateNestedManyWithoutReporterInput
+  blocksInitiated?: Prisma.UserBlockCreateNestedManyWithoutBlockerInput
+  blocksReceived?: Prisma.UserBlockCreateNestedManyWithoutBlockedInput
+  suspendedBy?: Prisma.UserCreateNestedOneWithoutSuspendedUsersInput
+  deletedBy?: Prisma.UserCreateNestedOneWithoutDeletedUsersInput
+  deletedUsers?: Prisma.UserCreateNestedManyWithoutDeletedByInput
+  ownershipTransfersFrom?: Prisma.EventOwnershipTransferCreateNestedManyWithoutFromUserInput
+  ownershipTransfersTo?: Prisma.EventOwnershipTransferCreateNestedManyWithoutToUserInput
+  ownershipTransfersActed?: Prisma.EventOwnershipTransferCreateNestedManyWithoutActorInput
+  createdInviteLinks?: Prisma.EventInviteLinkCreateNestedManyWithoutCreatedByInput
+  revokedInviteLinks?: Prisma.EventInviteLinkCreateNestedManyWithoutRevokedByInput
+  inviteLinkUsages?: Prisma.EventInviteLinkUsageCreateNestedManyWithoutUserInput
+  eventFavourites?: Prisma.EventFavouriteCreateNestedManyWithoutUserInput
+  agendaHostings?: Prisma.EventAgendaItemHostCreateNestedManyWithoutUserInput
+  checkinLogsAsActor?: Prisma.EventCheckinLogCreateNestedManyWithoutActorInput
+  checkinRejections?: Prisma.EventMemberCreateNestedManyWithoutLastCheckinRejectedByInput
+  auditLogsAsActor?: Prisma.EventAuditLogCreateNestedManyWithoutActorInput
+  userAuditLogsAsActor?: Prisma.UserAuditLogCreateNestedManyWithoutActorInput
+  subscriptions?: Prisma.UserSubscriptionCreateNestedManyWithoutUserInput
+  planPeriods?: Prisma.UserPlanPeriodCreateNestedManyWithoutUserInput
+  eventSponsorships?: Prisma.EventSponsorshipCreateNestedManyWithoutSponsorInput
+  eventSponsorshipPeriods?: Prisma.EventSponsorshipPeriodCreateNestedManyWithoutSponsorInput
+  profile?: Prisma.UserProfileCreateNestedOneWithoutUserInput
+  privacy?: Prisma.UserPrivacyCreateNestedOneWithoutUserInput
+  stats?: Prisma.UserStatsCreateNestedOneWithoutUserInput
+  socialLinks?: Prisma.UserSocialLinkCreateNestedManyWithoutUserInput
+  categoryLevels?: Prisma.UserCategoryLevelCreateNestedManyWithoutUserInput
+  availability?: Prisma.UserAvailabilityCreateNestedManyWithoutUserInput
+  badges?: Prisma.UserBadgeCreateNestedManyWithoutUserInput
+}
+
+export type UserUncheckedCreateWithoutSuspendedUsersInput = {
+  id?: string
+  email: string
+  name: string
+  avatarKey?: string | null
+  role?: $Enums.Role
+  verifiedAt?: Date | string | null
+  suspendedAt?: Date | string | null
+  suspendedUntil?: Date | string | null
+  suspendedById?: string | null
+  suspensionReason?: string | null
+  deletedAt?: Date | string | null
+  deletedById?: string | null
+  deletedReason?: string | null
+  restorationToken?: string | null
+  restorationTokenExpiry?: Date | string | null
+  createdAt?: Date | string
+  updatedAt?: Date | string
+  lastSeenAt?: Date | string | null
+  locale?: string
+  timezone?: string
+  acceptedTermsAt?: Date | string | null
+  acceptedMarketingAt?: Date | string | null
+  notifications?: Prisma.NotificationUncheckedCreateNestedManyWithoutRecipientInput
+  actedNotifications?: Prisma.NotificationUncheckedCreateNestedManyWithoutActorInput
+  eventMembers?: Prisma.EventMemberUncheckedCreateNestedManyWithoutUserInput
+  addedMemberships?: Prisma.EventMemberUncheckedCreateNestedManyWithoutAddedByInput
+  canceledEvents?: Prisma.EventUncheckedCreateNestedManyWithoutCanceledByInput
+  deletedEvents?: Prisma.EventUncheckedCreateNestedManyWithoutDeletedByInput
+  ownedEvents?: Prisma.EventUncheckedCreateNestedManyWithoutOwnerInput
+  memberEventsAsSubject?: Prisma.EventMemberEventUncheckedCreateNestedManyWithoutUserInput
+  memberEventsAsActor?: Prisma.EventMemberEventUncheckedCreateNestedManyWithoutActorInput
+  joinClosedEvents?: Prisma.EventUncheckedCreateNestedManyWithoutJoinManuallyClosedByInput
+  commentsWritten?: Prisma.CommentUncheckedCreateNestedManyWithoutAuthorInput
+  commentsDeleted?: Prisma.CommentUncheckedCreateNestedManyWithoutDeletedByInput
+  commentsHidden?: Prisma.CommentUncheckedCreateNestedManyWithoutHiddenByInput
+  reviewsWritten?: Prisma.ReviewUncheckedCreateNestedManyWithoutAuthorInput
+  reviewsDeleted?: Prisma.ReviewUncheckedCreateNestedManyWithoutDeletedByInput
+  reviewsHidden?: Prisma.ReviewUncheckedCreateNestedManyWithoutHiddenByInput
+  dmThreadsA?: Prisma.DmThreadUncheckedCreateNestedManyWithoutAUserInput
+  dmThreadsB?: Prisma.DmThreadUncheckedCreateNestedManyWithoutBUserInput
+  dmMessages?: Prisma.DmMessageUncheckedCreateNestedManyWithoutSenderInput
+  dmMutes?: Prisma.DmMuteUncheckedCreateNestedManyWithoutUserInput
+  dmReads?: Prisma.DmReadUncheckedCreateNestedManyWithoutUserInput
+  dmMessageReactions?: Prisma.DmMessageReactionUncheckedCreateNestedManyWithoutUserInput
+  eventChatMessages?: Prisma.EventChatMessageUncheckedCreateNestedManyWithoutAuthorInput
+  eventChatReads?: Prisma.EventChatReadUncheckedCreateNestedManyWithoutUserInput
+  eventChatMessageReactions?: Prisma.EventChatMessageReactionUncheckedCreateNestedManyWithoutUserInput
+  notificationPreference?: Prisma.NotificationPreferenceUncheckedCreateNestedOneWithoutUserInput
+  eventMutes?: Prisma.EventMuteUncheckedCreateNestedManyWithoutUserInput
+  reportsFiled?: Prisma.ReportUncheckedCreateNestedManyWithoutReporterInput
+  blocksInitiated?: Prisma.UserBlockUncheckedCreateNestedManyWithoutBlockerInput
+  blocksReceived?: Prisma.UserBlockUncheckedCreateNestedManyWithoutBlockedInput
+  deletedUsers?: Prisma.UserUncheckedCreateNestedManyWithoutDeletedByInput
+  ownershipTransfersFrom?: Prisma.EventOwnershipTransferUncheckedCreateNestedManyWithoutFromUserInput
+  ownershipTransfersTo?: Prisma.EventOwnershipTransferUncheckedCreateNestedManyWithoutToUserInput
+  ownershipTransfersActed?: Prisma.EventOwnershipTransferUncheckedCreateNestedManyWithoutActorInput
+  createdInviteLinks?: Prisma.EventInviteLinkUncheckedCreateNestedManyWithoutCreatedByInput
+  revokedInviteLinks?: Prisma.EventInviteLinkUncheckedCreateNestedManyWithoutRevokedByInput
+  inviteLinkUsages?: Prisma.EventInviteLinkUsageUncheckedCreateNestedManyWithoutUserInput
+  eventFavourites?: Prisma.EventFavouriteUncheckedCreateNestedManyWithoutUserInput
+  agendaHostings?: Prisma.EventAgendaItemHostUncheckedCreateNestedManyWithoutUserInput
+  checkinLogsAsActor?: Prisma.EventCheckinLogUncheckedCreateNestedManyWithoutActorInput
+  checkinRejections?: Prisma.EventMemberUncheckedCreateNestedManyWithoutLastCheckinRejectedByInput
+  auditLogsAsActor?: Prisma.EventAuditLogUncheckedCreateNestedManyWithoutActorInput
+  userAuditLogsAsActor?: Prisma.UserAuditLogUncheckedCreateNestedManyWithoutActorInput
+  subscriptions?: Prisma.UserSubscriptionUncheckedCreateNestedManyWithoutUserInput
+  planPeriods?: Prisma.UserPlanPeriodUncheckedCreateNestedManyWithoutUserInput
+  eventSponsorships?: Prisma.EventSponsorshipUncheckedCreateNestedManyWithoutSponsorInput
+  eventSponsorshipPeriods?: Prisma.EventSponsorshipPeriodUncheckedCreateNestedManyWithoutSponsorInput
+  profile?: Prisma.UserProfileUncheckedCreateNestedOneWithoutUserInput
+  privacy?: Prisma.UserPrivacyUncheckedCreateNestedOneWithoutUserInput
+  stats?: Prisma.UserStatsUncheckedCreateNestedOneWithoutUserInput
+  socialLinks?: Prisma.UserSocialLinkUncheckedCreateNestedManyWithoutUserInput
+  categoryLevels?: Prisma.UserCategoryLevelUncheckedCreateNestedManyWithoutUserInput
+  availability?: Prisma.UserAvailabilityUncheckedCreateNestedManyWithoutUserInput
+  badges?: Prisma.UserBadgeUncheckedCreateNestedManyWithoutUserInput
+}
+
+export type UserCreateOrConnectWithoutSuspendedUsersInput = {
+  where: Prisma.UserWhereUniqueInput
+  create: Prisma.XOR<Prisma.UserCreateWithoutSuspendedUsersInput, Prisma.UserUncheckedCreateWithoutSuspendedUsersInput>
+}
+
+export type UserCreateWithoutSuspendedByInput = {
+  id?: string
+  email: string
+  name: string
+  avatarKey?: string | null
+  role?: $Enums.Role
+  verifiedAt?: Date | string | null
+  suspendedAt?: Date | string | null
+  suspendedUntil?: Date | string | null
+  suspensionReason?: string | null
+  deletedAt?: Date | string | null
+  deletedReason?: string | null
+  restorationToken?: string | null
+  restorationTokenExpiry?: Date | string | null
+  createdAt?: Date | string
+  updatedAt?: Date | string
+  lastSeenAt?: Date | string | null
+  locale?: string
+  timezone?: string
+  acceptedTermsAt?: Date | string | null
+  acceptedMarketingAt?: Date | string | null
+  notifications?: Prisma.NotificationCreateNestedManyWithoutRecipientInput
+  actedNotifications?: Prisma.NotificationCreateNestedManyWithoutActorInput
+  eventMembers?: Prisma.EventMemberCreateNestedManyWithoutUserInput
+  addedMemberships?: Prisma.EventMemberCreateNestedManyWithoutAddedByInput
+  canceledEvents?: Prisma.EventCreateNestedManyWithoutCanceledByInput
+  deletedEvents?: Prisma.EventCreateNestedManyWithoutDeletedByInput
+  ownedEvents?: Prisma.EventCreateNestedManyWithoutOwnerInput
+  memberEventsAsSubject?: Prisma.EventMemberEventCreateNestedManyWithoutUserInput
+  memberEventsAsActor?: Prisma.EventMemberEventCreateNestedManyWithoutActorInput
+  joinClosedEvents?: Prisma.EventCreateNestedManyWithoutJoinManuallyClosedByInput
+  commentsWritten?: Prisma.CommentCreateNestedManyWithoutAuthorInput
+  commentsDeleted?: Prisma.CommentCreateNestedManyWithoutDeletedByInput
+  commentsHidden?: Prisma.CommentCreateNestedManyWithoutHiddenByInput
+  reviewsWritten?: Prisma.ReviewCreateNestedManyWithoutAuthorInput
+  reviewsDeleted?: Prisma.ReviewCreateNestedManyWithoutDeletedByInput
+  reviewsHidden?: Prisma.ReviewCreateNestedManyWithoutHiddenByInput
+  dmThreadsA?: Prisma.DmThreadCreateNestedManyWithoutAUserInput
+  dmThreadsB?: Prisma.DmThreadCreateNestedManyWithoutBUserInput
+  dmMessages?: Prisma.DmMessageCreateNestedManyWithoutSenderInput
+  dmMutes?: Prisma.DmMuteCreateNestedManyWithoutUserInput
+  dmReads?: Prisma.DmReadCreateNestedManyWithoutUserInput
+  dmMessageReactions?: Prisma.DmMessageReactionCreateNestedManyWithoutUserInput
+  eventChatMessages?: Prisma.EventChatMessageCreateNestedManyWithoutAuthorInput
+  eventChatReads?: Prisma.EventChatReadCreateNestedManyWithoutUserInput
+  eventChatMessageReactions?: Prisma.EventChatMessageReactionCreateNestedManyWithoutUserInput
+  notificationPreference?: Prisma.NotificationPreferenceCreateNestedOneWithoutUserInput
+  eventMutes?: Prisma.EventMuteCreateNestedManyWithoutUserInput
+  reportsFiled?: Prisma.ReportCreateNestedManyWithoutReporterInput
+  blocksInitiated?: Prisma.UserBlockCreateNestedManyWithoutBlockerInput
+  blocksReceived?: Prisma.UserBlockCreateNestedManyWithoutBlockedInput
+  suspendedUsers?: Prisma.UserCreateNestedManyWithoutSuspendedByInput
+  deletedBy?: Prisma.UserCreateNestedOneWithoutDeletedUsersInput
+  deletedUsers?: Prisma.UserCreateNestedManyWithoutDeletedByInput
+  ownershipTransfersFrom?: Prisma.EventOwnershipTransferCreateNestedManyWithoutFromUserInput
+  ownershipTransfersTo?: Prisma.EventOwnershipTransferCreateNestedManyWithoutToUserInput
+  ownershipTransfersActed?: Prisma.EventOwnershipTransferCreateNestedManyWithoutActorInput
+  createdInviteLinks?: Prisma.EventInviteLinkCreateNestedManyWithoutCreatedByInput
+  revokedInviteLinks?: Prisma.EventInviteLinkCreateNestedManyWithoutRevokedByInput
+  inviteLinkUsages?: Prisma.EventInviteLinkUsageCreateNestedManyWithoutUserInput
+  eventFavourites?: Prisma.EventFavouriteCreateNestedManyWithoutUserInput
+  agendaHostings?: Prisma.EventAgendaItemHostCreateNestedManyWithoutUserInput
+  checkinLogsAsActor?: Prisma.EventCheckinLogCreateNestedManyWithoutActorInput
+  checkinRejections?: Prisma.EventMemberCreateNestedManyWithoutLastCheckinRejectedByInput
+  auditLogsAsActor?: Prisma.EventAuditLogCreateNestedManyWithoutActorInput
+  userAuditLogsAsActor?: Prisma.UserAuditLogCreateNestedManyWithoutActorInput
+  subscriptions?: Prisma.UserSubscriptionCreateNestedManyWithoutUserInput
+  planPeriods?: Prisma.UserPlanPeriodCreateNestedManyWithoutUserInput
+  eventSponsorships?: Prisma.EventSponsorshipCreateNestedManyWithoutSponsorInput
+  eventSponsorshipPeriods?: Prisma.EventSponsorshipPeriodCreateNestedManyWithoutSponsorInput
+  profile?: Prisma.UserProfileCreateNestedOneWithoutUserInput
+  privacy?: Prisma.UserPrivacyCreateNestedOneWithoutUserInput
+  stats?: Prisma.UserStatsCreateNestedOneWithoutUserInput
+  socialLinks?: Prisma.UserSocialLinkCreateNestedManyWithoutUserInput
+  categoryLevels?: Prisma.UserCategoryLevelCreateNestedManyWithoutUserInput
+  availability?: Prisma.UserAvailabilityCreateNestedManyWithoutUserInput
+  badges?: Prisma.UserBadgeCreateNestedManyWithoutUserInput
+}
+
+export type UserUncheckedCreateWithoutSuspendedByInput = {
+  id?: string
+  email: string
+  name: string
+  avatarKey?: string | null
+  role?: $Enums.Role
+  verifiedAt?: Date | string | null
+  suspendedAt?: Date | string | null
+  suspendedUntil?: Date | string | null
+  suspensionReason?: string | null
+  deletedAt?: Date | string | null
+  deletedById?: string | null
+  deletedReason?: string | null
+  restorationToken?: string | null
+  restorationTokenExpiry?: Date | string | null
+  createdAt?: Date | string
+  updatedAt?: Date | string
+  lastSeenAt?: Date | string | null
+  locale?: string
+  timezone?: string
+  acceptedTermsAt?: Date | string | null
+  acceptedMarketingAt?: Date | string | null
+  notifications?: Prisma.NotificationUncheckedCreateNestedManyWithoutRecipientInput
+  actedNotifications?: Prisma.NotificationUncheckedCreateNestedManyWithoutActorInput
+  eventMembers?: Prisma.EventMemberUncheckedCreateNestedManyWithoutUserInput
+  addedMemberships?: Prisma.EventMemberUncheckedCreateNestedManyWithoutAddedByInput
+  canceledEvents?: Prisma.EventUncheckedCreateNestedManyWithoutCanceledByInput
+  deletedEvents?: Prisma.EventUncheckedCreateNestedManyWithoutDeletedByInput
+  ownedEvents?: Prisma.EventUncheckedCreateNestedManyWithoutOwnerInput
+  memberEventsAsSubject?: Prisma.EventMemberEventUncheckedCreateNestedManyWithoutUserInput
+  memberEventsAsActor?: Prisma.EventMemberEventUncheckedCreateNestedManyWithoutActorInput
+  joinClosedEvents?: Prisma.EventUncheckedCreateNestedManyWithoutJoinManuallyClosedByInput
+  commentsWritten?: Prisma.CommentUncheckedCreateNestedManyWithoutAuthorInput
+  commentsDeleted?: Prisma.CommentUncheckedCreateNestedManyWithoutDeletedByInput
+  commentsHidden?: Prisma.CommentUncheckedCreateNestedManyWithoutHiddenByInput
+  reviewsWritten?: Prisma.ReviewUncheckedCreateNestedManyWithoutAuthorInput
+  reviewsDeleted?: Prisma.ReviewUncheckedCreateNestedManyWithoutDeletedByInput
+  reviewsHidden?: Prisma.ReviewUncheckedCreateNestedManyWithoutHiddenByInput
+  dmThreadsA?: Prisma.DmThreadUncheckedCreateNestedManyWithoutAUserInput
+  dmThreadsB?: Prisma.DmThreadUncheckedCreateNestedManyWithoutBUserInput
+  dmMessages?: Prisma.DmMessageUncheckedCreateNestedManyWithoutSenderInput
+  dmMutes?: Prisma.DmMuteUncheckedCreateNestedManyWithoutUserInput
+  dmReads?: Prisma.DmReadUncheckedCreateNestedManyWithoutUserInput
+  dmMessageReactions?: Prisma.DmMessageReactionUncheckedCreateNestedManyWithoutUserInput
+  eventChatMessages?: Prisma.EventChatMessageUncheckedCreateNestedManyWithoutAuthorInput
+  eventChatReads?: Prisma.EventChatReadUncheckedCreateNestedManyWithoutUserInput
+  eventChatMessageReactions?: Prisma.EventChatMessageReactionUncheckedCreateNestedManyWithoutUserInput
+  notificationPreference?: Prisma.NotificationPreferenceUncheckedCreateNestedOneWithoutUserInput
+  eventMutes?: Prisma.EventMuteUncheckedCreateNestedManyWithoutUserInput
+  reportsFiled?: Prisma.ReportUncheckedCreateNestedManyWithoutReporterInput
+  blocksInitiated?: Prisma.UserBlockUncheckedCreateNestedManyWithoutBlockerInput
+  blocksReceived?: Prisma.UserBlockUncheckedCreateNestedManyWithoutBlockedInput
+  suspendedUsers?: Prisma.UserUncheckedCreateNestedManyWithoutSuspendedByInput
+  deletedUsers?: Prisma.UserUncheckedCreateNestedManyWithoutDeletedByInput
+  ownershipTransfersFrom?: Prisma.EventOwnershipTransferUncheckedCreateNestedManyWithoutFromUserInput
+  ownershipTransfersTo?: Prisma.EventOwnershipTransferUncheckedCreateNestedManyWithoutToUserInput
+  ownershipTransfersActed?: Prisma.EventOwnershipTransferUncheckedCreateNestedManyWithoutActorInput
+  createdInviteLinks?: Prisma.EventInviteLinkUncheckedCreateNestedManyWithoutCreatedByInput
+  revokedInviteLinks?: Prisma.EventInviteLinkUncheckedCreateNestedManyWithoutRevokedByInput
+  inviteLinkUsages?: Prisma.EventInviteLinkUsageUncheckedCreateNestedManyWithoutUserInput
+  eventFavourites?: Prisma.EventFavouriteUncheckedCreateNestedManyWithoutUserInput
+  agendaHostings?: Prisma.EventAgendaItemHostUncheckedCreateNestedManyWithoutUserInput
+  checkinLogsAsActor?: Prisma.EventCheckinLogUncheckedCreateNestedManyWithoutActorInput
+  checkinRejections?: Prisma.EventMemberUncheckedCreateNestedManyWithoutLastCheckinRejectedByInput
+  auditLogsAsActor?: Prisma.EventAuditLogUncheckedCreateNestedManyWithoutActorInput
+  userAuditLogsAsActor?: Prisma.UserAuditLogUncheckedCreateNestedManyWithoutActorInput
+  subscriptions?: Prisma.UserSubscriptionUncheckedCreateNestedManyWithoutUserInput
+  planPeriods?: Prisma.UserPlanPeriodUncheckedCreateNestedManyWithoutUserInput
+  eventSponsorships?: Prisma.EventSponsorshipUncheckedCreateNestedManyWithoutSponsorInput
+  eventSponsorshipPeriods?: Prisma.EventSponsorshipPeriodUncheckedCreateNestedManyWithoutSponsorInput
+  profile?: Prisma.UserProfileUncheckedCreateNestedOneWithoutUserInput
+  privacy?: Prisma.UserPrivacyUncheckedCreateNestedOneWithoutUserInput
+  stats?: Prisma.UserStatsUncheckedCreateNestedOneWithoutUserInput
+  socialLinks?: Prisma.UserSocialLinkUncheckedCreateNestedManyWithoutUserInput
+  categoryLevels?: Prisma.UserCategoryLevelUncheckedCreateNestedManyWithoutUserInput
+  availability?: Prisma.UserAvailabilityUncheckedCreateNestedManyWithoutUserInput
+  badges?: Prisma.UserBadgeUncheckedCreateNestedManyWithoutUserInput
+}
+
+export type UserCreateOrConnectWithoutSuspendedByInput = {
+  where: Prisma.UserWhereUniqueInput
+  create: Prisma.XOR<Prisma.UserCreateWithoutSuspendedByInput, Prisma.UserUncheckedCreateWithoutSuspendedByInput>
+}
+
+export type UserCreateManySuspendedByInputEnvelope = {
+  data: Prisma.UserCreateManySuspendedByInput | Prisma.UserCreateManySuspendedByInput[]
+  skipDuplicates?: boolean
+}
+
+export type UserCreateWithoutDeletedUsersInput = {
+  id?: string
+  email: string
+  name: string
+  avatarKey?: string | null
+  role?: $Enums.Role
+  verifiedAt?: Date | string | null
+  suspendedAt?: Date | string | null
+  suspendedUntil?: Date | string | null
+  suspensionReason?: string | null
+  deletedAt?: Date | string | null
+  deletedReason?: string | null
+  restorationToken?: string | null
+  restorationTokenExpiry?: Date | string | null
+  createdAt?: Date | string
+  updatedAt?: Date | string
+  lastSeenAt?: Date | string | null
+  locale?: string
+  timezone?: string
+  acceptedTermsAt?: Date | string | null
+  acceptedMarketingAt?: Date | string | null
+  notifications?: Prisma.NotificationCreateNestedManyWithoutRecipientInput
+  actedNotifications?: Prisma.NotificationCreateNestedManyWithoutActorInput
+  eventMembers?: Prisma.EventMemberCreateNestedManyWithoutUserInput
+  addedMemberships?: Prisma.EventMemberCreateNestedManyWithoutAddedByInput
+  canceledEvents?: Prisma.EventCreateNestedManyWithoutCanceledByInput
+  deletedEvents?: Prisma.EventCreateNestedManyWithoutDeletedByInput
+  ownedEvents?: Prisma.EventCreateNestedManyWithoutOwnerInput
+  memberEventsAsSubject?: Prisma.EventMemberEventCreateNestedManyWithoutUserInput
+  memberEventsAsActor?: Prisma.EventMemberEventCreateNestedManyWithoutActorInput
+  joinClosedEvents?: Prisma.EventCreateNestedManyWithoutJoinManuallyClosedByInput
+  commentsWritten?: Prisma.CommentCreateNestedManyWithoutAuthorInput
+  commentsDeleted?: Prisma.CommentCreateNestedManyWithoutDeletedByInput
+  commentsHidden?: Prisma.CommentCreateNestedManyWithoutHiddenByInput
+  reviewsWritten?: Prisma.ReviewCreateNestedManyWithoutAuthorInput
+  reviewsDeleted?: Prisma.ReviewCreateNestedManyWithoutDeletedByInput
+  reviewsHidden?: Prisma.ReviewCreateNestedManyWithoutHiddenByInput
+  dmThreadsA?: Prisma.DmThreadCreateNestedManyWithoutAUserInput
+  dmThreadsB?: Prisma.DmThreadCreateNestedManyWithoutBUserInput
+  dmMessages?: Prisma.DmMessageCreateNestedManyWithoutSenderInput
+  dmMutes?: Prisma.DmMuteCreateNestedManyWithoutUserInput
+  dmReads?: Prisma.DmReadCreateNestedManyWithoutUserInput
+  dmMessageReactions?: Prisma.DmMessageReactionCreateNestedManyWithoutUserInput
+  eventChatMessages?: Prisma.EventChatMessageCreateNestedManyWithoutAuthorInput
+  eventChatReads?: Prisma.EventChatReadCreateNestedManyWithoutUserInput
+  eventChatMessageReactions?: Prisma.EventChatMessageReactionCreateNestedManyWithoutUserInput
+  notificationPreference?: Prisma.NotificationPreferenceCreateNestedOneWithoutUserInput
+  eventMutes?: Prisma.EventMuteCreateNestedManyWithoutUserInput
+  reportsFiled?: Prisma.ReportCreateNestedManyWithoutReporterInput
+  blocksInitiated?: Prisma.UserBlockCreateNestedManyWithoutBlockerInput
+  blocksReceived?: Prisma.UserBlockCreateNestedManyWithoutBlockedInput
+  suspendedBy?: Prisma.UserCreateNestedOneWithoutSuspendedUsersInput
+  suspendedUsers?: Prisma.UserCreateNestedManyWithoutSuspendedByInput
+  deletedBy?: Prisma.UserCreateNestedOneWithoutDeletedUsersInput
+  ownershipTransfersFrom?: Prisma.EventOwnershipTransferCreateNestedManyWithoutFromUserInput
+  ownershipTransfersTo?: Prisma.EventOwnershipTransferCreateNestedManyWithoutToUserInput
+  ownershipTransfersActed?: Prisma.EventOwnershipTransferCreateNestedManyWithoutActorInput
+  createdInviteLinks?: Prisma.EventInviteLinkCreateNestedManyWithoutCreatedByInput
+  revokedInviteLinks?: Prisma.EventInviteLinkCreateNestedManyWithoutRevokedByInput
+  inviteLinkUsages?: Prisma.EventInviteLinkUsageCreateNestedManyWithoutUserInput
+  eventFavourites?: Prisma.EventFavouriteCreateNestedManyWithoutUserInput
+  agendaHostings?: Prisma.EventAgendaItemHostCreateNestedManyWithoutUserInput
+  checkinLogsAsActor?: Prisma.EventCheckinLogCreateNestedManyWithoutActorInput
+  checkinRejections?: Prisma.EventMemberCreateNestedManyWithoutLastCheckinRejectedByInput
+  auditLogsAsActor?: Prisma.EventAuditLogCreateNestedManyWithoutActorInput
+  userAuditLogsAsActor?: Prisma.UserAuditLogCreateNestedManyWithoutActorInput
+  subscriptions?: Prisma.UserSubscriptionCreateNestedManyWithoutUserInput
+  planPeriods?: Prisma.UserPlanPeriodCreateNestedManyWithoutUserInput
+  eventSponsorships?: Prisma.EventSponsorshipCreateNestedManyWithoutSponsorInput
+  eventSponsorshipPeriods?: Prisma.EventSponsorshipPeriodCreateNestedManyWithoutSponsorInput
+  profile?: Prisma.UserProfileCreateNestedOneWithoutUserInput
+  privacy?: Prisma.UserPrivacyCreateNestedOneWithoutUserInput
+  stats?: Prisma.UserStatsCreateNestedOneWithoutUserInput
+  socialLinks?: Prisma.UserSocialLinkCreateNestedManyWithoutUserInput
+  categoryLevels?: Prisma.UserCategoryLevelCreateNestedManyWithoutUserInput
+  availability?: Prisma.UserAvailabilityCreateNestedManyWithoutUserInput
+  badges?: Prisma.UserBadgeCreateNestedManyWithoutUserInput
+}
+
+export type UserUncheckedCreateWithoutDeletedUsersInput = {
+  id?: string
+  email: string
+  name: string
+  avatarKey?: string | null
+  role?: $Enums.Role
+  verifiedAt?: Date | string | null
+  suspendedAt?: Date | string | null
+  suspendedUntil?: Date | string | null
+  suspendedById?: string | null
+  suspensionReason?: string | null
+  deletedAt?: Date | string | null
+  deletedById?: string | null
+  deletedReason?: string | null
+  restorationToken?: string | null
+  restorationTokenExpiry?: Date | string | null
+  createdAt?: Date | string
+  updatedAt?: Date | string
+  lastSeenAt?: Date | string | null
+  locale?: string
+  timezone?: string
+  acceptedTermsAt?: Date | string | null
+  acceptedMarketingAt?: Date | string | null
+  notifications?: Prisma.NotificationUncheckedCreateNestedManyWithoutRecipientInput
+  actedNotifications?: Prisma.NotificationUncheckedCreateNestedManyWithoutActorInput
+  eventMembers?: Prisma.EventMemberUncheckedCreateNestedManyWithoutUserInput
+  addedMemberships?: Prisma.EventMemberUncheckedCreateNestedManyWithoutAddedByInput
+  canceledEvents?: Prisma.EventUncheckedCreateNestedManyWithoutCanceledByInput
+  deletedEvents?: Prisma.EventUncheckedCreateNestedManyWithoutDeletedByInput
+  ownedEvents?: Prisma.EventUncheckedCreateNestedManyWithoutOwnerInput
+  memberEventsAsSubject?: Prisma.EventMemberEventUncheckedCreateNestedManyWithoutUserInput
+  memberEventsAsActor?: Prisma.EventMemberEventUncheckedCreateNestedManyWithoutActorInput
+  joinClosedEvents?: Prisma.EventUncheckedCreateNestedManyWithoutJoinManuallyClosedByInput
+  commentsWritten?: Prisma.CommentUncheckedCreateNestedManyWithoutAuthorInput
+  commentsDeleted?: Prisma.CommentUncheckedCreateNestedManyWithoutDeletedByInput
+  commentsHidden?: Prisma.CommentUncheckedCreateNestedManyWithoutHiddenByInput
+  reviewsWritten?: Prisma.ReviewUncheckedCreateNestedManyWithoutAuthorInput
+  reviewsDeleted?: Prisma.ReviewUncheckedCreateNestedManyWithoutDeletedByInput
+  reviewsHidden?: Prisma.ReviewUncheckedCreateNestedManyWithoutHiddenByInput
+  dmThreadsA?: Prisma.DmThreadUncheckedCreateNestedManyWithoutAUserInput
+  dmThreadsB?: Prisma.DmThreadUncheckedCreateNestedManyWithoutBUserInput
+  dmMessages?: Prisma.DmMessageUncheckedCreateNestedManyWithoutSenderInput
+  dmMutes?: Prisma.DmMuteUncheckedCreateNestedManyWithoutUserInput
+  dmReads?: Prisma.DmReadUncheckedCreateNestedManyWithoutUserInput
+  dmMessageReactions?: Prisma.DmMessageReactionUncheckedCreateNestedManyWithoutUserInput
+  eventChatMessages?: Prisma.EventChatMessageUncheckedCreateNestedManyWithoutAuthorInput
+  eventChatReads?: Prisma.EventChatReadUncheckedCreateNestedManyWithoutUserInput
+  eventChatMessageReactions?: Prisma.EventChatMessageReactionUncheckedCreateNestedManyWithoutUserInput
+  notificationPreference?: Prisma.NotificationPreferenceUncheckedCreateNestedOneWithoutUserInput
+  eventMutes?: Prisma.EventMuteUncheckedCreateNestedManyWithoutUserInput
+  reportsFiled?: Prisma.ReportUncheckedCreateNestedManyWithoutReporterInput
+  blocksInitiated?: Prisma.UserBlockUncheckedCreateNestedManyWithoutBlockerInput
+  blocksReceived?: Prisma.UserBlockUncheckedCreateNestedManyWithoutBlockedInput
+  suspendedUsers?: Prisma.UserUncheckedCreateNestedManyWithoutSuspendedByInput
+  ownershipTransfersFrom?: Prisma.EventOwnershipTransferUncheckedCreateNestedManyWithoutFromUserInput
+  ownershipTransfersTo?: Prisma.EventOwnershipTransferUncheckedCreateNestedManyWithoutToUserInput
+  ownershipTransfersActed?: Prisma.EventOwnershipTransferUncheckedCreateNestedManyWithoutActorInput
+  createdInviteLinks?: Prisma.EventInviteLinkUncheckedCreateNestedManyWithoutCreatedByInput
+  revokedInviteLinks?: Prisma.EventInviteLinkUncheckedCreateNestedManyWithoutRevokedByInput
+  inviteLinkUsages?: Prisma.EventInviteLinkUsageUncheckedCreateNestedManyWithoutUserInput
+  eventFavourites?: Prisma.EventFavouriteUncheckedCreateNestedManyWithoutUserInput
+  agendaHostings?: Prisma.EventAgendaItemHostUncheckedCreateNestedManyWithoutUserInput
+  checkinLogsAsActor?: Prisma.EventCheckinLogUncheckedCreateNestedManyWithoutActorInput
+  checkinRejections?: Prisma.EventMemberUncheckedCreateNestedManyWithoutLastCheckinRejectedByInput
+  auditLogsAsActor?: Prisma.EventAuditLogUncheckedCreateNestedManyWithoutActorInput
+  userAuditLogsAsActor?: Prisma.UserAuditLogUncheckedCreateNestedManyWithoutActorInput
+  subscriptions?: Prisma.UserSubscriptionUncheckedCreateNestedManyWithoutUserInput
+  planPeriods?: Prisma.UserPlanPeriodUncheckedCreateNestedManyWithoutUserInput
+  eventSponsorships?: Prisma.EventSponsorshipUncheckedCreateNestedManyWithoutSponsorInput
+  eventSponsorshipPeriods?: Prisma.EventSponsorshipPeriodUncheckedCreateNestedManyWithoutSponsorInput
+  profile?: Prisma.UserProfileUncheckedCreateNestedOneWithoutUserInput
+  privacy?: Prisma.UserPrivacyUncheckedCreateNestedOneWithoutUserInput
+  stats?: Prisma.UserStatsUncheckedCreateNestedOneWithoutUserInput
+  socialLinks?: Prisma.UserSocialLinkUncheckedCreateNestedManyWithoutUserInput
+  categoryLevels?: Prisma.UserCategoryLevelUncheckedCreateNestedManyWithoutUserInput
+  availability?: Prisma.UserAvailabilityUncheckedCreateNestedManyWithoutUserInput
+  badges?: Prisma.UserBadgeUncheckedCreateNestedManyWithoutUserInput
+}
+
+export type UserCreateOrConnectWithoutDeletedUsersInput = {
+  where: Prisma.UserWhereUniqueInput
+  create: Prisma.XOR<Prisma.UserCreateWithoutDeletedUsersInput, Prisma.UserUncheckedCreateWithoutDeletedUsersInput>
+}
+
+export type UserCreateWithoutDeletedByInput = {
+  id?: string
+  email: string
+  name: string
+  avatarKey?: string | null
+  role?: $Enums.Role
+  verifiedAt?: Date | string | null
+  suspendedAt?: Date | string | null
+  suspendedUntil?: Date | string | null
+  suspensionReason?: string | null
+  deletedAt?: Date | string | null
+  deletedReason?: string | null
+  restorationToken?: string | null
+  restorationTokenExpiry?: Date | string | null
+  createdAt?: Date | string
+  updatedAt?: Date | string
+  lastSeenAt?: Date | string | null
+  locale?: string
+  timezone?: string
+  acceptedTermsAt?: Date | string | null
+  acceptedMarketingAt?: Date | string | null
+  notifications?: Prisma.NotificationCreateNestedManyWithoutRecipientInput
+  actedNotifications?: Prisma.NotificationCreateNestedManyWithoutActorInput
+  eventMembers?: Prisma.EventMemberCreateNestedManyWithoutUserInput
+  addedMemberships?: Prisma.EventMemberCreateNestedManyWithoutAddedByInput
+  canceledEvents?: Prisma.EventCreateNestedManyWithoutCanceledByInput
+  deletedEvents?: Prisma.EventCreateNestedManyWithoutDeletedByInput
+  ownedEvents?: Prisma.EventCreateNestedManyWithoutOwnerInput
+  memberEventsAsSubject?: Prisma.EventMemberEventCreateNestedManyWithoutUserInput
+  memberEventsAsActor?: Prisma.EventMemberEventCreateNestedManyWithoutActorInput
+  joinClosedEvents?: Prisma.EventCreateNestedManyWithoutJoinManuallyClosedByInput
+  commentsWritten?: Prisma.CommentCreateNestedManyWithoutAuthorInput
+  commentsDeleted?: Prisma.CommentCreateNestedManyWithoutDeletedByInput
+  commentsHidden?: Prisma.CommentCreateNestedManyWithoutHiddenByInput
+  reviewsWritten?: Prisma.ReviewCreateNestedManyWithoutAuthorInput
+  reviewsDeleted?: Prisma.ReviewCreateNestedManyWithoutDeletedByInput
+  reviewsHidden?: Prisma.ReviewCreateNestedManyWithoutHiddenByInput
+  dmThreadsA?: Prisma.DmThreadCreateNestedManyWithoutAUserInput
+  dmThreadsB?: Prisma.DmThreadCreateNestedManyWithoutBUserInput
+  dmMessages?: Prisma.DmMessageCreateNestedManyWithoutSenderInput
+  dmMutes?: Prisma.DmMuteCreateNestedManyWithoutUserInput
+  dmReads?: Prisma.DmReadCreateNestedManyWithoutUserInput
+  dmMessageReactions?: Prisma.DmMessageReactionCreateNestedManyWithoutUserInput
+  eventChatMessages?: Prisma.EventChatMessageCreateNestedManyWithoutAuthorInput
+  eventChatReads?: Prisma.EventChatReadCreateNestedManyWithoutUserInput
+  eventChatMessageReactions?: Prisma.EventChatMessageReactionCreateNestedManyWithoutUserInput
+  notificationPreference?: Prisma.NotificationPreferenceCreateNestedOneWithoutUserInput
+  eventMutes?: Prisma.EventMuteCreateNestedManyWithoutUserInput
+  reportsFiled?: Prisma.ReportCreateNestedManyWithoutReporterInput
+  blocksInitiated?: Prisma.UserBlockCreateNestedManyWithoutBlockerInput
+  blocksReceived?: Prisma.UserBlockCreateNestedManyWithoutBlockedInput
+  suspendedBy?: Prisma.UserCreateNestedOneWithoutSuspendedUsersInput
+  suspendedUsers?: Prisma.UserCreateNestedManyWithoutSuspendedByInput
+  deletedUsers?: Prisma.UserCreateNestedManyWithoutDeletedByInput
+  ownershipTransfersFrom?: Prisma.EventOwnershipTransferCreateNestedManyWithoutFromUserInput
+  ownershipTransfersTo?: Prisma.EventOwnershipTransferCreateNestedManyWithoutToUserInput
+  ownershipTransfersActed?: Prisma.EventOwnershipTransferCreateNestedManyWithoutActorInput
+  createdInviteLinks?: Prisma.EventInviteLinkCreateNestedManyWithoutCreatedByInput
+  revokedInviteLinks?: Prisma.EventInviteLinkCreateNestedManyWithoutRevokedByInput
+  inviteLinkUsages?: Prisma.EventInviteLinkUsageCreateNestedManyWithoutUserInput
+  eventFavourites?: Prisma.EventFavouriteCreateNestedManyWithoutUserInput
+  agendaHostings?: Prisma.EventAgendaItemHostCreateNestedManyWithoutUserInput
+  checkinLogsAsActor?: Prisma.EventCheckinLogCreateNestedManyWithoutActorInput
+  checkinRejections?: Prisma.EventMemberCreateNestedManyWithoutLastCheckinRejectedByInput
+  auditLogsAsActor?: Prisma.EventAuditLogCreateNestedManyWithoutActorInput
+  userAuditLogsAsActor?: Prisma.UserAuditLogCreateNestedManyWithoutActorInput
+  subscriptions?: Prisma.UserSubscriptionCreateNestedManyWithoutUserInput
+  planPeriods?: Prisma.UserPlanPeriodCreateNestedManyWithoutUserInput
+  eventSponsorships?: Prisma.EventSponsorshipCreateNestedManyWithoutSponsorInput
+  eventSponsorshipPeriods?: Prisma.EventSponsorshipPeriodCreateNestedManyWithoutSponsorInput
+  profile?: Prisma.UserProfileCreateNestedOneWithoutUserInput
+  privacy?: Prisma.UserPrivacyCreateNestedOneWithoutUserInput
+  stats?: Prisma.UserStatsCreateNestedOneWithoutUserInput
+  socialLinks?: Prisma.UserSocialLinkCreateNestedManyWithoutUserInput
+  categoryLevels?: Prisma.UserCategoryLevelCreateNestedManyWithoutUserInput
+  availability?: Prisma.UserAvailabilityCreateNestedManyWithoutUserInput
+  badges?: Prisma.UserBadgeCreateNestedManyWithoutUserInput
+}
+
+export type UserUncheckedCreateWithoutDeletedByInput = {
+  id?: string
+  email: string
+  name: string
+  avatarKey?: string | null
+  role?: $Enums.Role
+  verifiedAt?: Date | string | null
+  suspendedAt?: Date | string | null
+  suspendedUntil?: Date | string | null
+  suspendedById?: string | null
+  suspensionReason?: string | null
+  deletedAt?: Date | string | null
+  deletedReason?: string | null
+  restorationToken?: string | null
+  restorationTokenExpiry?: Date | string | null
+  createdAt?: Date | string
+  updatedAt?: Date | string
+  lastSeenAt?: Date | string | null
+  locale?: string
+  timezone?: string
+  acceptedTermsAt?: Date | string | null
+  acceptedMarketingAt?: Date | string | null
+  notifications?: Prisma.NotificationUncheckedCreateNestedManyWithoutRecipientInput
+  actedNotifications?: Prisma.NotificationUncheckedCreateNestedManyWithoutActorInput
+  eventMembers?: Prisma.EventMemberUncheckedCreateNestedManyWithoutUserInput
+  addedMemberships?: Prisma.EventMemberUncheckedCreateNestedManyWithoutAddedByInput
+  canceledEvents?: Prisma.EventUncheckedCreateNestedManyWithoutCanceledByInput
+  deletedEvents?: Prisma.EventUncheckedCreateNestedManyWithoutDeletedByInput
+  ownedEvents?: Prisma.EventUncheckedCreateNestedManyWithoutOwnerInput
+  memberEventsAsSubject?: Prisma.EventMemberEventUncheckedCreateNestedManyWithoutUserInput
+  memberEventsAsActor?: Prisma.EventMemberEventUncheckedCreateNestedManyWithoutActorInput
+  joinClosedEvents?: Prisma.EventUncheckedCreateNestedManyWithoutJoinManuallyClosedByInput
+  commentsWritten?: Prisma.CommentUncheckedCreateNestedManyWithoutAuthorInput
+  commentsDeleted?: Prisma.CommentUncheckedCreateNestedManyWithoutDeletedByInput
+  commentsHidden?: Prisma.CommentUncheckedCreateNestedManyWithoutHiddenByInput
+  reviewsWritten?: Prisma.ReviewUncheckedCreateNestedManyWithoutAuthorInput
+  reviewsDeleted?: Prisma.ReviewUncheckedCreateNestedManyWithoutDeletedByInput
+  reviewsHidden?: Prisma.ReviewUncheckedCreateNestedManyWithoutHiddenByInput
+  dmThreadsA?: Prisma.DmThreadUncheckedCreateNestedManyWithoutAUserInput
+  dmThreadsB?: Prisma.DmThreadUncheckedCreateNestedManyWithoutBUserInput
+  dmMessages?: Prisma.DmMessageUncheckedCreateNestedManyWithoutSenderInput
+  dmMutes?: Prisma.DmMuteUncheckedCreateNestedManyWithoutUserInput
+  dmReads?: Prisma.DmReadUncheckedCreateNestedManyWithoutUserInput
+  dmMessageReactions?: Prisma.DmMessageReactionUncheckedCreateNestedManyWithoutUserInput
+  eventChatMessages?: Prisma.EventChatMessageUncheckedCreateNestedManyWithoutAuthorInput
+  eventChatReads?: Prisma.EventChatReadUncheckedCreateNestedManyWithoutUserInput
+  eventChatMessageReactions?: Prisma.EventChatMessageReactionUncheckedCreateNestedManyWithoutUserInput
+  notificationPreference?: Prisma.NotificationPreferenceUncheckedCreateNestedOneWithoutUserInput
+  eventMutes?: Prisma.EventMuteUncheckedCreateNestedManyWithoutUserInput
+  reportsFiled?: Prisma.ReportUncheckedCreateNestedManyWithoutReporterInput
+  blocksInitiated?: Prisma.UserBlockUncheckedCreateNestedManyWithoutBlockerInput
+  blocksReceived?: Prisma.UserBlockUncheckedCreateNestedManyWithoutBlockedInput
+  suspendedUsers?: Prisma.UserUncheckedCreateNestedManyWithoutSuspendedByInput
+  deletedUsers?: Prisma.UserUncheckedCreateNestedManyWithoutDeletedByInput
+  ownershipTransfersFrom?: Prisma.EventOwnershipTransferUncheckedCreateNestedManyWithoutFromUserInput
+  ownershipTransfersTo?: Prisma.EventOwnershipTransferUncheckedCreateNestedManyWithoutToUserInput
+  ownershipTransfersActed?: Prisma.EventOwnershipTransferUncheckedCreateNestedManyWithoutActorInput
+  createdInviteLinks?: Prisma.EventInviteLinkUncheckedCreateNestedManyWithoutCreatedByInput
+  revokedInviteLinks?: Prisma.EventInviteLinkUncheckedCreateNestedManyWithoutRevokedByInput
+  inviteLinkUsages?: Prisma.EventInviteLinkUsageUncheckedCreateNestedManyWithoutUserInput
+  eventFavourites?: Prisma.EventFavouriteUncheckedCreateNestedManyWithoutUserInput
+  agendaHostings?: Prisma.EventAgendaItemHostUncheckedCreateNestedManyWithoutUserInput
+  checkinLogsAsActor?: Prisma.EventCheckinLogUncheckedCreateNestedManyWithoutActorInput
+  checkinRejections?: Prisma.EventMemberUncheckedCreateNestedManyWithoutLastCheckinRejectedByInput
+  auditLogsAsActor?: Prisma.EventAuditLogUncheckedCreateNestedManyWithoutActorInput
+  userAuditLogsAsActor?: Prisma.UserAuditLogUncheckedCreateNestedManyWithoutActorInput
+  subscriptions?: Prisma.UserSubscriptionUncheckedCreateNestedManyWithoutUserInput
+  planPeriods?: Prisma.UserPlanPeriodUncheckedCreateNestedManyWithoutUserInput
+  eventSponsorships?: Prisma.EventSponsorshipUncheckedCreateNestedManyWithoutSponsorInput
+  eventSponsorshipPeriods?: Prisma.EventSponsorshipPeriodUncheckedCreateNestedManyWithoutSponsorInput
+  profile?: Prisma.UserProfileUncheckedCreateNestedOneWithoutUserInput
+  privacy?: Prisma.UserPrivacyUncheckedCreateNestedOneWithoutUserInput
+  stats?: Prisma.UserStatsUncheckedCreateNestedOneWithoutUserInput
+  socialLinks?: Prisma.UserSocialLinkUncheckedCreateNestedManyWithoutUserInput
+  categoryLevels?: Prisma.UserCategoryLevelUncheckedCreateNestedManyWithoutUserInput
+  availability?: Prisma.UserAvailabilityUncheckedCreateNestedManyWithoutUserInput
+  badges?: Prisma.UserBadgeUncheckedCreateNestedManyWithoutUserInput
+}
+
+export type UserCreateOrConnectWithoutDeletedByInput = {
+  where: Prisma.UserWhereUniqueInput
+  create: Prisma.XOR<Prisma.UserCreateWithoutDeletedByInput, Prisma.UserUncheckedCreateWithoutDeletedByInput>
+}
+
+export type UserCreateManyDeletedByInputEnvelope = {
+  data: Prisma.UserCreateManyDeletedByInput | Prisma.UserCreateManyDeletedByInput[]
+  skipDuplicates?: boolean
+}
+
+export type UserUpsertWithoutSuspendedUsersInput = {
+  update: Prisma.XOR<Prisma.UserUpdateWithoutSuspendedUsersInput, Prisma.UserUncheckedUpdateWithoutSuspendedUsersInput>
+  create: Prisma.XOR<Prisma.UserCreateWithoutSuspendedUsersInput, Prisma.UserUncheckedCreateWithoutSuspendedUsersInput>
+  where?: Prisma.UserWhereInput
+}
+
+export type UserUpdateToOneWithWhereWithoutSuspendedUsersInput = {
+  where?: Prisma.UserWhereInput
+  data: Prisma.XOR<Prisma.UserUpdateWithoutSuspendedUsersInput, Prisma.UserUncheckedUpdateWithoutSuspendedUsersInput>
+}
+
+export type UserUpdateWithoutSuspendedUsersInput = {
+  id?: Prisma.StringFieldUpdateOperationsInput | string
+  email?: Prisma.StringFieldUpdateOperationsInput | string
+  name?: Prisma.StringFieldUpdateOperationsInput | string
+  avatarKey?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  role?: Prisma.EnumRoleFieldUpdateOperationsInput | $Enums.Role
+  verifiedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  suspendedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  suspendedUntil?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  suspensionReason?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  deletedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  deletedReason?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  restorationToken?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  restorationTokenExpiry?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  lastSeenAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  locale?: Prisma.StringFieldUpdateOperationsInput | string
+  timezone?: Prisma.StringFieldUpdateOperationsInput | string
+  acceptedTermsAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  acceptedMarketingAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  notifications?: Prisma.NotificationUpdateManyWithoutRecipientNestedInput
+  actedNotifications?: Prisma.NotificationUpdateManyWithoutActorNestedInput
+  eventMembers?: Prisma.EventMemberUpdateManyWithoutUserNestedInput
+  addedMemberships?: Prisma.EventMemberUpdateManyWithoutAddedByNestedInput
+  canceledEvents?: Prisma.EventUpdateManyWithoutCanceledByNestedInput
+  deletedEvents?: Prisma.EventUpdateManyWithoutDeletedByNestedInput
+  ownedEvents?: Prisma.EventUpdateManyWithoutOwnerNestedInput
+  memberEventsAsSubject?: Prisma.EventMemberEventUpdateManyWithoutUserNestedInput
+  memberEventsAsActor?: Prisma.EventMemberEventUpdateManyWithoutActorNestedInput
+  joinClosedEvents?: Prisma.EventUpdateManyWithoutJoinManuallyClosedByNestedInput
+  commentsWritten?: Prisma.CommentUpdateManyWithoutAuthorNestedInput
+  commentsDeleted?: Prisma.CommentUpdateManyWithoutDeletedByNestedInput
+  commentsHidden?: Prisma.CommentUpdateManyWithoutHiddenByNestedInput
+  reviewsWritten?: Prisma.ReviewUpdateManyWithoutAuthorNestedInput
+  reviewsDeleted?: Prisma.ReviewUpdateManyWithoutDeletedByNestedInput
+  reviewsHidden?: Prisma.ReviewUpdateManyWithoutHiddenByNestedInput
+  dmThreadsA?: Prisma.DmThreadUpdateManyWithoutAUserNestedInput
+  dmThreadsB?: Prisma.DmThreadUpdateManyWithoutBUserNestedInput
+  dmMessages?: Prisma.DmMessageUpdateManyWithoutSenderNestedInput
+  dmMutes?: Prisma.DmMuteUpdateManyWithoutUserNestedInput
+  dmReads?: Prisma.DmReadUpdateManyWithoutUserNestedInput
+  dmMessageReactions?: Prisma.DmMessageReactionUpdateManyWithoutUserNestedInput
+  eventChatMessages?: Prisma.EventChatMessageUpdateManyWithoutAuthorNestedInput
+  eventChatReads?: Prisma.EventChatReadUpdateManyWithoutUserNestedInput
+  eventChatMessageReactions?: Prisma.EventChatMessageReactionUpdateManyWithoutUserNestedInput
+  notificationPreference?: Prisma.NotificationPreferenceUpdateOneWithoutUserNestedInput
+  eventMutes?: Prisma.EventMuteUpdateManyWithoutUserNestedInput
+  reportsFiled?: Prisma.ReportUpdateManyWithoutReporterNestedInput
+  blocksInitiated?: Prisma.UserBlockUpdateManyWithoutBlockerNestedInput
+  blocksReceived?: Prisma.UserBlockUpdateManyWithoutBlockedNestedInput
+  suspendedBy?: Prisma.UserUpdateOneWithoutSuspendedUsersNestedInput
+  deletedBy?: Prisma.UserUpdateOneWithoutDeletedUsersNestedInput
+  deletedUsers?: Prisma.UserUpdateManyWithoutDeletedByNestedInput
+  ownershipTransfersFrom?: Prisma.EventOwnershipTransferUpdateManyWithoutFromUserNestedInput
+  ownershipTransfersTo?: Prisma.EventOwnershipTransferUpdateManyWithoutToUserNestedInput
+  ownershipTransfersActed?: Prisma.EventOwnershipTransferUpdateManyWithoutActorNestedInput
+  createdInviteLinks?: Prisma.EventInviteLinkUpdateManyWithoutCreatedByNestedInput
+  revokedInviteLinks?: Prisma.EventInviteLinkUpdateManyWithoutRevokedByNestedInput
+  inviteLinkUsages?: Prisma.EventInviteLinkUsageUpdateManyWithoutUserNestedInput
+  eventFavourites?: Prisma.EventFavouriteUpdateManyWithoutUserNestedInput
+  agendaHostings?: Prisma.EventAgendaItemHostUpdateManyWithoutUserNestedInput
+  checkinLogsAsActor?: Prisma.EventCheckinLogUpdateManyWithoutActorNestedInput
+  checkinRejections?: Prisma.EventMemberUpdateManyWithoutLastCheckinRejectedByNestedInput
+  auditLogsAsActor?: Prisma.EventAuditLogUpdateManyWithoutActorNestedInput
+  userAuditLogsAsActor?: Prisma.UserAuditLogUpdateManyWithoutActorNestedInput
+  subscriptions?: Prisma.UserSubscriptionUpdateManyWithoutUserNestedInput
+  planPeriods?: Prisma.UserPlanPeriodUpdateManyWithoutUserNestedInput
+  eventSponsorships?: Prisma.EventSponsorshipUpdateManyWithoutSponsorNestedInput
+  eventSponsorshipPeriods?: Prisma.EventSponsorshipPeriodUpdateManyWithoutSponsorNestedInput
+  profile?: Prisma.UserProfileUpdateOneWithoutUserNestedInput
+  privacy?: Prisma.UserPrivacyUpdateOneWithoutUserNestedInput
+  stats?: Prisma.UserStatsUpdateOneWithoutUserNestedInput
+  socialLinks?: Prisma.UserSocialLinkUpdateManyWithoutUserNestedInput
+  categoryLevels?: Prisma.UserCategoryLevelUpdateManyWithoutUserNestedInput
+  availability?: Prisma.UserAvailabilityUpdateManyWithoutUserNestedInput
+  badges?: Prisma.UserBadgeUpdateManyWithoutUserNestedInput
+}
+
+export type UserUncheckedUpdateWithoutSuspendedUsersInput = {
+  id?: Prisma.StringFieldUpdateOperationsInput | string
+  email?: Prisma.StringFieldUpdateOperationsInput | string
+  name?: Prisma.StringFieldUpdateOperationsInput | string
+  avatarKey?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  role?: Prisma.EnumRoleFieldUpdateOperationsInput | $Enums.Role
+  verifiedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  suspendedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  suspendedUntil?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  suspendedById?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  suspensionReason?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  deletedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  deletedById?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  deletedReason?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  restorationToken?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  restorationTokenExpiry?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  lastSeenAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  locale?: Prisma.StringFieldUpdateOperationsInput | string
+  timezone?: Prisma.StringFieldUpdateOperationsInput | string
+  acceptedTermsAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  acceptedMarketingAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  notifications?: Prisma.NotificationUncheckedUpdateManyWithoutRecipientNestedInput
+  actedNotifications?: Prisma.NotificationUncheckedUpdateManyWithoutActorNestedInput
+  eventMembers?: Prisma.EventMemberUncheckedUpdateManyWithoutUserNestedInput
+  addedMemberships?: Prisma.EventMemberUncheckedUpdateManyWithoutAddedByNestedInput
+  canceledEvents?: Prisma.EventUncheckedUpdateManyWithoutCanceledByNestedInput
+  deletedEvents?: Prisma.EventUncheckedUpdateManyWithoutDeletedByNestedInput
+  ownedEvents?: Prisma.EventUncheckedUpdateManyWithoutOwnerNestedInput
+  memberEventsAsSubject?: Prisma.EventMemberEventUncheckedUpdateManyWithoutUserNestedInput
+  memberEventsAsActor?: Prisma.EventMemberEventUncheckedUpdateManyWithoutActorNestedInput
+  joinClosedEvents?: Prisma.EventUncheckedUpdateManyWithoutJoinManuallyClosedByNestedInput
+  commentsWritten?: Prisma.CommentUncheckedUpdateManyWithoutAuthorNestedInput
+  commentsDeleted?: Prisma.CommentUncheckedUpdateManyWithoutDeletedByNestedInput
+  commentsHidden?: Prisma.CommentUncheckedUpdateManyWithoutHiddenByNestedInput
+  reviewsWritten?: Prisma.ReviewUncheckedUpdateManyWithoutAuthorNestedInput
+  reviewsDeleted?: Prisma.ReviewUncheckedUpdateManyWithoutDeletedByNestedInput
+  reviewsHidden?: Prisma.ReviewUncheckedUpdateManyWithoutHiddenByNestedInput
+  dmThreadsA?: Prisma.DmThreadUncheckedUpdateManyWithoutAUserNestedInput
+  dmThreadsB?: Prisma.DmThreadUncheckedUpdateManyWithoutBUserNestedInput
+  dmMessages?: Prisma.DmMessageUncheckedUpdateManyWithoutSenderNestedInput
+  dmMutes?: Prisma.DmMuteUncheckedUpdateManyWithoutUserNestedInput
+  dmReads?: Prisma.DmReadUncheckedUpdateManyWithoutUserNestedInput
+  dmMessageReactions?: Prisma.DmMessageReactionUncheckedUpdateManyWithoutUserNestedInput
+  eventChatMessages?: Prisma.EventChatMessageUncheckedUpdateManyWithoutAuthorNestedInput
+  eventChatReads?: Prisma.EventChatReadUncheckedUpdateManyWithoutUserNestedInput
+  eventChatMessageReactions?: Prisma.EventChatMessageReactionUncheckedUpdateManyWithoutUserNestedInput
+  notificationPreference?: Prisma.NotificationPreferenceUncheckedUpdateOneWithoutUserNestedInput
+  eventMutes?: Prisma.EventMuteUncheckedUpdateManyWithoutUserNestedInput
+  reportsFiled?: Prisma.ReportUncheckedUpdateManyWithoutReporterNestedInput
+  blocksInitiated?: Prisma.UserBlockUncheckedUpdateManyWithoutBlockerNestedInput
+  blocksReceived?: Prisma.UserBlockUncheckedUpdateManyWithoutBlockedNestedInput
+  deletedUsers?: Prisma.UserUncheckedUpdateManyWithoutDeletedByNestedInput
+  ownershipTransfersFrom?: Prisma.EventOwnershipTransferUncheckedUpdateManyWithoutFromUserNestedInput
+  ownershipTransfersTo?: Prisma.EventOwnershipTransferUncheckedUpdateManyWithoutToUserNestedInput
+  ownershipTransfersActed?: Prisma.EventOwnershipTransferUncheckedUpdateManyWithoutActorNestedInput
+  createdInviteLinks?: Prisma.EventInviteLinkUncheckedUpdateManyWithoutCreatedByNestedInput
+  revokedInviteLinks?: Prisma.EventInviteLinkUncheckedUpdateManyWithoutRevokedByNestedInput
+  inviteLinkUsages?: Prisma.EventInviteLinkUsageUncheckedUpdateManyWithoutUserNestedInput
+  eventFavourites?: Prisma.EventFavouriteUncheckedUpdateManyWithoutUserNestedInput
+  agendaHostings?: Prisma.EventAgendaItemHostUncheckedUpdateManyWithoutUserNestedInput
+  checkinLogsAsActor?: Prisma.EventCheckinLogUncheckedUpdateManyWithoutActorNestedInput
+  checkinRejections?: Prisma.EventMemberUncheckedUpdateManyWithoutLastCheckinRejectedByNestedInput
+  auditLogsAsActor?: Prisma.EventAuditLogUncheckedUpdateManyWithoutActorNestedInput
+  userAuditLogsAsActor?: Prisma.UserAuditLogUncheckedUpdateManyWithoutActorNestedInput
+  subscriptions?: Prisma.UserSubscriptionUncheckedUpdateManyWithoutUserNestedInput
+  planPeriods?: Prisma.UserPlanPeriodUncheckedUpdateManyWithoutUserNestedInput
+  eventSponsorships?: Prisma.EventSponsorshipUncheckedUpdateManyWithoutSponsorNestedInput
+  eventSponsorshipPeriods?: Prisma.EventSponsorshipPeriodUncheckedUpdateManyWithoutSponsorNestedInput
+  profile?: Prisma.UserProfileUncheckedUpdateOneWithoutUserNestedInput
+  privacy?: Prisma.UserPrivacyUncheckedUpdateOneWithoutUserNestedInput
+  stats?: Prisma.UserStatsUncheckedUpdateOneWithoutUserNestedInput
+  socialLinks?: Prisma.UserSocialLinkUncheckedUpdateManyWithoutUserNestedInput
+  categoryLevels?: Prisma.UserCategoryLevelUncheckedUpdateManyWithoutUserNestedInput
+  availability?: Prisma.UserAvailabilityUncheckedUpdateManyWithoutUserNestedInput
+  badges?: Prisma.UserBadgeUncheckedUpdateManyWithoutUserNestedInput
+}
+
+export type UserUpsertWithWhereUniqueWithoutSuspendedByInput = {
+  where: Prisma.UserWhereUniqueInput
+  update: Prisma.XOR<Prisma.UserUpdateWithoutSuspendedByInput, Prisma.UserUncheckedUpdateWithoutSuspendedByInput>
+  create: Prisma.XOR<Prisma.UserCreateWithoutSuspendedByInput, Prisma.UserUncheckedCreateWithoutSuspendedByInput>
+}
+
+export type UserUpdateWithWhereUniqueWithoutSuspendedByInput = {
+  where: Prisma.UserWhereUniqueInput
+  data: Prisma.XOR<Prisma.UserUpdateWithoutSuspendedByInput, Prisma.UserUncheckedUpdateWithoutSuspendedByInput>
+}
+
+export type UserUpdateManyWithWhereWithoutSuspendedByInput = {
+  where: Prisma.UserScalarWhereInput
+  data: Prisma.XOR<Prisma.UserUpdateManyMutationInput, Prisma.UserUncheckedUpdateManyWithoutSuspendedByInput>
+}
+
+export type UserScalarWhereInput = {
+  AND?: Prisma.UserScalarWhereInput | Prisma.UserScalarWhereInput[]
+  OR?: Prisma.UserScalarWhereInput[]
+  NOT?: Prisma.UserScalarWhereInput | Prisma.UserScalarWhereInput[]
+  id?: Prisma.StringFilter<"User"> | string
+  email?: Prisma.StringFilter<"User"> | string
+  name?: Prisma.StringFilter<"User"> | string
+  avatarKey?: Prisma.StringNullableFilter<"User"> | string | null
+  role?: Prisma.EnumRoleFilter<"User"> | $Enums.Role
+  verifiedAt?: Prisma.DateTimeNullableFilter<"User"> | Date | string | null
+  suspendedAt?: Prisma.DateTimeNullableFilter<"User"> | Date | string | null
+  suspendedUntil?: Prisma.DateTimeNullableFilter<"User"> | Date | string | null
+  suspendedById?: Prisma.StringNullableFilter<"User"> | string | null
+  suspensionReason?: Prisma.StringNullableFilter<"User"> | string | null
+  deletedAt?: Prisma.DateTimeNullableFilter<"User"> | Date | string | null
+  deletedById?: Prisma.StringNullableFilter<"User"> | string | null
+  deletedReason?: Prisma.StringNullableFilter<"User"> | string | null
+  restorationToken?: Prisma.StringNullableFilter<"User"> | string | null
+  restorationTokenExpiry?: Prisma.DateTimeNullableFilter<"User"> | Date | string | null
+  createdAt?: Prisma.DateTimeFilter<"User"> | Date | string
+  updatedAt?: Prisma.DateTimeFilter<"User"> | Date | string
+  lastSeenAt?: Prisma.DateTimeNullableFilter<"User"> | Date | string | null
+  locale?: Prisma.StringFilter<"User"> | string
+  timezone?: Prisma.StringFilter<"User"> | string
+  acceptedTermsAt?: Prisma.DateTimeNullableFilter<"User"> | Date | string | null
+  acceptedMarketingAt?: Prisma.DateTimeNullableFilter<"User"> | Date | string | null
+}
+
+export type UserUpsertWithoutDeletedUsersInput = {
+  update: Prisma.XOR<Prisma.UserUpdateWithoutDeletedUsersInput, Prisma.UserUncheckedUpdateWithoutDeletedUsersInput>
+  create: Prisma.XOR<Prisma.UserCreateWithoutDeletedUsersInput, Prisma.UserUncheckedCreateWithoutDeletedUsersInput>
+  where?: Prisma.UserWhereInput
+}
+
+export type UserUpdateToOneWithWhereWithoutDeletedUsersInput = {
+  where?: Prisma.UserWhereInput
+  data: Prisma.XOR<Prisma.UserUpdateWithoutDeletedUsersInput, Prisma.UserUncheckedUpdateWithoutDeletedUsersInput>
+}
+
+export type UserUpdateWithoutDeletedUsersInput = {
+  id?: Prisma.StringFieldUpdateOperationsInput | string
+  email?: Prisma.StringFieldUpdateOperationsInput | string
+  name?: Prisma.StringFieldUpdateOperationsInput | string
+  avatarKey?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  role?: Prisma.EnumRoleFieldUpdateOperationsInput | $Enums.Role
+  verifiedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  suspendedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  suspendedUntil?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  suspensionReason?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  deletedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  deletedReason?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  restorationToken?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  restorationTokenExpiry?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  lastSeenAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  locale?: Prisma.StringFieldUpdateOperationsInput | string
+  timezone?: Prisma.StringFieldUpdateOperationsInput | string
+  acceptedTermsAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  acceptedMarketingAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  notifications?: Prisma.NotificationUpdateManyWithoutRecipientNestedInput
+  actedNotifications?: Prisma.NotificationUpdateManyWithoutActorNestedInput
+  eventMembers?: Prisma.EventMemberUpdateManyWithoutUserNestedInput
+  addedMemberships?: Prisma.EventMemberUpdateManyWithoutAddedByNestedInput
+  canceledEvents?: Prisma.EventUpdateManyWithoutCanceledByNestedInput
+  deletedEvents?: Prisma.EventUpdateManyWithoutDeletedByNestedInput
+  ownedEvents?: Prisma.EventUpdateManyWithoutOwnerNestedInput
+  memberEventsAsSubject?: Prisma.EventMemberEventUpdateManyWithoutUserNestedInput
+  memberEventsAsActor?: Prisma.EventMemberEventUpdateManyWithoutActorNestedInput
+  joinClosedEvents?: Prisma.EventUpdateManyWithoutJoinManuallyClosedByNestedInput
+  commentsWritten?: Prisma.CommentUpdateManyWithoutAuthorNestedInput
+  commentsDeleted?: Prisma.CommentUpdateManyWithoutDeletedByNestedInput
+  commentsHidden?: Prisma.CommentUpdateManyWithoutHiddenByNestedInput
+  reviewsWritten?: Prisma.ReviewUpdateManyWithoutAuthorNestedInput
+  reviewsDeleted?: Prisma.ReviewUpdateManyWithoutDeletedByNestedInput
+  reviewsHidden?: Prisma.ReviewUpdateManyWithoutHiddenByNestedInput
+  dmThreadsA?: Prisma.DmThreadUpdateManyWithoutAUserNestedInput
+  dmThreadsB?: Prisma.DmThreadUpdateManyWithoutBUserNestedInput
+  dmMessages?: Prisma.DmMessageUpdateManyWithoutSenderNestedInput
+  dmMutes?: Prisma.DmMuteUpdateManyWithoutUserNestedInput
+  dmReads?: Prisma.DmReadUpdateManyWithoutUserNestedInput
+  dmMessageReactions?: Prisma.DmMessageReactionUpdateManyWithoutUserNestedInput
+  eventChatMessages?: Prisma.EventChatMessageUpdateManyWithoutAuthorNestedInput
+  eventChatReads?: Prisma.EventChatReadUpdateManyWithoutUserNestedInput
+  eventChatMessageReactions?: Prisma.EventChatMessageReactionUpdateManyWithoutUserNestedInput
+  notificationPreference?: Prisma.NotificationPreferenceUpdateOneWithoutUserNestedInput
+  eventMutes?: Prisma.EventMuteUpdateManyWithoutUserNestedInput
+  reportsFiled?: Prisma.ReportUpdateManyWithoutReporterNestedInput
+  blocksInitiated?: Prisma.UserBlockUpdateManyWithoutBlockerNestedInput
+  blocksReceived?: Prisma.UserBlockUpdateManyWithoutBlockedNestedInput
+  suspendedBy?: Prisma.UserUpdateOneWithoutSuspendedUsersNestedInput
+  suspendedUsers?: Prisma.UserUpdateManyWithoutSuspendedByNestedInput
+  deletedBy?: Prisma.UserUpdateOneWithoutDeletedUsersNestedInput
+  ownershipTransfersFrom?: Prisma.EventOwnershipTransferUpdateManyWithoutFromUserNestedInput
+  ownershipTransfersTo?: Prisma.EventOwnershipTransferUpdateManyWithoutToUserNestedInput
+  ownershipTransfersActed?: Prisma.EventOwnershipTransferUpdateManyWithoutActorNestedInput
+  createdInviteLinks?: Prisma.EventInviteLinkUpdateManyWithoutCreatedByNestedInput
+  revokedInviteLinks?: Prisma.EventInviteLinkUpdateManyWithoutRevokedByNestedInput
+  inviteLinkUsages?: Prisma.EventInviteLinkUsageUpdateManyWithoutUserNestedInput
+  eventFavourites?: Prisma.EventFavouriteUpdateManyWithoutUserNestedInput
+  agendaHostings?: Prisma.EventAgendaItemHostUpdateManyWithoutUserNestedInput
+  checkinLogsAsActor?: Prisma.EventCheckinLogUpdateManyWithoutActorNestedInput
+  checkinRejections?: Prisma.EventMemberUpdateManyWithoutLastCheckinRejectedByNestedInput
+  auditLogsAsActor?: Prisma.EventAuditLogUpdateManyWithoutActorNestedInput
+  userAuditLogsAsActor?: Prisma.UserAuditLogUpdateManyWithoutActorNestedInput
+  subscriptions?: Prisma.UserSubscriptionUpdateManyWithoutUserNestedInput
+  planPeriods?: Prisma.UserPlanPeriodUpdateManyWithoutUserNestedInput
+  eventSponsorships?: Prisma.EventSponsorshipUpdateManyWithoutSponsorNestedInput
+  eventSponsorshipPeriods?: Prisma.EventSponsorshipPeriodUpdateManyWithoutSponsorNestedInput
+  profile?: Prisma.UserProfileUpdateOneWithoutUserNestedInput
+  privacy?: Prisma.UserPrivacyUpdateOneWithoutUserNestedInput
+  stats?: Prisma.UserStatsUpdateOneWithoutUserNestedInput
+  socialLinks?: Prisma.UserSocialLinkUpdateManyWithoutUserNestedInput
+  categoryLevels?: Prisma.UserCategoryLevelUpdateManyWithoutUserNestedInput
+  availability?: Prisma.UserAvailabilityUpdateManyWithoutUserNestedInput
+  badges?: Prisma.UserBadgeUpdateManyWithoutUserNestedInput
+}
+
+export type UserUncheckedUpdateWithoutDeletedUsersInput = {
+  id?: Prisma.StringFieldUpdateOperationsInput | string
+  email?: Prisma.StringFieldUpdateOperationsInput | string
+  name?: Prisma.StringFieldUpdateOperationsInput | string
+  avatarKey?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  role?: Prisma.EnumRoleFieldUpdateOperationsInput | $Enums.Role
+  verifiedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  suspendedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  suspendedUntil?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  suspendedById?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  suspensionReason?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  deletedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  deletedById?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  deletedReason?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  restorationToken?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  restorationTokenExpiry?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  lastSeenAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  locale?: Prisma.StringFieldUpdateOperationsInput | string
+  timezone?: Prisma.StringFieldUpdateOperationsInput | string
+  acceptedTermsAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  acceptedMarketingAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  notifications?: Prisma.NotificationUncheckedUpdateManyWithoutRecipientNestedInput
+  actedNotifications?: Prisma.NotificationUncheckedUpdateManyWithoutActorNestedInput
+  eventMembers?: Prisma.EventMemberUncheckedUpdateManyWithoutUserNestedInput
+  addedMemberships?: Prisma.EventMemberUncheckedUpdateManyWithoutAddedByNestedInput
+  canceledEvents?: Prisma.EventUncheckedUpdateManyWithoutCanceledByNestedInput
+  deletedEvents?: Prisma.EventUncheckedUpdateManyWithoutDeletedByNestedInput
+  ownedEvents?: Prisma.EventUncheckedUpdateManyWithoutOwnerNestedInput
+  memberEventsAsSubject?: Prisma.EventMemberEventUncheckedUpdateManyWithoutUserNestedInput
+  memberEventsAsActor?: Prisma.EventMemberEventUncheckedUpdateManyWithoutActorNestedInput
+  joinClosedEvents?: Prisma.EventUncheckedUpdateManyWithoutJoinManuallyClosedByNestedInput
+  commentsWritten?: Prisma.CommentUncheckedUpdateManyWithoutAuthorNestedInput
+  commentsDeleted?: Prisma.CommentUncheckedUpdateManyWithoutDeletedByNestedInput
+  commentsHidden?: Prisma.CommentUncheckedUpdateManyWithoutHiddenByNestedInput
+  reviewsWritten?: Prisma.ReviewUncheckedUpdateManyWithoutAuthorNestedInput
+  reviewsDeleted?: Prisma.ReviewUncheckedUpdateManyWithoutDeletedByNestedInput
+  reviewsHidden?: Prisma.ReviewUncheckedUpdateManyWithoutHiddenByNestedInput
+  dmThreadsA?: Prisma.DmThreadUncheckedUpdateManyWithoutAUserNestedInput
+  dmThreadsB?: Prisma.DmThreadUncheckedUpdateManyWithoutBUserNestedInput
+  dmMessages?: Prisma.DmMessageUncheckedUpdateManyWithoutSenderNestedInput
+  dmMutes?: Prisma.DmMuteUncheckedUpdateManyWithoutUserNestedInput
+  dmReads?: Prisma.DmReadUncheckedUpdateManyWithoutUserNestedInput
+  dmMessageReactions?: Prisma.DmMessageReactionUncheckedUpdateManyWithoutUserNestedInput
+  eventChatMessages?: Prisma.EventChatMessageUncheckedUpdateManyWithoutAuthorNestedInput
+  eventChatReads?: Prisma.EventChatReadUncheckedUpdateManyWithoutUserNestedInput
+  eventChatMessageReactions?: Prisma.EventChatMessageReactionUncheckedUpdateManyWithoutUserNestedInput
+  notificationPreference?: Prisma.NotificationPreferenceUncheckedUpdateOneWithoutUserNestedInput
+  eventMutes?: Prisma.EventMuteUncheckedUpdateManyWithoutUserNestedInput
+  reportsFiled?: Prisma.ReportUncheckedUpdateManyWithoutReporterNestedInput
+  blocksInitiated?: Prisma.UserBlockUncheckedUpdateManyWithoutBlockerNestedInput
+  blocksReceived?: Prisma.UserBlockUncheckedUpdateManyWithoutBlockedNestedInput
+  suspendedUsers?: Prisma.UserUncheckedUpdateManyWithoutSuspendedByNestedInput
+  ownershipTransfersFrom?: Prisma.EventOwnershipTransferUncheckedUpdateManyWithoutFromUserNestedInput
+  ownershipTransfersTo?: Prisma.EventOwnershipTransferUncheckedUpdateManyWithoutToUserNestedInput
+  ownershipTransfersActed?: Prisma.EventOwnershipTransferUncheckedUpdateManyWithoutActorNestedInput
+  createdInviteLinks?: Prisma.EventInviteLinkUncheckedUpdateManyWithoutCreatedByNestedInput
+  revokedInviteLinks?: Prisma.EventInviteLinkUncheckedUpdateManyWithoutRevokedByNestedInput
+  inviteLinkUsages?: Prisma.EventInviteLinkUsageUncheckedUpdateManyWithoutUserNestedInput
+  eventFavourites?: Prisma.EventFavouriteUncheckedUpdateManyWithoutUserNestedInput
+  agendaHostings?: Prisma.EventAgendaItemHostUncheckedUpdateManyWithoutUserNestedInput
+  checkinLogsAsActor?: Prisma.EventCheckinLogUncheckedUpdateManyWithoutActorNestedInput
+  checkinRejections?: Prisma.EventMemberUncheckedUpdateManyWithoutLastCheckinRejectedByNestedInput
+  auditLogsAsActor?: Prisma.EventAuditLogUncheckedUpdateManyWithoutActorNestedInput
+  userAuditLogsAsActor?: Prisma.UserAuditLogUncheckedUpdateManyWithoutActorNestedInput
+  subscriptions?: Prisma.UserSubscriptionUncheckedUpdateManyWithoutUserNestedInput
+  planPeriods?: Prisma.UserPlanPeriodUncheckedUpdateManyWithoutUserNestedInput
+  eventSponsorships?: Prisma.EventSponsorshipUncheckedUpdateManyWithoutSponsorNestedInput
+  eventSponsorshipPeriods?: Prisma.EventSponsorshipPeriodUncheckedUpdateManyWithoutSponsorNestedInput
+  profile?: Prisma.UserProfileUncheckedUpdateOneWithoutUserNestedInput
+  privacy?: Prisma.UserPrivacyUncheckedUpdateOneWithoutUserNestedInput
+  stats?: Prisma.UserStatsUncheckedUpdateOneWithoutUserNestedInput
+  socialLinks?: Prisma.UserSocialLinkUncheckedUpdateManyWithoutUserNestedInput
+  categoryLevels?: Prisma.UserCategoryLevelUncheckedUpdateManyWithoutUserNestedInput
+  availability?: Prisma.UserAvailabilityUncheckedUpdateManyWithoutUserNestedInput
+  badges?: Prisma.UserBadgeUncheckedUpdateManyWithoutUserNestedInput
+}
+
+export type UserUpsertWithWhereUniqueWithoutDeletedByInput = {
+  where: Prisma.UserWhereUniqueInput
+  update: Prisma.XOR<Prisma.UserUpdateWithoutDeletedByInput, Prisma.UserUncheckedUpdateWithoutDeletedByInput>
+  create: Prisma.XOR<Prisma.UserCreateWithoutDeletedByInput, Prisma.UserUncheckedCreateWithoutDeletedByInput>
+}
+
+export type UserUpdateWithWhereUniqueWithoutDeletedByInput = {
+  where: Prisma.UserWhereUniqueInput
+  data: Prisma.XOR<Prisma.UserUpdateWithoutDeletedByInput, Prisma.UserUncheckedUpdateWithoutDeletedByInput>
+}
+
+export type UserUpdateManyWithWhereWithoutDeletedByInput = {
+  where: Prisma.UserScalarWhereInput
+  data: Prisma.XOR<Prisma.UserUpdateManyMutationInput, Prisma.UserUncheckedUpdateManyWithoutDeletedByInput>
+}
+
 export type UserCreateWithoutJoinClosedEventsInput = {
   id?: string
   email: string
@@ -1779,6 +3072,7 @@ export type UserCreateWithoutJoinClosedEventsInput = {
   role?: $Enums.Role
   verifiedAt?: Date | string | null
   suspendedAt?: Date | string | null
+  suspendedUntil?: Date | string | null
   suspensionReason?: string | null
   deletedAt?: Date | string | null
   deletedReason?: string | null
@@ -1820,6 +3114,10 @@ export type UserCreateWithoutJoinClosedEventsInput = {
   reportsFiled?: Prisma.ReportCreateNestedManyWithoutReporterInput
   blocksInitiated?: Prisma.UserBlockCreateNestedManyWithoutBlockerInput
   blocksReceived?: Prisma.UserBlockCreateNestedManyWithoutBlockedInput
+  suspendedBy?: Prisma.UserCreateNestedOneWithoutSuspendedUsersInput
+  suspendedUsers?: Prisma.UserCreateNestedManyWithoutSuspendedByInput
+  deletedBy?: Prisma.UserCreateNestedOneWithoutDeletedUsersInput
+  deletedUsers?: Prisma.UserCreateNestedManyWithoutDeletedByInput
   ownershipTransfersFrom?: Prisma.EventOwnershipTransferCreateNestedManyWithoutFromUserInput
   ownershipTransfersTo?: Prisma.EventOwnershipTransferCreateNestedManyWithoutToUserInput
   ownershipTransfersActed?: Prisma.EventOwnershipTransferCreateNestedManyWithoutActorInput
@@ -1831,6 +3129,7 @@ export type UserCreateWithoutJoinClosedEventsInput = {
   checkinLogsAsActor?: Prisma.EventCheckinLogCreateNestedManyWithoutActorInput
   checkinRejections?: Prisma.EventMemberCreateNestedManyWithoutLastCheckinRejectedByInput
   auditLogsAsActor?: Prisma.EventAuditLogCreateNestedManyWithoutActorInput
+  userAuditLogsAsActor?: Prisma.UserAuditLogCreateNestedManyWithoutActorInput
   subscriptions?: Prisma.UserSubscriptionCreateNestedManyWithoutUserInput
   planPeriods?: Prisma.UserPlanPeriodCreateNestedManyWithoutUserInput
   eventSponsorships?: Prisma.EventSponsorshipCreateNestedManyWithoutSponsorInput
@@ -1852,8 +3151,11 @@ export type UserUncheckedCreateWithoutJoinClosedEventsInput = {
   role?: $Enums.Role
   verifiedAt?: Date | string | null
   suspendedAt?: Date | string | null
+  suspendedUntil?: Date | string | null
+  suspendedById?: string | null
   suspensionReason?: string | null
   deletedAt?: Date | string | null
+  deletedById?: string | null
   deletedReason?: string | null
   restorationToken?: string | null
   restorationTokenExpiry?: Date | string | null
@@ -1893,6 +3195,8 @@ export type UserUncheckedCreateWithoutJoinClosedEventsInput = {
   reportsFiled?: Prisma.ReportUncheckedCreateNestedManyWithoutReporterInput
   blocksInitiated?: Prisma.UserBlockUncheckedCreateNestedManyWithoutBlockerInput
   blocksReceived?: Prisma.UserBlockUncheckedCreateNestedManyWithoutBlockedInput
+  suspendedUsers?: Prisma.UserUncheckedCreateNestedManyWithoutSuspendedByInput
+  deletedUsers?: Prisma.UserUncheckedCreateNestedManyWithoutDeletedByInput
   ownershipTransfersFrom?: Prisma.EventOwnershipTransferUncheckedCreateNestedManyWithoutFromUserInput
   ownershipTransfersTo?: Prisma.EventOwnershipTransferUncheckedCreateNestedManyWithoutToUserInput
   ownershipTransfersActed?: Prisma.EventOwnershipTransferUncheckedCreateNestedManyWithoutActorInput
@@ -1904,6 +3208,7 @@ export type UserUncheckedCreateWithoutJoinClosedEventsInput = {
   checkinLogsAsActor?: Prisma.EventCheckinLogUncheckedCreateNestedManyWithoutActorInput
   checkinRejections?: Prisma.EventMemberUncheckedCreateNestedManyWithoutLastCheckinRejectedByInput
   auditLogsAsActor?: Prisma.EventAuditLogUncheckedCreateNestedManyWithoutActorInput
+  userAuditLogsAsActor?: Prisma.UserAuditLogUncheckedCreateNestedManyWithoutActorInput
   subscriptions?: Prisma.UserSubscriptionUncheckedCreateNestedManyWithoutUserInput
   planPeriods?: Prisma.UserPlanPeriodUncheckedCreateNestedManyWithoutUserInput
   eventSponsorships?: Prisma.EventSponsorshipUncheckedCreateNestedManyWithoutSponsorInput
@@ -1930,6 +3235,7 @@ export type UserCreateWithoutOwnedEventsInput = {
   role?: $Enums.Role
   verifiedAt?: Date | string | null
   suspendedAt?: Date | string | null
+  suspendedUntil?: Date | string | null
   suspensionReason?: string | null
   deletedAt?: Date | string | null
   deletedReason?: string | null
@@ -1971,6 +3277,10 @@ export type UserCreateWithoutOwnedEventsInput = {
   reportsFiled?: Prisma.ReportCreateNestedManyWithoutReporterInput
   blocksInitiated?: Prisma.UserBlockCreateNestedManyWithoutBlockerInput
   blocksReceived?: Prisma.UserBlockCreateNestedManyWithoutBlockedInput
+  suspendedBy?: Prisma.UserCreateNestedOneWithoutSuspendedUsersInput
+  suspendedUsers?: Prisma.UserCreateNestedManyWithoutSuspendedByInput
+  deletedBy?: Prisma.UserCreateNestedOneWithoutDeletedUsersInput
+  deletedUsers?: Prisma.UserCreateNestedManyWithoutDeletedByInput
   ownershipTransfersFrom?: Prisma.EventOwnershipTransferCreateNestedManyWithoutFromUserInput
   ownershipTransfersTo?: Prisma.EventOwnershipTransferCreateNestedManyWithoutToUserInput
   ownershipTransfersActed?: Prisma.EventOwnershipTransferCreateNestedManyWithoutActorInput
@@ -1982,6 +3292,7 @@ export type UserCreateWithoutOwnedEventsInput = {
   checkinLogsAsActor?: Prisma.EventCheckinLogCreateNestedManyWithoutActorInput
   checkinRejections?: Prisma.EventMemberCreateNestedManyWithoutLastCheckinRejectedByInput
   auditLogsAsActor?: Prisma.EventAuditLogCreateNestedManyWithoutActorInput
+  userAuditLogsAsActor?: Prisma.UserAuditLogCreateNestedManyWithoutActorInput
   subscriptions?: Prisma.UserSubscriptionCreateNestedManyWithoutUserInput
   planPeriods?: Prisma.UserPlanPeriodCreateNestedManyWithoutUserInput
   eventSponsorships?: Prisma.EventSponsorshipCreateNestedManyWithoutSponsorInput
@@ -2003,8 +3314,11 @@ export type UserUncheckedCreateWithoutOwnedEventsInput = {
   role?: $Enums.Role
   verifiedAt?: Date | string | null
   suspendedAt?: Date | string | null
+  suspendedUntil?: Date | string | null
+  suspendedById?: string | null
   suspensionReason?: string | null
   deletedAt?: Date | string | null
+  deletedById?: string | null
   deletedReason?: string | null
   restorationToken?: string | null
   restorationTokenExpiry?: Date | string | null
@@ -2044,6 +3358,8 @@ export type UserUncheckedCreateWithoutOwnedEventsInput = {
   reportsFiled?: Prisma.ReportUncheckedCreateNestedManyWithoutReporterInput
   blocksInitiated?: Prisma.UserBlockUncheckedCreateNestedManyWithoutBlockerInput
   blocksReceived?: Prisma.UserBlockUncheckedCreateNestedManyWithoutBlockedInput
+  suspendedUsers?: Prisma.UserUncheckedCreateNestedManyWithoutSuspendedByInput
+  deletedUsers?: Prisma.UserUncheckedCreateNestedManyWithoutDeletedByInput
   ownershipTransfersFrom?: Prisma.EventOwnershipTransferUncheckedCreateNestedManyWithoutFromUserInput
   ownershipTransfersTo?: Prisma.EventOwnershipTransferUncheckedCreateNestedManyWithoutToUserInput
   ownershipTransfersActed?: Prisma.EventOwnershipTransferUncheckedCreateNestedManyWithoutActorInput
@@ -2055,6 +3371,7 @@ export type UserUncheckedCreateWithoutOwnedEventsInput = {
   checkinLogsAsActor?: Prisma.EventCheckinLogUncheckedCreateNestedManyWithoutActorInput
   checkinRejections?: Prisma.EventMemberUncheckedCreateNestedManyWithoutLastCheckinRejectedByInput
   auditLogsAsActor?: Prisma.EventAuditLogUncheckedCreateNestedManyWithoutActorInput
+  userAuditLogsAsActor?: Prisma.UserAuditLogUncheckedCreateNestedManyWithoutActorInput
   subscriptions?: Prisma.UserSubscriptionUncheckedCreateNestedManyWithoutUserInput
   planPeriods?: Prisma.UserPlanPeriodUncheckedCreateNestedManyWithoutUserInput
   eventSponsorships?: Prisma.EventSponsorshipUncheckedCreateNestedManyWithoutSponsorInput
@@ -2081,6 +3398,7 @@ export type UserCreateWithoutCanceledEventsInput = {
   role?: $Enums.Role
   verifiedAt?: Date | string | null
   suspendedAt?: Date | string | null
+  suspendedUntil?: Date | string | null
   suspensionReason?: string | null
   deletedAt?: Date | string | null
   deletedReason?: string | null
@@ -2122,6 +3440,10 @@ export type UserCreateWithoutCanceledEventsInput = {
   reportsFiled?: Prisma.ReportCreateNestedManyWithoutReporterInput
   blocksInitiated?: Prisma.UserBlockCreateNestedManyWithoutBlockerInput
   blocksReceived?: Prisma.UserBlockCreateNestedManyWithoutBlockedInput
+  suspendedBy?: Prisma.UserCreateNestedOneWithoutSuspendedUsersInput
+  suspendedUsers?: Prisma.UserCreateNestedManyWithoutSuspendedByInput
+  deletedBy?: Prisma.UserCreateNestedOneWithoutDeletedUsersInput
+  deletedUsers?: Prisma.UserCreateNestedManyWithoutDeletedByInput
   ownershipTransfersFrom?: Prisma.EventOwnershipTransferCreateNestedManyWithoutFromUserInput
   ownershipTransfersTo?: Prisma.EventOwnershipTransferCreateNestedManyWithoutToUserInput
   ownershipTransfersActed?: Prisma.EventOwnershipTransferCreateNestedManyWithoutActorInput
@@ -2133,6 +3455,7 @@ export type UserCreateWithoutCanceledEventsInput = {
   checkinLogsAsActor?: Prisma.EventCheckinLogCreateNestedManyWithoutActorInput
   checkinRejections?: Prisma.EventMemberCreateNestedManyWithoutLastCheckinRejectedByInput
   auditLogsAsActor?: Prisma.EventAuditLogCreateNestedManyWithoutActorInput
+  userAuditLogsAsActor?: Prisma.UserAuditLogCreateNestedManyWithoutActorInput
   subscriptions?: Prisma.UserSubscriptionCreateNestedManyWithoutUserInput
   planPeriods?: Prisma.UserPlanPeriodCreateNestedManyWithoutUserInput
   eventSponsorships?: Prisma.EventSponsorshipCreateNestedManyWithoutSponsorInput
@@ -2154,8 +3477,11 @@ export type UserUncheckedCreateWithoutCanceledEventsInput = {
   role?: $Enums.Role
   verifiedAt?: Date | string | null
   suspendedAt?: Date | string | null
+  suspendedUntil?: Date | string | null
+  suspendedById?: string | null
   suspensionReason?: string | null
   deletedAt?: Date | string | null
+  deletedById?: string | null
   deletedReason?: string | null
   restorationToken?: string | null
   restorationTokenExpiry?: Date | string | null
@@ -2195,6 +3521,8 @@ export type UserUncheckedCreateWithoutCanceledEventsInput = {
   reportsFiled?: Prisma.ReportUncheckedCreateNestedManyWithoutReporterInput
   blocksInitiated?: Prisma.UserBlockUncheckedCreateNestedManyWithoutBlockerInput
   blocksReceived?: Prisma.UserBlockUncheckedCreateNestedManyWithoutBlockedInput
+  suspendedUsers?: Prisma.UserUncheckedCreateNestedManyWithoutSuspendedByInput
+  deletedUsers?: Prisma.UserUncheckedCreateNestedManyWithoutDeletedByInput
   ownershipTransfersFrom?: Prisma.EventOwnershipTransferUncheckedCreateNestedManyWithoutFromUserInput
   ownershipTransfersTo?: Prisma.EventOwnershipTransferUncheckedCreateNestedManyWithoutToUserInput
   ownershipTransfersActed?: Prisma.EventOwnershipTransferUncheckedCreateNestedManyWithoutActorInput
@@ -2206,6 +3534,7 @@ export type UserUncheckedCreateWithoutCanceledEventsInput = {
   checkinLogsAsActor?: Prisma.EventCheckinLogUncheckedCreateNestedManyWithoutActorInput
   checkinRejections?: Prisma.EventMemberUncheckedCreateNestedManyWithoutLastCheckinRejectedByInput
   auditLogsAsActor?: Prisma.EventAuditLogUncheckedCreateNestedManyWithoutActorInput
+  userAuditLogsAsActor?: Prisma.UserAuditLogUncheckedCreateNestedManyWithoutActorInput
   subscriptions?: Prisma.UserSubscriptionUncheckedCreateNestedManyWithoutUserInput
   planPeriods?: Prisma.UserPlanPeriodUncheckedCreateNestedManyWithoutUserInput
   eventSponsorships?: Prisma.EventSponsorshipUncheckedCreateNestedManyWithoutSponsorInput
@@ -2232,6 +3561,7 @@ export type UserCreateWithoutDeletedEventsInput = {
   role?: $Enums.Role
   verifiedAt?: Date | string | null
   suspendedAt?: Date | string | null
+  suspendedUntil?: Date | string | null
   suspensionReason?: string | null
   deletedAt?: Date | string | null
   deletedReason?: string | null
@@ -2273,6 +3603,10 @@ export type UserCreateWithoutDeletedEventsInput = {
   reportsFiled?: Prisma.ReportCreateNestedManyWithoutReporterInput
   blocksInitiated?: Prisma.UserBlockCreateNestedManyWithoutBlockerInput
   blocksReceived?: Prisma.UserBlockCreateNestedManyWithoutBlockedInput
+  suspendedBy?: Prisma.UserCreateNestedOneWithoutSuspendedUsersInput
+  suspendedUsers?: Prisma.UserCreateNestedManyWithoutSuspendedByInput
+  deletedBy?: Prisma.UserCreateNestedOneWithoutDeletedUsersInput
+  deletedUsers?: Prisma.UserCreateNestedManyWithoutDeletedByInput
   ownershipTransfersFrom?: Prisma.EventOwnershipTransferCreateNestedManyWithoutFromUserInput
   ownershipTransfersTo?: Prisma.EventOwnershipTransferCreateNestedManyWithoutToUserInput
   ownershipTransfersActed?: Prisma.EventOwnershipTransferCreateNestedManyWithoutActorInput
@@ -2284,6 +3618,7 @@ export type UserCreateWithoutDeletedEventsInput = {
   checkinLogsAsActor?: Prisma.EventCheckinLogCreateNestedManyWithoutActorInput
   checkinRejections?: Prisma.EventMemberCreateNestedManyWithoutLastCheckinRejectedByInput
   auditLogsAsActor?: Prisma.EventAuditLogCreateNestedManyWithoutActorInput
+  userAuditLogsAsActor?: Prisma.UserAuditLogCreateNestedManyWithoutActorInput
   subscriptions?: Prisma.UserSubscriptionCreateNestedManyWithoutUserInput
   planPeriods?: Prisma.UserPlanPeriodCreateNestedManyWithoutUserInput
   eventSponsorships?: Prisma.EventSponsorshipCreateNestedManyWithoutSponsorInput
@@ -2305,8 +3640,11 @@ export type UserUncheckedCreateWithoutDeletedEventsInput = {
   role?: $Enums.Role
   verifiedAt?: Date | string | null
   suspendedAt?: Date | string | null
+  suspendedUntil?: Date | string | null
+  suspendedById?: string | null
   suspensionReason?: string | null
   deletedAt?: Date | string | null
+  deletedById?: string | null
   deletedReason?: string | null
   restorationToken?: string | null
   restorationTokenExpiry?: Date | string | null
@@ -2346,6 +3684,8 @@ export type UserUncheckedCreateWithoutDeletedEventsInput = {
   reportsFiled?: Prisma.ReportUncheckedCreateNestedManyWithoutReporterInput
   blocksInitiated?: Prisma.UserBlockUncheckedCreateNestedManyWithoutBlockerInput
   blocksReceived?: Prisma.UserBlockUncheckedCreateNestedManyWithoutBlockedInput
+  suspendedUsers?: Prisma.UserUncheckedCreateNestedManyWithoutSuspendedByInput
+  deletedUsers?: Prisma.UserUncheckedCreateNestedManyWithoutDeletedByInput
   ownershipTransfersFrom?: Prisma.EventOwnershipTransferUncheckedCreateNestedManyWithoutFromUserInput
   ownershipTransfersTo?: Prisma.EventOwnershipTransferUncheckedCreateNestedManyWithoutToUserInput
   ownershipTransfersActed?: Prisma.EventOwnershipTransferUncheckedCreateNestedManyWithoutActorInput
@@ -2357,6 +3697,7 @@ export type UserUncheckedCreateWithoutDeletedEventsInput = {
   checkinLogsAsActor?: Prisma.EventCheckinLogUncheckedCreateNestedManyWithoutActorInput
   checkinRejections?: Prisma.EventMemberUncheckedCreateNestedManyWithoutLastCheckinRejectedByInput
   auditLogsAsActor?: Prisma.EventAuditLogUncheckedCreateNestedManyWithoutActorInput
+  userAuditLogsAsActor?: Prisma.UserAuditLogUncheckedCreateNestedManyWithoutActorInput
   subscriptions?: Prisma.UserSubscriptionUncheckedCreateNestedManyWithoutUserInput
   planPeriods?: Prisma.UserPlanPeriodUncheckedCreateNestedManyWithoutUserInput
   eventSponsorships?: Prisma.EventSponsorshipUncheckedCreateNestedManyWithoutSponsorInput
@@ -2394,6 +3735,7 @@ export type UserUpdateWithoutJoinClosedEventsInput = {
   role?: Prisma.EnumRoleFieldUpdateOperationsInput | $Enums.Role
   verifiedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   suspendedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  suspendedUntil?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   suspensionReason?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   deletedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   deletedReason?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
@@ -2435,6 +3777,10 @@ export type UserUpdateWithoutJoinClosedEventsInput = {
   reportsFiled?: Prisma.ReportUpdateManyWithoutReporterNestedInput
   blocksInitiated?: Prisma.UserBlockUpdateManyWithoutBlockerNestedInput
   blocksReceived?: Prisma.UserBlockUpdateManyWithoutBlockedNestedInput
+  suspendedBy?: Prisma.UserUpdateOneWithoutSuspendedUsersNestedInput
+  suspendedUsers?: Prisma.UserUpdateManyWithoutSuspendedByNestedInput
+  deletedBy?: Prisma.UserUpdateOneWithoutDeletedUsersNestedInput
+  deletedUsers?: Prisma.UserUpdateManyWithoutDeletedByNestedInput
   ownershipTransfersFrom?: Prisma.EventOwnershipTransferUpdateManyWithoutFromUserNestedInput
   ownershipTransfersTo?: Prisma.EventOwnershipTransferUpdateManyWithoutToUserNestedInput
   ownershipTransfersActed?: Prisma.EventOwnershipTransferUpdateManyWithoutActorNestedInput
@@ -2446,6 +3792,7 @@ export type UserUpdateWithoutJoinClosedEventsInput = {
   checkinLogsAsActor?: Prisma.EventCheckinLogUpdateManyWithoutActorNestedInput
   checkinRejections?: Prisma.EventMemberUpdateManyWithoutLastCheckinRejectedByNestedInput
   auditLogsAsActor?: Prisma.EventAuditLogUpdateManyWithoutActorNestedInput
+  userAuditLogsAsActor?: Prisma.UserAuditLogUpdateManyWithoutActorNestedInput
   subscriptions?: Prisma.UserSubscriptionUpdateManyWithoutUserNestedInput
   planPeriods?: Prisma.UserPlanPeriodUpdateManyWithoutUserNestedInput
   eventSponsorships?: Prisma.EventSponsorshipUpdateManyWithoutSponsorNestedInput
@@ -2467,8 +3814,11 @@ export type UserUncheckedUpdateWithoutJoinClosedEventsInput = {
   role?: Prisma.EnumRoleFieldUpdateOperationsInput | $Enums.Role
   verifiedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   suspendedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  suspendedUntil?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  suspendedById?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   suspensionReason?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   deletedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  deletedById?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   deletedReason?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   restorationToken?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   restorationTokenExpiry?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
@@ -2508,6 +3858,8 @@ export type UserUncheckedUpdateWithoutJoinClosedEventsInput = {
   reportsFiled?: Prisma.ReportUncheckedUpdateManyWithoutReporterNestedInput
   blocksInitiated?: Prisma.UserBlockUncheckedUpdateManyWithoutBlockerNestedInput
   blocksReceived?: Prisma.UserBlockUncheckedUpdateManyWithoutBlockedNestedInput
+  suspendedUsers?: Prisma.UserUncheckedUpdateManyWithoutSuspendedByNestedInput
+  deletedUsers?: Prisma.UserUncheckedUpdateManyWithoutDeletedByNestedInput
   ownershipTransfersFrom?: Prisma.EventOwnershipTransferUncheckedUpdateManyWithoutFromUserNestedInput
   ownershipTransfersTo?: Prisma.EventOwnershipTransferUncheckedUpdateManyWithoutToUserNestedInput
   ownershipTransfersActed?: Prisma.EventOwnershipTransferUncheckedUpdateManyWithoutActorNestedInput
@@ -2519,6 +3871,7 @@ export type UserUncheckedUpdateWithoutJoinClosedEventsInput = {
   checkinLogsAsActor?: Prisma.EventCheckinLogUncheckedUpdateManyWithoutActorNestedInput
   checkinRejections?: Prisma.EventMemberUncheckedUpdateManyWithoutLastCheckinRejectedByNestedInput
   auditLogsAsActor?: Prisma.EventAuditLogUncheckedUpdateManyWithoutActorNestedInput
+  userAuditLogsAsActor?: Prisma.UserAuditLogUncheckedUpdateManyWithoutActorNestedInput
   subscriptions?: Prisma.UserSubscriptionUncheckedUpdateManyWithoutUserNestedInput
   planPeriods?: Prisma.UserPlanPeriodUncheckedUpdateManyWithoutUserNestedInput
   eventSponsorships?: Prisma.EventSponsorshipUncheckedUpdateManyWithoutSponsorNestedInput
@@ -2551,6 +3904,7 @@ export type UserUpdateWithoutOwnedEventsInput = {
   role?: Prisma.EnumRoleFieldUpdateOperationsInput | $Enums.Role
   verifiedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   suspendedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  suspendedUntil?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   suspensionReason?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   deletedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   deletedReason?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
@@ -2592,6 +3946,10 @@ export type UserUpdateWithoutOwnedEventsInput = {
   reportsFiled?: Prisma.ReportUpdateManyWithoutReporterNestedInput
   blocksInitiated?: Prisma.UserBlockUpdateManyWithoutBlockerNestedInput
   blocksReceived?: Prisma.UserBlockUpdateManyWithoutBlockedNestedInput
+  suspendedBy?: Prisma.UserUpdateOneWithoutSuspendedUsersNestedInput
+  suspendedUsers?: Prisma.UserUpdateManyWithoutSuspendedByNestedInput
+  deletedBy?: Prisma.UserUpdateOneWithoutDeletedUsersNestedInput
+  deletedUsers?: Prisma.UserUpdateManyWithoutDeletedByNestedInput
   ownershipTransfersFrom?: Prisma.EventOwnershipTransferUpdateManyWithoutFromUserNestedInput
   ownershipTransfersTo?: Prisma.EventOwnershipTransferUpdateManyWithoutToUserNestedInput
   ownershipTransfersActed?: Prisma.EventOwnershipTransferUpdateManyWithoutActorNestedInput
@@ -2603,6 +3961,7 @@ export type UserUpdateWithoutOwnedEventsInput = {
   checkinLogsAsActor?: Prisma.EventCheckinLogUpdateManyWithoutActorNestedInput
   checkinRejections?: Prisma.EventMemberUpdateManyWithoutLastCheckinRejectedByNestedInput
   auditLogsAsActor?: Prisma.EventAuditLogUpdateManyWithoutActorNestedInput
+  userAuditLogsAsActor?: Prisma.UserAuditLogUpdateManyWithoutActorNestedInput
   subscriptions?: Prisma.UserSubscriptionUpdateManyWithoutUserNestedInput
   planPeriods?: Prisma.UserPlanPeriodUpdateManyWithoutUserNestedInput
   eventSponsorships?: Prisma.EventSponsorshipUpdateManyWithoutSponsorNestedInput
@@ -2624,8 +3983,11 @@ export type UserUncheckedUpdateWithoutOwnedEventsInput = {
   role?: Prisma.EnumRoleFieldUpdateOperationsInput | $Enums.Role
   verifiedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   suspendedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  suspendedUntil?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  suspendedById?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   suspensionReason?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   deletedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  deletedById?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   deletedReason?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   restorationToken?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   restorationTokenExpiry?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
@@ -2665,6 +4027,8 @@ export type UserUncheckedUpdateWithoutOwnedEventsInput = {
   reportsFiled?: Prisma.ReportUncheckedUpdateManyWithoutReporterNestedInput
   blocksInitiated?: Prisma.UserBlockUncheckedUpdateManyWithoutBlockerNestedInput
   blocksReceived?: Prisma.UserBlockUncheckedUpdateManyWithoutBlockedNestedInput
+  suspendedUsers?: Prisma.UserUncheckedUpdateManyWithoutSuspendedByNestedInput
+  deletedUsers?: Prisma.UserUncheckedUpdateManyWithoutDeletedByNestedInput
   ownershipTransfersFrom?: Prisma.EventOwnershipTransferUncheckedUpdateManyWithoutFromUserNestedInput
   ownershipTransfersTo?: Prisma.EventOwnershipTransferUncheckedUpdateManyWithoutToUserNestedInput
   ownershipTransfersActed?: Prisma.EventOwnershipTransferUncheckedUpdateManyWithoutActorNestedInput
@@ -2676,6 +4040,7 @@ export type UserUncheckedUpdateWithoutOwnedEventsInput = {
   checkinLogsAsActor?: Prisma.EventCheckinLogUncheckedUpdateManyWithoutActorNestedInput
   checkinRejections?: Prisma.EventMemberUncheckedUpdateManyWithoutLastCheckinRejectedByNestedInput
   auditLogsAsActor?: Prisma.EventAuditLogUncheckedUpdateManyWithoutActorNestedInput
+  userAuditLogsAsActor?: Prisma.UserAuditLogUncheckedUpdateManyWithoutActorNestedInput
   subscriptions?: Prisma.UserSubscriptionUncheckedUpdateManyWithoutUserNestedInput
   planPeriods?: Prisma.UserPlanPeriodUncheckedUpdateManyWithoutUserNestedInput
   eventSponsorships?: Prisma.EventSponsorshipUncheckedUpdateManyWithoutSponsorNestedInput
@@ -2708,6 +4073,7 @@ export type UserUpdateWithoutCanceledEventsInput = {
   role?: Prisma.EnumRoleFieldUpdateOperationsInput | $Enums.Role
   verifiedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   suspendedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  suspendedUntil?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   suspensionReason?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   deletedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   deletedReason?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
@@ -2749,6 +4115,10 @@ export type UserUpdateWithoutCanceledEventsInput = {
   reportsFiled?: Prisma.ReportUpdateManyWithoutReporterNestedInput
   blocksInitiated?: Prisma.UserBlockUpdateManyWithoutBlockerNestedInput
   blocksReceived?: Prisma.UserBlockUpdateManyWithoutBlockedNestedInput
+  suspendedBy?: Prisma.UserUpdateOneWithoutSuspendedUsersNestedInput
+  suspendedUsers?: Prisma.UserUpdateManyWithoutSuspendedByNestedInput
+  deletedBy?: Prisma.UserUpdateOneWithoutDeletedUsersNestedInput
+  deletedUsers?: Prisma.UserUpdateManyWithoutDeletedByNestedInput
   ownershipTransfersFrom?: Prisma.EventOwnershipTransferUpdateManyWithoutFromUserNestedInput
   ownershipTransfersTo?: Prisma.EventOwnershipTransferUpdateManyWithoutToUserNestedInput
   ownershipTransfersActed?: Prisma.EventOwnershipTransferUpdateManyWithoutActorNestedInput
@@ -2760,6 +4130,7 @@ export type UserUpdateWithoutCanceledEventsInput = {
   checkinLogsAsActor?: Prisma.EventCheckinLogUpdateManyWithoutActorNestedInput
   checkinRejections?: Prisma.EventMemberUpdateManyWithoutLastCheckinRejectedByNestedInput
   auditLogsAsActor?: Prisma.EventAuditLogUpdateManyWithoutActorNestedInput
+  userAuditLogsAsActor?: Prisma.UserAuditLogUpdateManyWithoutActorNestedInput
   subscriptions?: Prisma.UserSubscriptionUpdateManyWithoutUserNestedInput
   planPeriods?: Prisma.UserPlanPeriodUpdateManyWithoutUserNestedInput
   eventSponsorships?: Prisma.EventSponsorshipUpdateManyWithoutSponsorNestedInput
@@ -2781,8 +4152,11 @@ export type UserUncheckedUpdateWithoutCanceledEventsInput = {
   role?: Prisma.EnumRoleFieldUpdateOperationsInput | $Enums.Role
   verifiedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   suspendedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  suspendedUntil?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  suspendedById?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   suspensionReason?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   deletedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  deletedById?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   deletedReason?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   restorationToken?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   restorationTokenExpiry?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
@@ -2822,6 +4196,8 @@ export type UserUncheckedUpdateWithoutCanceledEventsInput = {
   reportsFiled?: Prisma.ReportUncheckedUpdateManyWithoutReporterNestedInput
   blocksInitiated?: Prisma.UserBlockUncheckedUpdateManyWithoutBlockerNestedInput
   blocksReceived?: Prisma.UserBlockUncheckedUpdateManyWithoutBlockedNestedInput
+  suspendedUsers?: Prisma.UserUncheckedUpdateManyWithoutSuspendedByNestedInput
+  deletedUsers?: Prisma.UserUncheckedUpdateManyWithoutDeletedByNestedInput
   ownershipTransfersFrom?: Prisma.EventOwnershipTransferUncheckedUpdateManyWithoutFromUserNestedInput
   ownershipTransfersTo?: Prisma.EventOwnershipTransferUncheckedUpdateManyWithoutToUserNestedInput
   ownershipTransfersActed?: Prisma.EventOwnershipTransferUncheckedUpdateManyWithoutActorNestedInput
@@ -2833,6 +4209,7 @@ export type UserUncheckedUpdateWithoutCanceledEventsInput = {
   checkinLogsAsActor?: Prisma.EventCheckinLogUncheckedUpdateManyWithoutActorNestedInput
   checkinRejections?: Prisma.EventMemberUncheckedUpdateManyWithoutLastCheckinRejectedByNestedInput
   auditLogsAsActor?: Prisma.EventAuditLogUncheckedUpdateManyWithoutActorNestedInput
+  userAuditLogsAsActor?: Prisma.UserAuditLogUncheckedUpdateManyWithoutActorNestedInput
   subscriptions?: Prisma.UserSubscriptionUncheckedUpdateManyWithoutUserNestedInput
   planPeriods?: Prisma.UserPlanPeriodUncheckedUpdateManyWithoutUserNestedInput
   eventSponsorships?: Prisma.EventSponsorshipUncheckedUpdateManyWithoutSponsorNestedInput
@@ -2865,6 +4242,7 @@ export type UserUpdateWithoutDeletedEventsInput = {
   role?: Prisma.EnumRoleFieldUpdateOperationsInput | $Enums.Role
   verifiedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   suspendedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  suspendedUntil?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   suspensionReason?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   deletedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   deletedReason?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
@@ -2906,6 +4284,10 @@ export type UserUpdateWithoutDeletedEventsInput = {
   reportsFiled?: Prisma.ReportUpdateManyWithoutReporterNestedInput
   blocksInitiated?: Prisma.UserBlockUpdateManyWithoutBlockerNestedInput
   blocksReceived?: Prisma.UserBlockUpdateManyWithoutBlockedNestedInput
+  suspendedBy?: Prisma.UserUpdateOneWithoutSuspendedUsersNestedInput
+  suspendedUsers?: Prisma.UserUpdateManyWithoutSuspendedByNestedInput
+  deletedBy?: Prisma.UserUpdateOneWithoutDeletedUsersNestedInput
+  deletedUsers?: Prisma.UserUpdateManyWithoutDeletedByNestedInput
   ownershipTransfersFrom?: Prisma.EventOwnershipTransferUpdateManyWithoutFromUserNestedInput
   ownershipTransfersTo?: Prisma.EventOwnershipTransferUpdateManyWithoutToUserNestedInput
   ownershipTransfersActed?: Prisma.EventOwnershipTransferUpdateManyWithoutActorNestedInput
@@ -2917,6 +4299,7 @@ export type UserUpdateWithoutDeletedEventsInput = {
   checkinLogsAsActor?: Prisma.EventCheckinLogUpdateManyWithoutActorNestedInput
   checkinRejections?: Prisma.EventMemberUpdateManyWithoutLastCheckinRejectedByNestedInput
   auditLogsAsActor?: Prisma.EventAuditLogUpdateManyWithoutActorNestedInput
+  userAuditLogsAsActor?: Prisma.UserAuditLogUpdateManyWithoutActorNestedInput
   subscriptions?: Prisma.UserSubscriptionUpdateManyWithoutUserNestedInput
   planPeriods?: Prisma.UserPlanPeriodUpdateManyWithoutUserNestedInput
   eventSponsorships?: Prisma.EventSponsorshipUpdateManyWithoutSponsorNestedInput
@@ -2938,8 +4321,11 @@ export type UserUncheckedUpdateWithoutDeletedEventsInput = {
   role?: Prisma.EnumRoleFieldUpdateOperationsInput | $Enums.Role
   verifiedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   suspendedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  suspendedUntil?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  suspendedById?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   suspensionReason?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   deletedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  deletedById?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   deletedReason?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   restorationToken?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   restorationTokenExpiry?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
@@ -2979,6 +4365,8 @@ export type UserUncheckedUpdateWithoutDeletedEventsInput = {
   reportsFiled?: Prisma.ReportUncheckedUpdateManyWithoutReporterNestedInput
   blocksInitiated?: Prisma.UserBlockUncheckedUpdateManyWithoutBlockerNestedInput
   blocksReceived?: Prisma.UserBlockUncheckedUpdateManyWithoutBlockedNestedInput
+  suspendedUsers?: Prisma.UserUncheckedUpdateManyWithoutSuspendedByNestedInput
+  deletedUsers?: Prisma.UserUncheckedUpdateManyWithoutDeletedByNestedInput
   ownershipTransfersFrom?: Prisma.EventOwnershipTransferUncheckedUpdateManyWithoutFromUserNestedInput
   ownershipTransfersTo?: Prisma.EventOwnershipTransferUncheckedUpdateManyWithoutToUserNestedInput
   ownershipTransfersActed?: Prisma.EventOwnershipTransferUncheckedUpdateManyWithoutActorNestedInput
@@ -2990,6 +4378,7 @@ export type UserUncheckedUpdateWithoutDeletedEventsInput = {
   checkinLogsAsActor?: Prisma.EventCheckinLogUncheckedUpdateManyWithoutActorNestedInput
   checkinRejections?: Prisma.EventMemberUncheckedUpdateManyWithoutLastCheckinRejectedByNestedInput
   auditLogsAsActor?: Prisma.EventAuditLogUncheckedUpdateManyWithoutActorNestedInput
+  userAuditLogsAsActor?: Prisma.UserAuditLogUncheckedUpdateManyWithoutActorNestedInput
   subscriptions?: Prisma.UserSubscriptionUncheckedUpdateManyWithoutUserNestedInput
   planPeriods?: Prisma.UserPlanPeriodUncheckedUpdateManyWithoutUserNestedInput
   eventSponsorships?: Prisma.EventSponsorshipUncheckedUpdateManyWithoutSponsorNestedInput
@@ -3011,6 +4400,7 @@ export type UserCreateWithoutEventMembersInput = {
   role?: $Enums.Role
   verifiedAt?: Date | string | null
   suspendedAt?: Date | string | null
+  suspendedUntil?: Date | string | null
   suspensionReason?: string | null
   deletedAt?: Date | string | null
   deletedReason?: string | null
@@ -3052,6 +4442,10 @@ export type UserCreateWithoutEventMembersInput = {
   reportsFiled?: Prisma.ReportCreateNestedManyWithoutReporterInput
   blocksInitiated?: Prisma.UserBlockCreateNestedManyWithoutBlockerInput
   blocksReceived?: Prisma.UserBlockCreateNestedManyWithoutBlockedInput
+  suspendedBy?: Prisma.UserCreateNestedOneWithoutSuspendedUsersInput
+  suspendedUsers?: Prisma.UserCreateNestedManyWithoutSuspendedByInput
+  deletedBy?: Prisma.UserCreateNestedOneWithoutDeletedUsersInput
+  deletedUsers?: Prisma.UserCreateNestedManyWithoutDeletedByInput
   ownershipTransfersFrom?: Prisma.EventOwnershipTransferCreateNestedManyWithoutFromUserInput
   ownershipTransfersTo?: Prisma.EventOwnershipTransferCreateNestedManyWithoutToUserInput
   ownershipTransfersActed?: Prisma.EventOwnershipTransferCreateNestedManyWithoutActorInput
@@ -3063,6 +4457,7 @@ export type UserCreateWithoutEventMembersInput = {
   checkinLogsAsActor?: Prisma.EventCheckinLogCreateNestedManyWithoutActorInput
   checkinRejections?: Prisma.EventMemberCreateNestedManyWithoutLastCheckinRejectedByInput
   auditLogsAsActor?: Prisma.EventAuditLogCreateNestedManyWithoutActorInput
+  userAuditLogsAsActor?: Prisma.UserAuditLogCreateNestedManyWithoutActorInput
   subscriptions?: Prisma.UserSubscriptionCreateNestedManyWithoutUserInput
   planPeriods?: Prisma.UserPlanPeriodCreateNestedManyWithoutUserInput
   eventSponsorships?: Prisma.EventSponsorshipCreateNestedManyWithoutSponsorInput
@@ -3084,8 +4479,11 @@ export type UserUncheckedCreateWithoutEventMembersInput = {
   role?: $Enums.Role
   verifiedAt?: Date | string | null
   suspendedAt?: Date | string | null
+  suspendedUntil?: Date | string | null
+  suspendedById?: string | null
   suspensionReason?: string | null
   deletedAt?: Date | string | null
+  deletedById?: string | null
   deletedReason?: string | null
   restorationToken?: string | null
   restorationTokenExpiry?: Date | string | null
@@ -3125,6 +4523,8 @@ export type UserUncheckedCreateWithoutEventMembersInput = {
   reportsFiled?: Prisma.ReportUncheckedCreateNestedManyWithoutReporterInput
   blocksInitiated?: Prisma.UserBlockUncheckedCreateNestedManyWithoutBlockerInput
   blocksReceived?: Prisma.UserBlockUncheckedCreateNestedManyWithoutBlockedInput
+  suspendedUsers?: Prisma.UserUncheckedCreateNestedManyWithoutSuspendedByInput
+  deletedUsers?: Prisma.UserUncheckedCreateNestedManyWithoutDeletedByInput
   ownershipTransfersFrom?: Prisma.EventOwnershipTransferUncheckedCreateNestedManyWithoutFromUserInput
   ownershipTransfersTo?: Prisma.EventOwnershipTransferUncheckedCreateNestedManyWithoutToUserInput
   ownershipTransfersActed?: Prisma.EventOwnershipTransferUncheckedCreateNestedManyWithoutActorInput
@@ -3136,6 +4536,7 @@ export type UserUncheckedCreateWithoutEventMembersInput = {
   checkinLogsAsActor?: Prisma.EventCheckinLogUncheckedCreateNestedManyWithoutActorInput
   checkinRejections?: Prisma.EventMemberUncheckedCreateNestedManyWithoutLastCheckinRejectedByInput
   auditLogsAsActor?: Prisma.EventAuditLogUncheckedCreateNestedManyWithoutActorInput
+  userAuditLogsAsActor?: Prisma.UserAuditLogUncheckedCreateNestedManyWithoutActorInput
   subscriptions?: Prisma.UserSubscriptionUncheckedCreateNestedManyWithoutUserInput
   planPeriods?: Prisma.UserPlanPeriodUncheckedCreateNestedManyWithoutUserInput
   eventSponsorships?: Prisma.EventSponsorshipUncheckedCreateNestedManyWithoutSponsorInput
@@ -3162,6 +4563,7 @@ export type UserCreateWithoutAddedMembershipsInput = {
   role?: $Enums.Role
   verifiedAt?: Date | string | null
   suspendedAt?: Date | string | null
+  suspendedUntil?: Date | string | null
   suspensionReason?: string | null
   deletedAt?: Date | string | null
   deletedReason?: string | null
@@ -3203,6 +4605,10 @@ export type UserCreateWithoutAddedMembershipsInput = {
   reportsFiled?: Prisma.ReportCreateNestedManyWithoutReporterInput
   blocksInitiated?: Prisma.UserBlockCreateNestedManyWithoutBlockerInput
   blocksReceived?: Prisma.UserBlockCreateNestedManyWithoutBlockedInput
+  suspendedBy?: Prisma.UserCreateNestedOneWithoutSuspendedUsersInput
+  suspendedUsers?: Prisma.UserCreateNestedManyWithoutSuspendedByInput
+  deletedBy?: Prisma.UserCreateNestedOneWithoutDeletedUsersInput
+  deletedUsers?: Prisma.UserCreateNestedManyWithoutDeletedByInput
   ownershipTransfersFrom?: Prisma.EventOwnershipTransferCreateNestedManyWithoutFromUserInput
   ownershipTransfersTo?: Prisma.EventOwnershipTransferCreateNestedManyWithoutToUserInput
   ownershipTransfersActed?: Prisma.EventOwnershipTransferCreateNestedManyWithoutActorInput
@@ -3214,6 +4620,7 @@ export type UserCreateWithoutAddedMembershipsInput = {
   checkinLogsAsActor?: Prisma.EventCheckinLogCreateNestedManyWithoutActorInput
   checkinRejections?: Prisma.EventMemberCreateNestedManyWithoutLastCheckinRejectedByInput
   auditLogsAsActor?: Prisma.EventAuditLogCreateNestedManyWithoutActorInput
+  userAuditLogsAsActor?: Prisma.UserAuditLogCreateNestedManyWithoutActorInput
   subscriptions?: Prisma.UserSubscriptionCreateNestedManyWithoutUserInput
   planPeriods?: Prisma.UserPlanPeriodCreateNestedManyWithoutUserInput
   eventSponsorships?: Prisma.EventSponsorshipCreateNestedManyWithoutSponsorInput
@@ -3235,8 +4642,11 @@ export type UserUncheckedCreateWithoutAddedMembershipsInput = {
   role?: $Enums.Role
   verifiedAt?: Date | string | null
   suspendedAt?: Date | string | null
+  suspendedUntil?: Date | string | null
+  suspendedById?: string | null
   suspensionReason?: string | null
   deletedAt?: Date | string | null
+  deletedById?: string | null
   deletedReason?: string | null
   restorationToken?: string | null
   restorationTokenExpiry?: Date | string | null
@@ -3276,6 +4686,8 @@ export type UserUncheckedCreateWithoutAddedMembershipsInput = {
   reportsFiled?: Prisma.ReportUncheckedCreateNestedManyWithoutReporterInput
   blocksInitiated?: Prisma.UserBlockUncheckedCreateNestedManyWithoutBlockerInput
   blocksReceived?: Prisma.UserBlockUncheckedCreateNestedManyWithoutBlockedInput
+  suspendedUsers?: Prisma.UserUncheckedCreateNestedManyWithoutSuspendedByInput
+  deletedUsers?: Prisma.UserUncheckedCreateNestedManyWithoutDeletedByInput
   ownershipTransfersFrom?: Prisma.EventOwnershipTransferUncheckedCreateNestedManyWithoutFromUserInput
   ownershipTransfersTo?: Prisma.EventOwnershipTransferUncheckedCreateNestedManyWithoutToUserInput
   ownershipTransfersActed?: Prisma.EventOwnershipTransferUncheckedCreateNestedManyWithoutActorInput
@@ -3287,6 +4699,7 @@ export type UserUncheckedCreateWithoutAddedMembershipsInput = {
   checkinLogsAsActor?: Prisma.EventCheckinLogUncheckedCreateNestedManyWithoutActorInput
   checkinRejections?: Prisma.EventMemberUncheckedCreateNestedManyWithoutLastCheckinRejectedByInput
   auditLogsAsActor?: Prisma.EventAuditLogUncheckedCreateNestedManyWithoutActorInput
+  userAuditLogsAsActor?: Prisma.UserAuditLogUncheckedCreateNestedManyWithoutActorInput
   subscriptions?: Prisma.UserSubscriptionUncheckedCreateNestedManyWithoutUserInput
   planPeriods?: Prisma.UserPlanPeriodUncheckedCreateNestedManyWithoutUserInput
   eventSponsorships?: Prisma.EventSponsorshipUncheckedCreateNestedManyWithoutSponsorInput
@@ -3313,6 +4726,7 @@ export type UserCreateWithoutCheckinRejectionsInput = {
   role?: $Enums.Role
   verifiedAt?: Date | string | null
   suspendedAt?: Date | string | null
+  suspendedUntil?: Date | string | null
   suspensionReason?: string | null
   deletedAt?: Date | string | null
   deletedReason?: string | null
@@ -3355,6 +4769,10 @@ export type UserCreateWithoutCheckinRejectionsInput = {
   reportsFiled?: Prisma.ReportCreateNestedManyWithoutReporterInput
   blocksInitiated?: Prisma.UserBlockCreateNestedManyWithoutBlockerInput
   blocksReceived?: Prisma.UserBlockCreateNestedManyWithoutBlockedInput
+  suspendedBy?: Prisma.UserCreateNestedOneWithoutSuspendedUsersInput
+  suspendedUsers?: Prisma.UserCreateNestedManyWithoutSuspendedByInput
+  deletedBy?: Prisma.UserCreateNestedOneWithoutDeletedUsersInput
+  deletedUsers?: Prisma.UserCreateNestedManyWithoutDeletedByInput
   ownershipTransfersFrom?: Prisma.EventOwnershipTransferCreateNestedManyWithoutFromUserInput
   ownershipTransfersTo?: Prisma.EventOwnershipTransferCreateNestedManyWithoutToUserInput
   ownershipTransfersActed?: Prisma.EventOwnershipTransferCreateNestedManyWithoutActorInput
@@ -3365,6 +4783,7 @@ export type UserCreateWithoutCheckinRejectionsInput = {
   agendaHostings?: Prisma.EventAgendaItemHostCreateNestedManyWithoutUserInput
   checkinLogsAsActor?: Prisma.EventCheckinLogCreateNestedManyWithoutActorInput
   auditLogsAsActor?: Prisma.EventAuditLogCreateNestedManyWithoutActorInput
+  userAuditLogsAsActor?: Prisma.UserAuditLogCreateNestedManyWithoutActorInput
   subscriptions?: Prisma.UserSubscriptionCreateNestedManyWithoutUserInput
   planPeriods?: Prisma.UserPlanPeriodCreateNestedManyWithoutUserInput
   eventSponsorships?: Prisma.EventSponsorshipCreateNestedManyWithoutSponsorInput
@@ -3386,8 +4805,11 @@ export type UserUncheckedCreateWithoutCheckinRejectionsInput = {
   role?: $Enums.Role
   verifiedAt?: Date | string | null
   suspendedAt?: Date | string | null
+  suspendedUntil?: Date | string | null
+  suspendedById?: string | null
   suspensionReason?: string | null
   deletedAt?: Date | string | null
+  deletedById?: string | null
   deletedReason?: string | null
   restorationToken?: string | null
   restorationTokenExpiry?: Date | string | null
@@ -3428,6 +4850,8 @@ export type UserUncheckedCreateWithoutCheckinRejectionsInput = {
   reportsFiled?: Prisma.ReportUncheckedCreateNestedManyWithoutReporterInput
   blocksInitiated?: Prisma.UserBlockUncheckedCreateNestedManyWithoutBlockerInput
   blocksReceived?: Prisma.UserBlockUncheckedCreateNestedManyWithoutBlockedInput
+  suspendedUsers?: Prisma.UserUncheckedCreateNestedManyWithoutSuspendedByInput
+  deletedUsers?: Prisma.UserUncheckedCreateNestedManyWithoutDeletedByInput
   ownershipTransfersFrom?: Prisma.EventOwnershipTransferUncheckedCreateNestedManyWithoutFromUserInput
   ownershipTransfersTo?: Prisma.EventOwnershipTransferUncheckedCreateNestedManyWithoutToUserInput
   ownershipTransfersActed?: Prisma.EventOwnershipTransferUncheckedCreateNestedManyWithoutActorInput
@@ -3438,6 +4862,7 @@ export type UserUncheckedCreateWithoutCheckinRejectionsInput = {
   agendaHostings?: Prisma.EventAgendaItemHostUncheckedCreateNestedManyWithoutUserInput
   checkinLogsAsActor?: Prisma.EventCheckinLogUncheckedCreateNestedManyWithoutActorInput
   auditLogsAsActor?: Prisma.EventAuditLogUncheckedCreateNestedManyWithoutActorInput
+  userAuditLogsAsActor?: Prisma.UserAuditLogUncheckedCreateNestedManyWithoutActorInput
   subscriptions?: Prisma.UserSubscriptionUncheckedCreateNestedManyWithoutUserInput
   planPeriods?: Prisma.UserPlanPeriodUncheckedCreateNestedManyWithoutUserInput
   eventSponsorships?: Prisma.EventSponsorshipUncheckedCreateNestedManyWithoutSponsorInput
@@ -3475,6 +4900,7 @@ export type UserUpdateWithoutEventMembersInput = {
   role?: Prisma.EnumRoleFieldUpdateOperationsInput | $Enums.Role
   verifiedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   suspendedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  suspendedUntil?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   suspensionReason?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   deletedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   deletedReason?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
@@ -3516,6 +4942,10 @@ export type UserUpdateWithoutEventMembersInput = {
   reportsFiled?: Prisma.ReportUpdateManyWithoutReporterNestedInput
   blocksInitiated?: Prisma.UserBlockUpdateManyWithoutBlockerNestedInput
   blocksReceived?: Prisma.UserBlockUpdateManyWithoutBlockedNestedInput
+  suspendedBy?: Prisma.UserUpdateOneWithoutSuspendedUsersNestedInput
+  suspendedUsers?: Prisma.UserUpdateManyWithoutSuspendedByNestedInput
+  deletedBy?: Prisma.UserUpdateOneWithoutDeletedUsersNestedInput
+  deletedUsers?: Prisma.UserUpdateManyWithoutDeletedByNestedInput
   ownershipTransfersFrom?: Prisma.EventOwnershipTransferUpdateManyWithoutFromUserNestedInput
   ownershipTransfersTo?: Prisma.EventOwnershipTransferUpdateManyWithoutToUserNestedInput
   ownershipTransfersActed?: Prisma.EventOwnershipTransferUpdateManyWithoutActorNestedInput
@@ -3527,6 +4957,7 @@ export type UserUpdateWithoutEventMembersInput = {
   checkinLogsAsActor?: Prisma.EventCheckinLogUpdateManyWithoutActorNestedInput
   checkinRejections?: Prisma.EventMemberUpdateManyWithoutLastCheckinRejectedByNestedInput
   auditLogsAsActor?: Prisma.EventAuditLogUpdateManyWithoutActorNestedInput
+  userAuditLogsAsActor?: Prisma.UserAuditLogUpdateManyWithoutActorNestedInput
   subscriptions?: Prisma.UserSubscriptionUpdateManyWithoutUserNestedInput
   planPeriods?: Prisma.UserPlanPeriodUpdateManyWithoutUserNestedInput
   eventSponsorships?: Prisma.EventSponsorshipUpdateManyWithoutSponsorNestedInput
@@ -3548,8 +4979,11 @@ export type UserUncheckedUpdateWithoutEventMembersInput = {
   role?: Prisma.EnumRoleFieldUpdateOperationsInput | $Enums.Role
   verifiedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   suspendedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  suspendedUntil?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  suspendedById?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   suspensionReason?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   deletedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  deletedById?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   deletedReason?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   restorationToken?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   restorationTokenExpiry?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
@@ -3589,6 +5023,8 @@ export type UserUncheckedUpdateWithoutEventMembersInput = {
   reportsFiled?: Prisma.ReportUncheckedUpdateManyWithoutReporterNestedInput
   blocksInitiated?: Prisma.UserBlockUncheckedUpdateManyWithoutBlockerNestedInput
   blocksReceived?: Prisma.UserBlockUncheckedUpdateManyWithoutBlockedNestedInput
+  suspendedUsers?: Prisma.UserUncheckedUpdateManyWithoutSuspendedByNestedInput
+  deletedUsers?: Prisma.UserUncheckedUpdateManyWithoutDeletedByNestedInput
   ownershipTransfersFrom?: Prisma.EventOwnershipTransferUncheckedUpdateManyWithoutFromUserNestedInput
   ownershipTransfersTo?: Prisma.EventOwnershipTransferUncheckedUpdateManyWithoutToUserNestedInput
   ownershipTransfersActed?: Prisma.EventOwnershipTransferUncheckedUpdateManyWithoutActorNestedInput
@@ -3600,6 +5036,7 @@ export type UserUncheckedUpdateWithoutEventMembersInput = {
   checkinLogsAsActor?: Prisma.EventCheckinLogUncheckedUpdateManyWithoutActorNestedInput
   checkinRejections?: Prisma.EventMemberUncheckedUpdateManyWithoutLastCheckinRejectedByNestedInput
   auditLogsAsActor?: Prisma.EventAuditLogUncheckedUpdateManyWithoutActorNestedInput
+  userAuditLogsAsActor?: Prisma.UserAuditLogUncheckedUpdateManyWithoutActorNestedInput
   subscriptions?: Prisma.UserSubscriptionUncheckedUpdateManyWithoutUserNestedInput
   planPeriods?: Prisma.UserPlanPeriodUncheckedUpdateManyWithoutUserNestedInput
   eventSponsorships?: Prisma.EventSponsorshipUncheckedUpdateManyWithoutSponsorNestedInput
@@ -3632,6 +5069,7 @@ export type UserUpdateWithoutAddedMembershipsInput = {
   role?: Prisma.EnumRoleFieldUpdateOperationsInput | $Enums.Role
   verifiedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   suspendedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  suspendedUntil?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   suspensionReason?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   deletedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   deletedReason?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
@@ -3673,6 +5111,10 @@ export type UserUpdateWithoutAddedMembershipsInput = {
   reportsFiled?: Prisma.ReportUpdateManyWithoutReporterNestedInput
   blocksInitiated?: Prisma.UserBlockUpdateManyWithoutBlockerNestedInput
   blocksReceived?: Prisma.UserBlockUpdateManyWithoutBlockedNestedInput
+  suspendedBy?: Prisma.UserUpdateOneWithoutSuspendedUsersNestedInput
+  suspendedUsers?: Prisma.UserUpdateManyWithoutSuspendedByNestedInput
+  deletedBy?: Prisma.UserUpdateOneWithoutDeletedUsersNestedInput
+  deletedUsers?: Prisma.UserUpdateManyWithoutDeletedByNestedInput
   ownershipTransfersFrom?: Prisma.EventOwnershipTransferUpdateManyWithoutFromUserNestedInput
   ownershipTransfersTo?: Prisma.EventOwnershipTransferUpdateManyWithoutToUserNestedInput
   ownershipTransfersActed?: Prisma.EventOwnershipTransferUpdateManyWithoutActorNestedInput
@@ -3684,6 +5126,7 @@ export type UserUpdateWithoutAddedMembershipsInput = {
   checkinLogsAsActor?: Prisma.EventCheckinLogUpdateManyWithoutActorNestedInput
   checkinRejections?: Prisma.EventMemberUpdateManyWithoutLastCheckinRejectedByNestedInput
   auditLogsAsActor?: Prisma.EventAuditLogUpdateManyWithoutActorNestedInput
+  userAuditLogsAsActor?: Prisma.UserAuditLogUpdateManyWithoutActorNestedInput
   subscriptions?: Prisma.UserSubscriptionUpdateManyWithoutUserNestedInput
   planPeriods?: Prisma.UserPlanPeriodUpdateManyWithoutUserNestedInput
   eventSponsorships?: Prisma.EventSponsorshipUpdateManyWithoutSponsorNestedInput
@@ -3705,8 +5148,11 @@ export type UserUncheckedUpdateWithoutAddedMembershipsInput = {
   role?: Prisma.EnumRoleFieldUpdateOperationsInput | $Enums.Role
   verifiedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   suspendedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  suspendedUntil?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  suspendedById?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   suspensionReason?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   deletedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  deletedById?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   deletedReason?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   restorationToken?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   restorationTokenExpiry?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
@@ -3746,6 +5192,8 @@ export type UserUncheckedUpdateWithoutAddedMembershipsInput = {
   reportsFiled?: Prisma.ReportUncheckedUpdateManyWithoutReporterNestedInput
   blocksInitiated?: Prisma.UserBlockUncheckedUpdateManyWithoutBlockerNestedInput
   blocksReceived?: Prisma.UserBlockUncheckedUpdateManyWithoutBlockedNestedInput
+  suspendedUsers?: Prisma.UserUncheckedUpdateManyWithoutSuspendedByNestedInput
+  deletedUsers?: Prisma.UserUncheckedUpdateManyWithoutDeletedByNestedInput
   ownershipTransfersFrom?: Prisma.EventOwnershipTransferUncheckedUpdateManyWithoutFromUserNestedInput
   ownershipTransfersTo?: Prisma.EventOwnershipTransferUncheckedUpdateManyWithoutToUserNestedInput
   ownershipTransfersActed?: Prisma.EventOwnershipTransferUncheckedUpdateManyWithoutActorNestedInput
@@ -3757,6 +5205,7 @@ export type UserUncheckedUpdateWithoutAddedMembershipsInput = {
   checkinLogsAsActor?: Prisma.EventCheckinLogUncheckedUpdateManyWithoutActorNestedInput
   checkinRejections?: Prisma.EventMemberUncheckedUpdateManyWithoutLastCheckinRejectedByNestedInput
   auditLogsAsActor?: Prisma.EventAuditLogUncheckedUpdateManyWithoutActorNestedInput
+  userAuditLogsAsActor?: Prisma.UserAuditLogUncheckedUpdateManyWithoutActorNestedInput
   subscriptions?: Prisma.UserSubscriptionUncheckedUpdateManyWithoutUserNestedInput
   planPeriods?: Prisma.UserPlanPeriodUncheckedUpdateManyWithoutUserNestedInput
   eventSponsorships?: Prisma.EventSponsorshipUncheckedUpdateManyWithoutSponsorNestedInput
@@ -3789,6 +5238,7 @@ export type UserUpdateWithoutCheckinRejectionsInput = {
   role?: Prisma.EnumRoleFieldUpdateOperationsInput | $Enums.Role
   verifiedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   suspendedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  suspendedUntil?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   suspensionReason?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   deletedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   deletedReason?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
@@ -3831,6 +5281,10 @@ export type UserUpdateWithoutCheckinRejectionsInput = {
   reportsFiled?: Prisma.ReportUpdateManyWithoutReporterNestedInput
   blocksInitiated?: Prisma.UserBlockUpdateManyWithoutBlockerNestedInput
   blocksReceived?: Prisma.UserBlockUpdateManyWithoutBlockedNestedInput
+  suspendedBy?: Prisma.UserUpdateOneWithoutSuspendedUsersNestedInput
+  suspendedUsers?: Prisma.UserUpdateManyWithoutSuspendedByNestedInput
+  deletedBy?: Prisma.UserUpdateOneWithoutDeletedUsersNestedInput
+  deletedUsers?: Prisma.UserUpdateManyWithoutDeletedByNestedInput
   ownershipTransfersFrom?: Prisma.EventOwnershipTransferUpdateManyWithoutFromUserNestedInput
   ownershipTransfersTo?: Prisma.EventOwnershipTransferUpdateManyWithoutToUserNestedInput
   ownershipTransfersActed?: Prisma.EventOwnershipTransferUpdateManyWithoutActorNestedInput
@@ -3841,6 +5295,7 @@ export type UserUpdateWithoutCheckinRejectionsInput = {
   agendaHostings?: Prisma.EventAgendaItemHostUpdateManyWithoutUserNestedInput
   checkinLogsAsActor?: Prisma.EventCheckinLogUpdateManyWithoutActorNestedInput
   auditLogsAsActor?: Prisma.EventAuditLogUpdateManyWithoutActorNestedInput
+  userAuditLogsAsActor?: Prisma.UserAuditLogUpdateManyWithoutActorNestedInput
   subscriptions?: Prisma.UserSubscriptionUpdateManyWithoutUserNestedInput
   planPeriods?: Prisma.UserPlanPeriodUpdateManyWithoutUserNestedInput
   eventSponsorships?: Prisma.EventSponsorshipUpdateManyWithoutSponsorNestedInput
@@ -3862,8 +5317,11 @@ export type UserUncheckedUpdateWithoutCheckinRejectionsInput = {
   role?: Prisma.EnumRoleFieldUpdateOperationsInput | $Enums.Role
   verifiedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   suspendedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  suspendedUntil?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  suspendedById?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   suspensionReason?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   deletedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  deletedById?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   deletedReason?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   restorationToken?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   restorationTokenExpiry?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
@@ -3904,6 +5362,8 @@ export type UserUncheckedUpdateWithoutCheckinRejectionsInput = {
   reportsFiled?: Prisma.ReportUncheckedUpdateManyWithoutReporterNestedInput
   blocksInitiated?: Prisma.UserBlockUncheckedUpdateManyWithoutBlockerNestedInput
   blocksReceived?: Prisma.UserBlockUncheckedUpdateManyWithoutBlockedNestedInput
+  suspendedUsers?: Prisma.UserUncheckedUpdateManyWithoutSuspendedByNestedInput
+  deletedUsers?: Prisma.UserUncheckedUpdateManyWithoutDeletedByNestedInput
   ownershipTransfersFrom?: Prisma.EventOwnershipTransferUncheckedUpdateManyWithoutFromUserNestedInput
   ownershipTransfersTo?: Prisma.EventOwnershipTransferUncheckedUpdateManyWithoutToUserNestedInput
   ownershipTransfersActed?: Prisma.EventOwnershipTransferUncheckedUpdateManyWithoutActorNestedInput
@@ -3914,6 +5374,7 @@ export type UserUncheckedUpdateWithoutCheckinRejectionsInput = {
   agendaHostings?: Prisma.EventAgendaItemHostUncheckedUpdateManyWithoutUserNestedInput
   checkinLogsAsActor?: Prisma.EventCheckinLogUncheckedUpdateManyWithoutActorNestedInput
   auditLogsAsActor?: Prisma.EventAuditLogUncheckedUpdateManyWithoutActorNestedInput
+  userAuditLogsAsActor?: Prisma.UserAuditLogUncheckedUpdateManyWithoutActorNestedInput
   subscriptions?: Prisma.UserSubscriptionUncheckedUpdateManyWithoutUserNestedInput
   planPeriods?: Prisma.UserPlanPeriodUncheckedUpdateManyWithoutUserNestedInput
   eventSponsorships?: Prisma.EventSponsorshipUncheckedUpdateManyWithoutSponsorNestedInput
@@ -3935,6 +5396,7 @@ export type UserCreateWithoutMemberEventsAsSubjectInput = {
   role?: $Enums.Role
   verifiedAt?: Date | string | null
   suspendedAt?: Date | string | null
+  suspendedUntil?: Date | string | null
   suspensionReason?: string | null
   deletedAt?: Date | string | null
   deletedReason?: string | null
@@ -3976,6 +5438,10 @@ export type UserCreateWithoutMemberEventsAsSubjectInput = {
   reportsFiled?: Prisma.ReportCreateNestedManyWithoutReporterInput
   blocksInitiated?: Prisma.UserBlockCreateNestedManyWithoutBlockerInput
   blocksReceived?: Prisma.UserBlockCreateNestedManyWithoutBlockedInput
+  suspendedBy?: Prisma.UserCreateNestedOneWithoutSuspendedUsersInput
+  suspendedUsers?: Prisma.UserCreateNestedManyWithoutSuspendedByInput
+  deletedBy?: Prisma.UserCreateNestedOneWithoutDeletedUsersInput
+  deletedUsers?: Prisma.UserCreateNestedManyWithoutDeletedByInput
   ownershipTransfersFrom?: Prisma.EventOwnershipTransferCreateNestedManyWithoutFromUserInput
   ownershipTransfersTo?: Prisma.EventOwnershipTransferCreateNestedManyWithoutToUserInput
   ownershipTransfersActed?: Prisma.EventOwnershipTransferCreateNestedManyWithoutActorInput
@@ -3987,6 +5453,7 @@ export type UserCreateWithoutMemberEventsAsSubjectInput = {
   checkinLogsAsActor?: Prisma.EventCheckinLogCreateNestedManyWithoutActorInput
   checkinRejections?: Prisma.EventMemberCreateNestedManyWithoutLastCheckinRejectedByInput
   auditLogsAsActor?: Prisma.EventAuditLogCreateNestedManyWithoutActorInput
+  userAuditLogsAsActor?: Prisma.UserAuditLogCreateNestedManyWithoutActorInput
   subscriptions?: Prisma.UserSubscriptionCreateNestedManyWithoutUserInput
   planPeriods?: Prisma.UserPlanPeriodCreateNestedManyWithoutUserInput
   eventSponsorships?: Prisma.EventSponsorshipCreateNestedManyWithoutSponsorInput
@@ -4008,8 +5475,11 @@ export type UserUncheckedCreateWithoutMemberEventsAsSubjectInput = {
   role?: $Enums.Role
   verifiedAt?: Date | string | null
   suspendedAt?: Date | string | null
+  suspendedUntil?: Date | string | null
+  suspendedById?: string | null
   suspensionReason?: string | null
   deletedAt?: Date | string | null
+  deletedById?: string | null
   deletedReason?: string | null
   restorationToken?: string | null
   restorationTokenExpiry?: Date | string | null
@@ -4049,6 +5519,8 @@ export type UserUncheckedCreateWithoutMemberEventsAsSubjectInput = {
   reportsFiled?: Prisma.ReportUncheckedCreateNestedManyWithoutReporterInput
   blocksInitiated?: Prisma.UserBlockUncheckedCreateNestedManyWithoutBlockerInput
   blocksReceived?: Prisma.UserBlockUncheckedCreateNestedManyWithoutBlockedInput
+  suspendedUsers?: Prisma.UserUncheckedCreateNestedManyWithoutSuspendedByInput
+  deletedUsers?: Prisma.UserUncheckedCreateNestedManyWithoutDeletedByInput
   ownershipTransfersFrom?: Prisma.EventOwnershipTransferUncheckedCreateNestedManyWithoutFromUserInput
   ownershipTransfersTo?: Prisma.EventOwnershipTransferUncheckedCreateNestedManyWithoutToUserInput
   ownershipTransfersActed?: Prisma.EventOwnershipTransferUncheckedCreateNestedManyWithoutActorInput
@@ -4060,6 +5532,7 @@ export type UserUncheckedCreateWithoutMemberEventsAsSubjectInput = {
   checkinLogsAsActor?: Prisma.EventCheckinLogUncheckedCreateNestedManyWithoutActorInput
   checkinRejections?: Prisma.EventMemberUncheckedCreateNestedManyWithoutLastCheckinRejectedByInput
   auditLogsAsActor?: Prisma.EventAuditLogUncheckedCreateNestedManyWithoutActorInput
+  userAuditLogsAsActor?: Prisma.UserAuditLogUncheckedCreateNestedManyWithoutActorInput
   subscriptions?: Prisma.UserSubscriptionUncheckedCreateNestedManyWithoutUserInput
   planPeriods?: Prisma.UserPlanPeriodUncheckedCreateNestedManyWithoutUserInput
   eventSponsorships?: Prisma.EventSponsorshipUncheckedCreateNestedManyWithoutSponsorInput
@@ -4086,6 +5559,7 @@ export type UserCreateWithoutMemberEventsAsActorInput = {
   role?: $Enums.Role
   verifiedAt?: Date | string | null
   suspendedAt?: Date | string | null
+  suspendedUntil?: Date | string | null
   suspensionReason?: string | null
   deletedAt?: Date | string | null
   deletedReason?: string | null
@@ -4127,6 +5601,10 @@ export type UserCreateWithoutMemberEventsAsActorInput = {
   reportsFiled?: Prisma.ReportCreateNestedManyWithoutReporterInput
   blocksInitiated?: Prisma.UserBlockCreateNestedManyWithoutBlockerInput
   blocksReceived?: Prisma.UserBlockCreateNestedManyWithoutBlockedInput
+  suspendedBy?: Prisma.UserCreateNestedOneWithoutSuspendedUsersInput
+  suspendedUsers?: Prisma.UserCreateNestedManyWithoutSuspendedByInput
+  deletedBy?: Prisma.UserCreateNestedOneWithoutDeletedUsersInput
+  deletedUsers?: Prisma.UserCreateNestedManyWithoutDeletedByInput
   ownershipTransfersFrom?: Prisma.EventOwnershipTransferCreateNestedManyWithoutFromUserInput
   ownershipTransfersTo?: Prisma.EventOwnershipTransferCreateNestedManyWithoutToUserInput
   ownershipTransfersActed?: Prisma.EventOwnershipTransferCreateNestedManyWithoutActorInput
@@ -4138,6 +5616,7 @@ export type UserCreateWithoutMemberEventsAsActorInput = {
   checkinLogsAsActor?: Prisma.EventCheckinLogCreateNestedManyWithoutActorInput
   checkinRejections?: Prisma.EventMemberCreateNestedManyWithoutLastCheckinRejectedByInput
   auditLogsAsActor?: Prisma.EventAuditLogCreateNestedManyWithoutActorInput
+  userAuditLogsAsActor?: Prisma.UserAuditLogCreateNestedManyWithoutActorInput
   subscriptions?: Prisma.UserSubscriptionCreateNestedManyWithoutUserInput
   planPeriods?: Prisma.UserPlanPeriodCreateNestedManyWithoutUserInput
   eventSponsorships?: Prisma.EventSponsorshipCreateNestedManyWithoutSponsorInput
@@ -4159,8 +5638,11 @@ export type UserUncheckedCreateWithoutMemberEventsAsActorInput = {
   role?: $Enums.Role
   verifiedAt?: Date | string | null
   suspendedAt?: Date | string | null
+  suspendedUntil?: Date | string | null
+  suspendedById?: string | null
   suspensionReason?: string | null
   deletedAt?: Date | string | null
+  deletedById?: string | null
   deletedReason?: string | null
   restorationToken?: string | null
   restorationTokenExpiry?: Date | string | null
@@ -4200,6 +5682,8 @@ export type UserUncheckedCreateWithoutMemberEventsAsActorInput = {
   reportsFiled?: Prisma.ReportUncheckedCreateNestedManyWithoutReporterInput
   blocksInitiated?: Prisma.UserBlockUncheckedCreateNestedManyWithoutBlockerInput
   blocksReceived?: Prisma.UserBlockUncheckedCreateNestedManyWithoutBlockedInput
+  suspendedUsers?: Prisma.UserUncheckedCreateNestedManyWithoutSuspendedByInput
+  deletedUsers?: Prisma.UserUncheckedCreateNestedManyWithoutDeletedByInput
   ownershipTransfersFrom?: Prisma.EventOwnershipTransferUncheckedCreateNestedManyWithoutFromUserInput
   ownershipTransfersTo?: Prisma.EventOwnershipTransferUncheckedCreateNestedManyWithoutToUserInput
   ownershipTransfersActed?: Prisma.EventOwnershipTransferUncheckedCreateNestedManyWithoutActorInput
@@ -4211,6 +5695,7 @@ export type UserUncheckedCreateWithoutMemberEventsAsActorInput = {
   checkinLogsAsActor?: Prisma.EventCheckinLogUncheckedCreateNestedManyWithoutActorInput
   checkinRejections?: Prisma.EventMemberUncheckedCreateNestedManyWithoutLastCheckinRejectedByInput
   auditLogsAsActor?: Prisma.EventAuditLogUncheckedCreateNestedManyWithoutActorInput
+  userAuditLogsAsActor?: Prisma.UserAuditLogUncheckedCreateNestedManyWithoutActorInput
   subscriptions?: Prisma.UserSubscriptionUncheckedCreateNestedManyWithoutUserInput
   planPeriods?: Prisma.UserPlanPeriodUncheckedCreateNestedManyWithoutUserInput
   eventSponsorships?: Prisma.EventSponsorshipUncheckedCreateNestedManyWithoutSponsorInput
@@ -4248,6 +5733,7 @@ export type UserUpdateWithoutMemberEventsAsSubjectInput = {
   role?: Prisma.EnumRoleFieldUpdateOperationsInput | $Enums.Role
   verifiedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   suspendedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  suspendedUntil?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   suspensionReason?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   deletedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   deletedReason?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
@@ -4289,6 +5775,10 @@ export type UserUpdateWithoutMemberEventsAsSubjectInput = {
   reportsFiled?: Prisma.ReportUpdateManyWithoutReporterNestedInput
   blocksInitiated?: Prisma.UserBlockUpdateManyWithoutBlockerNestedInput
   blocksReceived?: Prisma.UserBlockUpdateManyWithoutBlockedNestedInput
+  suspendedBy?: Prisma.UserUpdateOneWithoutSuspendedUsersNestedInput
+  suspendedUsers?: Prisma.UserUpdateManyWithoutSuspendedByNestedInput
+  deletedBy?: Prisma.UserUpdateOneWithoutDeletedUsersNestedInput
+  deletedUsers?: Prisma.UserUpdateManyWithoutDeletedByNestedInput
   ownershipTransfersFrom?: Prisma.EventOwnershipTransferUpdateManyWithoutFromUserNestedInput
   ownershipTransfersTo?: Prisma.EventOwnershipTransferUpdateManyWithoutToUserNestedInput
   ownershipTransfersActed?: Prisma.EventOwnershipTransferUpdateManyWithoutActorNestedInput
@@ -4300,6 +5790,7 @@ export type UserUpdateWithoutMemberEventsAsSubjectInput = {
   checkinLogsAsActor?: Prisma.EventCheckinLogUpdateManyWithoutActorNestedInput
   checkinRejections?: Prisma.EventMemberUpdateManyWithoutLastCheckinRejectedByNestedInput
   auditLogsAsActor?: Prisma.EventAuditLogUpdateManyWithoutActorNestedInput
+  userAuditLogsAsActor?: Prisma.UserAuditLogUpdateManyWithoutActorNestedInput
   subscriptions?: Prisma.UserSubscriptionUpdateManyWithoutUserNestedInput
   planPeriods?: Prisma.UserPlanPeriodUpdateManyWithoutUserNestedInput
   eventSponsorships?: Prisma.EventSponsorshipUpdateManyWithoutSponsorNestedInput
@@ -4321,8 +5812,11 @@ export type UserUncheckedUpdateWithoutMemberEventsAsSubjectInput = {
   role?: Prisma.EnumRoleFieldUpdateOperationsInput | $Enums.Role
   verifiedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   suspendedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  suspendedUntil?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  suspendedById?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   suspensionReason?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   deletedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  deletedById?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   deletedReason?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   restorationToken?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   restorationTokenExpiry?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
@@ -4362,6 +5856,8 @@ export type UserUncheckedUpdateWithoutMemberEventsAsSubjectInput = {
   reportsFiled?: Prisma.ReportUncheckedUpdateManyWithoutReporterNestedInput
   blocksInitiated?: Prisma.UserBlockUncheckedUpdateManyWithoutBlockerNestedInput
   blocksReceived?: Prisma.UserBlockUncheckedUpdateManyWithoutBlockedNestedInput
+  suspendedUsers?: Prisma.UserUncheckedUpdateManyWithoutSuspendedByNestedInput
+  deletedUsers?: Prisma.UserUncheckedUpdateManyWithoutDeletedByNestedInput
   ownershipTransfersFrom?: Prisma.EventOwnershipTransferUncheckedUpdateManyWithoutFromUserNestedInput
   ownershipTransfersTo?: Prisma.EventOwnershipTransferUncheckedUpdateManyWithoutToUserNestedInput
   ownershipTransfersActed?: Prisma.EventOwnershipTransferUncheckedUpdateManyWithoutActorNestedInput
@@ -4373,6 +5869,7 @@ export type UserUncheckedUpdateWithoutMemberEventsAsSubjectInput = {
   checkinLogsAsActor?: Prisma.EventCheckinLogUncheckedUpdateManyWithoutActorNestedInput
   checkinRejections?: Prisma.EventMemberUncheckedUpdateManyWithoutLastCheckinRejectedByNestedInput
   auditLogsAsActor?: Prisma.EventAuditLogUncheckedUpdateManyWithoutActorNestedInput
+  userAuditLogsAsActor?: Prisma.UserAuditLogUncheckedUpdateManyWithoutActorNestedInput
   subscriptions?: Prisma.UserSubscriptionUncheckedUpdateManyWithoutUserNestedInput
   planPeriods?: Prisma.UserPlanPeriodUncheckedUpdateManyWithoutUserNestedInput
   eventSponsorships?: Prisma.EventSponsorshipUncheckedUpdateManyWithoutSponsorNestedInput
@@ -4405,6 +5902,7 @@ export type UserUpdateWithoutMemberEventsAsActorInput = {
   role?: Prisma.EnumRoleFieldUpdateOperationsInput | $Enums.Role
   verifiedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   suspendedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  suspendedUntil?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   suspensionReason?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   deletedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   deletedReason?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
@@ -4446,6 +5944,10 @@ export type UserUpdateWithoutMemberEventsAsActorInput = {
   reportsFiled?: Prisma.ReportUpdateManyWithoutReporterNestedInput
   blocksInitiated?: Prisma.UserBlockUpdateManyWithoutBlockerNestedInput
   blocksReceived?: Prisma.UserBlockUpdateManyWithoutBlockedNestedInput
+  suspendedBy?: Prisma.UserUpdateOneWithoutSuspendedUsersNestedInput
+  suspendedUsers?: Prisma.UserUpdateManyWithoutSuspendedByNestedInput
+  deletedBy?: Prisma.UserUpdateOneWithoutDeletedUsersNestedInput
+  deletedUsers?: Prisma.UserUpdateManyWithoutDeletedByNestedInput
   ownershipTransfersFrom?: Prisma.EventOwnershipTransferUpdateManyWithoutFromUserNestedInput
   ownershipTransfersTo?: Prisma.EventOwnershipTransferUpdateManyWithoutToUserNestedInput
   ownershipTransfersActed?: Prisma.EventOwnershipTransferUpdateManyWithoutActorNestedInput
@@ -4457,6 +5959,7 @@ export type UserUpdateWithoutMemberEventsAsActorInput = {
   checkinLogsAsActor?: Prisma.EventCheckinLogUpdateManyWithoutActorNestedInput
   checkinRejections?: Prisma.EventMemberUpdateManyWithoutLastCheckinRejectedByNestedInput
   auditLogsAsActor?: Prisma.EventAuditLogUpdateManyWithoutActorNestedInput
+  userAuditLogsAsActor?: Prisma.UserAuditLogUpdateManyWithoutActorNestedInput
   subscriptions?: Prisma.UserSubscriptionUpdateManyWithoutUserNestedInput
   planPeriods?: Prisma.UserPlanPeriodUpdateManyWithoutUserNestedInput
   eventSponsorships?: Prisma.EventSponsorshipUpdateManyWithoutSponsorNestedInput
@@ -4478,8 +5981,11 @@ export type UserUncheckedUpdateWithoutMemberEventsAsActorInput = {
   role?: Prisma.EnumRoleFieldUpdateOperationsInput | $Enums.Role
   verifiedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   suspendedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  suspendedUntil?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  suspendedById?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   suspensionReason?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   deletedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  deletedById?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   deletedReason?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   restorationToken?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   restorationTokenExpiry?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
@@ -4519,6 +6025,8 @@ export type UserUncheckedUpdateWithoutMemberEventsAsActorInput = {
   reportsFiled?: Prisma.ReportUncheckedUpdateManyWithoutReporterNestedInput
   blocksInitiated?: Prisma.UserBlockUncheckedUpdateManyWithoutBlockerNestedInput
   blocksReceived?: Prisma.UserBlockUncheckedUpdateManyWithoutBlockedNestedInput
+  suspendedUsers?: Prisma.UserUncheckedUpdateManyWithoutSuspendedByNestedInput
+  deletedUsers?: Prisma.UserUncheckedUpdateManyWithoutDeletedByNestedInput
   ownershipTransfersFrom?: Prisma.EventOwnershipTransferUncheckedUpdateManyWithoutFromUserNestedInput
   ownershipTransfersTo?: Prisma.EventOwnershipTransferUncheckedUpdateManyWithoutToUserNestedInput
   ownershipTransfersActed?: Prisma.EventOwnershipTransferUncheckedUpdateManyWithoutActorNestedInput
@@ -4530,6 +6038,7 @@ export type UserUncheckedUpdateWithoutMemberEventsAsActorInput = {
   checkinLogsAsActor?: Prisma.EventCheckinLogUncheckedUpdateManyWithoutActorNestedInput
   checkinRejections?: Prisma.EventMemberUncheckedUpdateManyWithoutLastCheckinRejectedByNestedInput
   auditLogsAsActor?: Prisma.EventAuditLogUncheckedUpdateManyWithoutActorNestedInput
+  userAuditLogsAsActor?: Prisma.UserAuditLogUncheckedUpdateManyWithoutActorNestedInput
   subscriptions?: Prisma.UserSubscriptionUncheckedUpdateManyWithoutUserNestedInput
   planPeriods?: Prisma.UserPlanPeriodUncheckedUpdateManyWithoutUserNestedInput
   eventSponsorships?: Prisma.EventSponsorshipUncheckedUpdateManyWithoutSponsorNestedInput
@@ -4551,6 +6060,7 @@ export type UserCreateWithoutCommentsDeletedInput = {
   role?: $Enums.Role
   verifiedAt?: Date | string | null
   suspendedAt?: Date | string | null
+  suspendedUntil?: Date | string | null
   suspensionReason?: string | null
   deletedAt?: Date | string | null
   deletedReason?: string | null
@@ -4592,6 +6102,10 @@ export type UserCreateWithoutCommentsDeletedInput = {
   reportsFiled?: Prisma.ReportCreateNestedManyWithoutReporterInput
   blocksInitiated?: Prisma.UserBlockCreateNestedManyWithoutBlockerInput
   blocksReceived?: Prisma.UserBlockCreateNestedManyWithoutBlockedInput
+  suspendedBy?: Prisma.UserCreateNestedOneWithoutSuspendedUsersInput
+  suspendedUsers?: Prisma.UserCreateNestedManyWithoutSuspendedByInput
+  deletedBy?: Prisma.UserCreateNestedOneWithoutDeletedUsersInput
+  deletedUsers?: Prisma.UserCreateNestedManyWithoutDeletedByInput
   ownershipTransfersFrom?: Prisma.EventOwnershipTransferCreateNestedManyWithoutFromUserInput
   ownershipTransfersTo?: Prisma.EventOwnershipTransferCreateNestedManyWithoutToUserInput
   ownershipTransfersActed?: Prisma.EventOwnershipTransferCreateNestedManyWithoutActorInput
@@ -4603,6 +6117,7 @@ export type UserCreateWithoutCommentsDeletedInput = {
   checkinLogsAsActor?: Prisma.EventCheckinLogCreateNestedManyWithoutActorInput
   checkinRejections?: Prisma.EventMemberCreateNestedManyWithoutLastCheckinRejectedByInput
   auditLogsAsActor?: Prisma.EventAuditLogCreateNestedManyWithoutActorInput
+  userAuditLogsAsActor?: Prisma.UserAuditLogCreateNestedManyWithoutActorInput
   subscriptions?: Prisma.UserSubscriptionCreateNestedManyWithoutUserInput
   planPeriods?: Prisma.UserPlanPeriodCreateNestedManyWithoutUserInput
   eventSponsorships?: Prisma.EventSponsorshipCreateNestedManyWithoutSponsorInput
@@ -4624,8 +6139,11 @@ export type UserUncheckedCreateWithoutCommentsDeletedInput = {
   role?: $Enums.Role
   verifiedAt?: Date | string | null
   suspendedAt?: Date | string | null
+  suspendedUntil?: Date | string | null
+  suspendedById?: string | null
   suspensionReason?: string | null
   deletedAt?: Date | string | null
+  deletedById?: string | null
   deletedReason?: string | null
   restorationToken?: string | null
   restorationTokenExpiry?: Date | string | null
@@ -4665,6 +6183,8 @@ export type UserUncheckedCreateWithoutCommentsDeletedInput = {
   reportsFiled?: Prisma.ReportUncheckedCreateNestedManyWithoutReporterInput
   blocksInitiated?: Prisma.UserBlockUncheckedCreateNestedManyWithoutBlockerInput
   blocksReceived?: Prisma.UserBlockUncheckedCreateNestedManyWithoutBlockedInput
+  suspendedUsers?: Prisma.UserUncheckedCreateNestedManyWithoutSuspendedByInput
+  deletedUsers?: Prisma.UserUncheckedCreateNestedManyWithoutDeletedByInput
   ownershipTransfersFrom?: Prisma.EventOwnershipTransferUncheckedCreateNestedManyWithoutFromUserInput
   ownershipTransfersTo?: Prisma.EventOwnershipTransferUncheckedCreateNestedManyWithoutToUserInput
   ownershipTransfersActed?: Prisma.EventOwnershipTransferUncheckedCreateNestedManyWithoutActorInput
@@ -4676,6 +6196,7 @@ export type UserUncheckedCreateWithoutCommentsDeletedInput = {
   checkinLogsAsActor?: Prisma.EventCheckinLogUncheckedCreateNestedManyWithoutActorInput
   checkinRejections?: Prisma.EventMemberUncheckedCreateNestedManyWithoutLastCheckinRejectedByInput
   auditLogsAsActor?: Prisma.EventAuditLogUncheckedCreateNestedManyWithoutActorInput
+  userAuditLogsAsActor?: Prisma.UserAuditLogUncheckedCreateNestedManyWithoutActorInput
   subscriptions?: Prisma.UserSubscriptionUncheckedCreateNestedManyWithoutUserInput
   planPeriods?: Prisma.UserPlanPeriodUncheckedCreateNestedManyWithoutUserInput
   eventSponsorships?: Prisma.EventSponsorshipUncheckedCreateNestedManyWithoutSponsorInput
@@ -4702,6 +6223,7 @@ export type UserCreateWithoutCommentsHiddenInput = {
   role?: $Enums.Role
   verifiedAt?: Date | string | null
   suspendedAt?: Date | string | null
+  suspendedUntil?: Date | string | null
   suspensionReason?: string | null
   deletedAt?: Date | string | null
   deletedReason?: string | null
@@ -4743,6 +6265,10 @@ export type UserCreateWithoutCommentsHiddenInput = {
   reportsFiled?: Prisma.ReportCreateNestedManyWithoutReporterInput
   blocksInitiated?: Prisma.UserBlockCreateNestedManyWithoutBlockerInput
   blocksReceived?: Prisma.UserBlockCreateNestedManyWithoutBlockedInput
+  suspendedBy?: Prisma.UserCreateNestedOneWithoutSuspendedUsersInput
+  suspendedUsers?: Prisma.UserCreateNestedManyWithoutSuspendedByInput
+  deletedBy?: Prisma.UserCreateNestedOneWithoutDeletedUsersInput
+  deletedUsers?: Prisma.UserCreateNestedManyWithoutDeletedByInput
   ownershipTransfersFrom?: Prisma.EventOwnershipTransferCreateNestedManyWithoutFromUserInput
   ownershipTransfersTo?: Prisma.EventOwnershipTransferCreateNestedManyWithoutToUserInput
   ownershipTransfersActed?: Prisma.EventOwnershipTransferCreateNestedManyWithoutActorInput
@@ -4754,6 +6280,7 @@ export type UserCreateWithoutCommentsHiddenInput = {
   checkinLogsAsActor?: Prisma.EventCheckinLogCreateNestedManyWithoutActorInput
   checkinRejections?: Prisma.EventMemberCreateNestedManyWithoutLastCheckinRejectedByInput
   auditLogsAsActor?: Prisma.EventAuditLogCreateNestedManyWithoutActorInput
+  userAuditLogsAsActor?: Prisma.UserAuditLogCreateNestedManyWithoutActorInput
   subscriptions?: Prisma.UserSubscriptionCreateNestedManyWithoutUserInput
   planPeriods?: Prisma.UserPlanPeriodCreateNestedManyWithoutUserInput
   eventSponsorships?: Prisma.EventSponsorshipCreateNestedManyWithoutSponsorInput
@@ -4775,8 +6302,11 @@ export type UserUncheckedCreateWithoutCommentsHiddenInput = {
   role?: $Enums.Role
   verifiedAt?: Date | string | null
   suspendedAt?: Date | string | null
+  suspendedUntil?: Date | string | null
+  suspendedById?: string | null
   suspensionReason?: string | null
   deletedAt?: Date | string | null
+  deletedById?: string | null
   deletedReason?: string | null
   restorationToken?: string | null
   restorationTokenExpiry?: Date | string | null
@@ -4816,6 +6346,8 @@ export type UserUncheckedCreateWithoutCommentsHiddenInput = {
   reportsFiled?: Prisma.ReportUncheckedCreateNestedManyWithoutReporterInput
   blocksInitiated?: Prisma.UserBlockUncheckedCreateNestedManyWithoutBlockerInput
   blocksReceived?: Prisma.UserBlockUncheckedCreateNestedManyWithoutBlockedInput
+  suspendedUsers?: Prisma.UserUncheckedCreateNestedManyWithoutSuspendedByInput
+  deletedUsers?: Prisma.UserUncheckedCreateNestedManyWithoutDeletedByInput
   ownershipTransfersFrom?: Prisma.EventOwnershipTransferUncheckedCreateNestedManyWithoutFromUserInput
   ownershipTransfersTo?: Prisma.EventOwnershipTransferUncheckedCreateNestedManyWithoutToUserInput
   ownershipTransfersActed?: Prisma.EventOwnershipTransferUncheckedCreateNestedManyWithoutActorInput
@@ -4827,6 +6359,7 @@ export type UserUncheckedCreateWithoutCommentsHiddenInput = {
   checkinLogsAsActor?: Prisma.EventCheckinLogUncheckedCreateNestedManyWithoutActorInput
   checkinRejections?: Prisma.EventMemberUncheckedCreateNestedManyWithoutLastCheckinRejectedByInput
   auditLogsAsActor?: Prisma.EventAuditLogUncheckedCreateNestedManyWithoutActorInput
+  userAuditLogsAsActor?: Prisma.UserAuditLogUncheckedCreateNestedManyWithoutActorInput
   subscriptions?: Prisma.UserSubscriptionUncheckedCreateNestedManyWithoutUserInput
   planPeriods?: Prisma.UserPlanPeriodUncheckedCreateNestedManyWithoutUserInput
   eventSponsorships?: Prisma.EventSponsorshipUncheckedCreateNestedManyWithoutSponsorInput
@@ -4853,6 +6386,7 @@ export type UserCreateWithoutCommentsWrittenInput = {
   role?: $Enums.Role
   verifiedAt?: Date | string | null
   suspendedAt?: Date | string | null
+  suspendedUntil?: Date | string | null
   suspensionReason?: string | null
   deletedAt?: Date | string | null
   deletedReason?: string | null
@@ -4894,6 +6428,10 @@ export type UserCreateWithoutCommentsWrittenInput = {
   reportsFiled?: Prisma.ReportCreateNestedManyWithoutReporterInput
   blocksInitiated?: Prisma.UserBlockCreateNestedManyWithoutBlockerInput
   blocksReceived?: Prisma.UserBlockCreateNestedManyWithoutBlockedInput
+  suspendedBy?: Prisma.UserCreateNestedOneWithoutSuspendedUsersInput
+  suspendedUsers?: Prisma.UserCreateNestedManyWithoutSuspendedByInput
+  deletedBy?: Prisma.UserCreateNestedOneWithoutDeletedUsersInput
+  deletedUsers?: Prisma.UserCreateNestedManyWithoutDeletedByInput
   ownershipTransfersFrom?: Prisma.EventOwnershipTransferCreateNestedManyWithoutFromUserInput
   ownershipTransfersTo?: Prisma.EventOwnershipTransferCreateNestedManyWithoutToUserInput
   ownershipTransfersActed?: Prisma.EventOwnershipTransferCreateNestedManyWithoutActorInput
@@ -4905,6 +6443,7 @@ export type UserCreateWithoutCommentsWrittenInput = {
   checkinLogsAsActor?: Prisma.EventCheckinLogCreateNestedManyWithoutActorInput
   checkinRejections?: Prisma.EventMemberCreateNestedManyWithoutLastCheckinRejectedByInput
   auditLogsAsActor?: Prisma.EventAuditLogCreateNestedManyWithoutActorInput
+  userAuditLogsAsActor?: Prisma.UserAuditLogCreateNestedManyWithoutActorInput
   subscriptions?: Prisma.UserSubscriptionCreateNestedManyWithoutUserInput
   planPeriods?: Prisma.UserPlanPeriodCreateNestedManyWithoutUserInput
   eventSponsorships?: Prisma.EventSponsorshipCreateNestedManyWithoutSponsorInput
@@ -4926,8 +6465,11 @@ export type UserUncheckedCreateWithoutCommentsWrittenInput = {
   role?: $Enums.Role
   verifiedAt?: Date | string | null
   suspendedAt?: Date | string | null
+  suspendedUntil?: Date | string | null
+  suspendedById?: string | null
   suspensionReason?: string | null
   deletedAt?: Date | string | null
+  deletedById?: string | null
   deletedReason?: string | null
   restorationToken?: string | null
   restorationTokenExpiry?: Date | string | null
@@ -4967,6 +6509,8 @@ export type UserUncheckedCreateWithoutCommentsWrittenInput = {
   reportsFiled?: Prisma.ReportUncheckedCreateNestedManyWithoutReporterInput
   blocksInitiated?: Prisma.UserBlockUncheckedCreateNestedManyWithoutBlockerInput
   blocksReceived?: Prisma.UserBlockUncheckedCreateNestedManyWithoutBlockedInput
+  suspendedUsers?: Prisma.UserUncheckedCreateNestedManyWithoutSuspendedByInput
+  deletedUsers?: Prisma.UserUncheckedCreateNestedManyWithoutDeletedByInput
   ownershipTransfersFrom?: Prisma.EventOwnershipTransferUncheckedCreateNestedManyWithoutFromUserInput
   ownershipTransfersTo?: Prisma.EventOwnershipTransferUncheckedCreateNestedManyWithoutToUserInput
   ownershipTransfersActed?: Prisma.EventOwnershipTransferUncheckedCreateNestedManyWithoutActorInput
@@ -4978,6 +6522,7 @@ export type UserUncheckedCreateWithoutCommentsWrittenInput = {
   checkinLogsAsActor?: Prisma.EventCheckinLogUncheckedCreateNestedManyWithoutActorInput
   checkinRejections?: Prisma.EventMemberUncheckedCreateNestedManyWithoutLastCheckinRejectedByInput
   auditLogsAsActor?: Prisma.EventAuditLogUncheckedCreateNestedManyWithoutActorInput
+  userAuditLogsAsActor?: Prisma.UserAuditLogUncheckedCreateNestedManyWithoutActorInput
   subscriptions?: Prisma.UserSubscriptionUncheckedCreateNestedManyWithoutUserInput
   planPeriods?: Prisma.UserPlanPeriodUncheckedCreateNestedManyWithoutUserInput
   eventSponsorships?: Prisma.EventSponsorshipUncheckedCreateNestedManyWithoutSponsorInput
@@ -5015,6 +6560,7 @@ export type UserUpdateWithoutCommentsDeletedInput = {
   role?: Prisma.EnumRoleFieldUpdateOperationsInput | $Enums.Role
   verifiedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   suspendedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  suspendedUntil?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   suspensionReason?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   deletedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   deletedReason?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
@@ -5056,6 +6602,10 @@ export type UserUpdateWithoutCommentsDeletedInput = {
   reportsFiled?: Prisma.ReportUpdateManyWithoutReporterNestedInput
   blocksInitiated?: Prisma.UserBlockUpdateManyWithoutBlockerNestedInput
   blocksReceived?: Prisma.UserBlockUpdateManyWithoutBlockedNestedInput
+  suspendedBy?: Prisma.UserUpdateOneWithoutSuspendedUsersNestedInput
+  suspendedUsers?: Prisma.UserUpdateManyWithoutSuspendedByNestedInput
+  deletedBy?: Prisma.UserUpdateOneWithoutDeletedUsersNestedInput
+  deletedUsers?: Prisma.UserUpdateManyWithoutDeletedByNestedInput
   ownershipTransfersFrom?: Prisma.EventOwnershipTransferUpdateManyWithoutFromUserNestedInput
   ownershipTransfersTo?: Prisma.EventOwnershipTransferUpdateManyWithoutToUserNestedInput
   ownershipTransfersActed?: Prisma.EventOwnershipTransferUpdateManyWithoutActorNestedInput
@@ -5067,6 +6617,7 @@ export type UserUpdateWithoutCommentsDeletedInput = {
   checkinLogsAsActor?: Prisma.EventCheckinLogUpdateManyWithoutActorNestedInput
   checkinRejections?: Prisma.EventMemberUpdateManyWithoutLastCheckinRejectedByNestedInput
   auditLogsAsActor?: Prisma.EventAuditLogUpdateManyWithoutActorNestedInput
+  userAuditLogsAsActor?: Prisma.UserAuditLogUpdateManyWithoutActorNestedInput
   subscriptions?: Prisma.UserSubscriptionUpdateManyWithoutUserNestedInput
   planPeriods?: Prisma.UserPlanPeriodUpdateManyWithoutUserNestedInput
   eventSponsorships?: Prisma.EventSponsorshipUpdateManyWithoutSponsorNestedInput
@@ -5088,8 +6639,11 @@ export type UserUncheckedUpdateWithoutCommentsDeletedInput = {
   role?: Prisma.EnumRoleFieldUpdateOperationsInput | $Enums.Role
   verifiedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   suspendedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  suspendedUntil?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  suspendedById?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   suspensionReason?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   deletedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  deletedById?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   deletedReason?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   restorationToken?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   restorationTokenExpiry?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
@@ -5129,6 +6683,8 @@ export type UserUncheckedUpdateWithoutCommentsDeletedInput = {
   reportsFiled?: Prisma.ReportUncheckedUpdateManyWithoutReporterNestedInput
   blocksInitiated?: Prisma.UserBlockUncheckedUpdateManyWithoutBlockerNestedInput
   blocksReceived?: Prisma.UserBlockUncheckedUpdateManyWithoutBlockedNestedInput
+  suspendedUsers?: Prisma.UserUncheckedUpdateManyWithoutSuspendedByNestedInput
+  deletedUsers?: Prisma.UserUncheckedUpdateManyWithoutDeletedByNestedInput
   ownershipTransfersFrom?: Prisma.EventOwnershipTransferUncheckedUpdateManyWithoutFromUserNestedInput
   ownershipTransfersTo?: Prisma.EventOwnershipTransferUncheckedUpdateManyWithoutToUserNestedInput
   ownershipTransfersActed?: Prisma.EventOwnershipTransferUncheckedUpdateManyWithoutActorNestedInput
@@ -5140,6 +6696,7 @@ export type UserUncheckedUpdateWithoutCommentsDeletedInput = {
   checkinLogsAsActor?: Prisma.EventCheckinLogUncheckedUpdateManyWithoutActorNestedInput
   checkinRejections?: Prisma.EventMemberUncheckedUpdateManyWithoutLastCheckinRejectedByNestedInput
   auditLogsAsActor?: Prisma.EventAuditLogUncheckedUpdateManyWithoutActorNestedInput
+  userAuditLogsAsActor?: Prisma.UserAuditLogUncheckedUpdateManyWithoutActorNestedInput
   subscriptions?: Prisma.UserSubscriptionUncheckedUpdateManyWithoutUserNestedInput
   planPeriods?: Prisma.UserPlanPeriodUncheckedUpdateManyWithoutUserNestedInput
   eventSponsorships?: Prisma.EventSponsorshipUncheckedUpdateManyWithoutSponsorNestedInput
@@ -5172,6 +6729,7 @@ export type UserUpdateWithoutCommentsHiddenInput = {
   role?: Prisma.EnumRoleFieldUpdateOperationsInput | $Enums.Role
   verifiedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   suspendedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  suspendedUntil?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   suspensionReason?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   deletedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   deletedReason?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
@@ -5213,6 +6771,10 @@ export type UserUpdateWithoutCommentsHiddenInput = {
   reportsFiled?: Prisma.ReportUpdateManyWithoutReporterNestedInput
   blocksInitiated?: Prisma.UserBlockUpdateManyWithoutBlockerNestedInput
   blocksReceived?: Prisma.UserBlockUpdateManyWithoutBlockedNestedInput
+  suspendedBy?: Prisma.UserUpdateOneWithoutSuspendedUsersNestedInput
+  suspendedUsers?: Prisma.UserUpdateManyWithoutSuspendedByNestedInput
+  deletedBy?: Prisma.UserUpdateOneWithoutDeletedUsersNestedInput
+  deletedUsers?: Prisma.UserUpdateManyWithoutDeletedByNestedInput
   ownershipTransfersFrom?: Prisma.EventOwnershipTransferUpdateManyWithoutFromUserNestedInput
   ownershipTransfersTo?: Prisma.EventOwnershipTransferUpdateManyWithoutToUserNestedInput
   ownershipTransfersActed?: Prisma.EventOwnershipTransferUpdateManyWithoutActorNestedInput
@@ -5224,6 +6786,7 @@ export type UserUpdateWithoutCommentsHiddenInput = {
   checkinLogsAsActor?: Prisma.EventCheckinLogUpdateManyWithoutActorNestedInput
   checkinRejections?: Prisma.EventMemberUpdateManyWithoutLastCheckinRejectedByNestedInput
   auditLogsAsActor?: Prisma.EventAuditLogUpdateManyWithoutActorNestedInput
+  userAuditLogsAsActor?: Prisma.UserAuditLogUpdateManyWithoutActorNestedInput
   subscriptions?: Prisma.UserSubscriptionUpdateManyWithoutUserNestedInput
   planPeriods?: Prisma.UserPlanPeriodUpdateManyWithoutUserNestedInput
   eventSponsorships?: Prisma.EventSponsorshipUpdateManyWithoutSponsorNestedInput
@@ -5245,8 +6808,11 @@ export type UserUncheckedUpdateWithoutCommentsHiddenInput = {
   role?: Prisma.EnumRoleFieldUpdateOperationsInput | $Enums.Role
   verifiedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   suspendedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  suspendedUntil?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  suspendedById?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   suspensionReason?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   deletedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  deletedById?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   deletedReason?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   restorationToken?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   restorationTokenExpiry?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
@@ -5286,6 +6852,8 @@ export type UserUncheckedUpdateWithoutCommentsHiddenInput = {
   reportsFiled?: Prisma.ReportUncheckedUpdateManyWithoutReporterNestedInput
   blocksInitiated?: Prisma.UserBlockUncheckedUpdateManyWithoutBlockerNestedInput
   blocksReceived?: Prisma.UserBlockUncheckedUpdateManyWithoutBlockedNestedInput
+  suspendedUsers?: Prisma.UserUncheckedUpdateManyWithoutSuspendedByNestedInput
+  deletedUsers?: Prisma.UserUncheckedUpdateManyWithoutDeletedByNestedInput
   ownershipTransfersFrom?: Prisma.EventOwnershipTransferUncheckedUpdateManyWithoutFromUserNestedInput
   ownershipTransfersTo?: Prisma.EventOwnershipTransferUncheckedUpdateManyWithoutToUserNestedInput
   ownershipTransfersActed?: Prisma.EventOwnershipTransferUncheckedUpdateManyWithoutActorNestedInput
@@ -5297,6 +6865,7 @@ export type UserUncheckedUpdateWithoutCommentsHiddenInput = {
   checkinLogsAsActor?: Prisma.EventCheckinLogUncheckedUpdateManyWithoutActorNestedInput
   checkinRejections?: Prisma.EventMemberUncheckedUpdateManyWithoutLastCheckinRejectedByNestedInput
   auditLogsAsActor?: Prisma.EventAuditLogUncheckedUpdateManyWithoutActorNestedInput
+  userAuditLogsAsActor?: Prisma.UserAuditLogUncheckedUpdateManyWithoutActorNestedInput
   subscriptions?: Prisma.UserSubscriptionUncheckedUpdateManyWithoutUserNestedInput
   planPeriods?: Prisma.UserPlanPeriodUncheckedUpdateManyWithoutUserNestedInput
   eventSponsorships?: Prisma.EventSponsorshipUncheckedUpdateManyWithoutSponsorNestedInput
@@ -5329,6 +6898,7 @@ export type UserUpdateWithoutCommentsWrittenInput = {
   role?: Prisma.EnumRoleFieldUpdateOperationsInput | $Enums.Role
   verifiedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   suspendedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  suspendedUntil?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   suspensionReason?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   deletedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   deletedReason?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
@@ -5370,6 +6940,10 @@ export type UserUpdateWithoutCommentsWrittenInput = {
   reportsFiled?: Prisma.ReportUpdateManyWithoutReporterNestedInput
   blocksInitiated?: Prisma.UserBlockUpdateManyWithoutBlockerNestedInput
   blocksReceived?: Prisma.UserBlockUpdateManyWithoutBlockedNestedInput
+  suspendedBy?: Prisma.UserUpdateOneWithoutSuspendedUsersNestedInput
+  suspendedUsers?: Prisma.UserUpdateManyWithoutSuspendedByNestedInput
+  deletedBy?: Prisma.UserUpdateOneWithoutDeletedUsersNestedInput
+  deletedUsers?: Prisma.UserUpdateManyWithoutDeletedByNestedInput
   ownershipTransfersFrom?: Prisma.EventOwnershipTransferUpdateManyWithoutFromUserNestedInput
   ownershipTransfersTo?: Prisma.EventOwnershipTransferUpdateManyWithoutToUserNestedInput
   ownershipTransfersActed?: Prisma.EventOwnershipTransferUpdateManyWithoutActorNestedInput
@@ -5381,6 +6955,7 @@ export type UserUpdateWithoutCommentsWrittenInput = {
   checkinLogsAsActor?: Prisma.EventCheckinLogUpdateManyWithoutActorNestedInput
   checkinRejections?: Prisma.EventMemberUpdateManyWithoutLastCheckinRejectedByNestedInput
   auditLogsAsActor?: Prisma.EventAuditLogUpdateManyWithoutActorNestedInput
+  userAuditLogsAsActor?: Prisma.UserAuditLogUpdateManyWithoutActorNestedInput
   subscriptions?: Prisma.UserSubscriptionUpdateManyWithoutUserNestedInput
   planPeriods?: Prisma.UserPlanPeriodUpdateManyWithoutUserNestedInput
   eventSponsorships?: Prisma.EventSponsorshipUpdateManyWithoutSponsorNestedInput
@@ -5402,8 +6977,11 @@ export type UserUncheckedUpdateWithoutCommentsWrittenInput = {
   role?: Prisma.EnumRoleFieldUpdateOperationsInput | $Enums.Role
   verifiedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   suspendedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  suspendedUntil?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  suspendedById?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   suspensionReason?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   deletedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  deletedById?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   deletedReason?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   restorationToken?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   restorationTokenExpiry?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
@@ -5443,6 +7021,8 @@ export type UserUncheckedUpdateWithoutCommentsWrittenInput = {
   reportsFiled?: Prisma.ReportUncheckedUpdateManyWithoutReporterNestedInput
   blocksInitiated?: Prisma.UserBlockUncheckedUpdateManyWithoutBlockerNestedInput
   blocksReceived?: Prisma.UserBlockUncheckedUpdateManyWithoutBlockedNestedInput
+  suspendedUsers?: Prisma.UserUncheckedUpdateManyWithoutSuspendedByNestedInput
+  deletedUsers?: Prisma.UserUncheckedUpdateManyWithoutDeletedByNestedInput
   ownershipTransfersFrom?: Prisma.EventOwnershipTransferUncheckedUpdateManyWithoutFromUserNestedInput
   ownershipTransfersTo?: Prisma.EventOwnershipTransferUncheckedUpdateManyWithoutToUserNestedInput
   ownershipTransfersActed?: Prisma.EventOwnershipTransferUncheckedUpdateManyWithoutActorNestedInput
@@ -5454,6 +7034,7 @@ export type UserUncheckedUpdateWithoutCommentsWrittenInput = {
   checkinLogsAsActor?: Prisma.EventCheckinLogUncheckedUpdateManyWithoutActorNestedInput
   checkinRejections?: Prisma.EventMemberUncheckedUpdateManyWithoutLastCheckinRejectedByNestedInput
   auditLogsAsActor?: Prisma.EventAuditLogUncheckedUpdateManyWithoutActorNestedInput
+  userAuditLogsAsActor?: Prisma.UserAuditLogUncheckedUpdateManyWithoutActorNestedInput
   subscriptions?: Prisma.UserSubscriptionUncheckedUpdateManyWithoutUserNestedInput
   planPeriods?: Prisma.UserPlanPeriodUncheckedUpdateManyWithoutUserNestedInput
   eventSponsorships?: Prisma.EventSponsorshipUncheckedUpdateManyWithoutSponsorNestedInput
@@ -5475,6 +7056,7 @@ export type UserCreateWithoutReviewsDeletedInput = {
   role?: $Enums.Role
   verifiedAt?: Date | string | null
   suspendedAt?: Date | string | null
+  suspendedUntil?: Date | string | null
   suspensionReason?: string | null
   deletedAt?: Date | string | null
   deletedReason?: string | null
@@ -5516,6 +7098,10 @@ export type UserCreateWithoutReviewsDeletedInput = {
   reportsFiled?: Prisma.ReportCreateNestedManyWithoutReporterInput
   blocksInitiated?: Prisma.UserBlockCreateNestedManyWithoutBlockerInput
   blocksReceived?: Prisma.UserBlockCreateNestedManyWithoutBlockedInput
+  suspendedBy?: Prisma.UserCreateNestedOneWithoutSuspendedUsersInput
+  suspendedUsers?: Prisma.UserCreateNestedManyWithoutSuspendedByInput
+  deletedBy?: Prisma.UserCreateNestedOneWithoutDeletedUsersInput
+  deletedUsers?: Prisma.UserCreateNestedManyWithoutDeletedByInput
   ownershipTransfersFrom?: Prisma.EventOwnershipTransferCreateNestedManyWithoutFromUserInput
   ownershipTransfersTo?: Prisma.EventOwnershipTransferCreateNestedManyWithoutToUserInput
   ownershipTransfersActed?: Prisma.EventOwnershipTransferCreateNestedManyWithoutActorInput
@@ -5527,6 +7113,7 @@ export type UserCreateWithoutReviewsDeletedInput = {
   checkinLogsAsActor?: Prisma.EventCheckinLogCreateNestedManyWithoutActorInput
   checkinRejections?: Prisma.EventMemberCreateNestedManyWithoutLastCheckinRejectedByInput
   auditLogsAsActor?: Prisma.EventAuditLogCreateNestedManyWithoutActorInput
+  userAuditLogsAsActor?: Prisma.UserAuditLogCreateNestedManyWithoutActorInput
   subscriptions?: Prisma.UserSubscriptionCreateNestedManyWithoutUserInput
   planPeriods?: Prisma.UserPlanPeriodCreateNestedManyWithoutUserInput
   eventSponsorships?: Prisma.EventSponsorshipCreateNestedManyWithoutSponsorInput
@@ -5548,8 +7135,11 @@ export type UserUncheckedCreateWithoutReviewsDeletedInput = {
   role?: $Enums.Role
   verifiedAt?: Date | string | null
   suspendedAt?: Date | string | null
+  suspendedUntil?: Date | string | null
+  suspendedById?: string | null
   suspensionReason?: string | null
   deletedAt?: Date | string | null
+  deletedById?: string | null
   deletedReason?: string | null
   restorationToken?: string | null
   restorationTokenExpiry?: Date | string | null
@@ -5589,6 +7179,8 @@ export type UserUncheckedCreateWithoutReviewsDeletedInput = {
   reportsFiled?: Prisma.ReportUncheckedCreateNestedManyWithoutReporterInput
   blocksInitiated?: Prisma.UserBlockUncheckedCreateNestedManyWithoutBlockerInput
   blocksReceived?: Prisma.UserBlockUncheckedCreateNestedManyWithoutBlockedInput
+  suspendedUsers?: Prisma.UserUncheckedCreateNestedManyWithoutSuspendedByInput
+  deletedUsers?: Prisma.UserUncheckedCreateNestedManyWithoutDeletedByInput
   ownershipTransfersFrom?: Prisma.EventOwnershipTransferUncheckedCreateNestedManyWithoutFromUserInput
   ownershipTransfersTo?: Prisma.EventOwnershipTransferUncheckedCreateNestedManyWithoutToUserInput
   ownershipTransfersActed?: Prisma.EventOwnershipTransferUncheckedCreateNestedManyWithoutActorInput
@@ -5600,6 +7192,7 @@ export type UserUncheckedCreateWithoutReviewsDeletedInput = {
   checkinLogsAsActor?: Prisma.EventCheckinLogUncheckedCreateNestedManyWithoutActorInput
   checkinRejections?: Prisma.EventMemberUncheckedCreateNestedManyWithoutLastCheckinRejectedByInput
   auditLogsAsActor?: Prisma.EventAuditLogUncheckedCreateNestedManyWithoutActorInput
+  userAuditLogsAsActor?: Prisma.UserAuditLogUncheckedCreateNestedManyWithoutActorInput
   subscriptions?: Prisma.UserSubscriptionUncheckedCreateNestedManyWithoutUserInput
   planPeriods?: Prisma.UserPlanPeriodUncheckedCreateNestedManyWithoutUserInput
   eventSponsorships?: Prisma.EventSponsorshipUncheckedCreateNestedManyWithoutSponsorInput
@@ -5626,6 +7219,7 @@ export type UserCreateWithoutReviewsHiddenInput = {
   role?: $Enums.Role
   verifiedAt?: Date | string | null
   suspendedAt?: Date | string | null
+  suspendedUntil?: Date | string | null
   suspensionReason?: string | null
   deletedAt?: Date | string | null
   deletedReason?: string | null
@@ -5667,6 +7261,10 @@ export type UserCreateWithoutReviewsHiddenInput = {
   reportsFiled?: Prisma.ReportCreateNestedManyWithoutReporterInput
   blocksInitiated?: Prisma.UserBlockCreateNestedManyWithoutBlockerInput
   blocksReceived?: Prisma.UserBlockCreateNestedManyWithoutBlockedInput
+  suspendedBy?: Prisma.UserCreateNestedOneWithoutSuspendedUsersInput
+  suspendedUsers?: Prisma.UserCreateNestedManyWithoutSuspendedByInput
+  deletedBy?: Prisma.UserCreateNestedOneWithoutDeletedUsersInput
+  deletedUsers?: Prisma.UserCreateNestedManyWithoutDeletedByInput
   ownershipTransfersFrom?: Prisma.EventOwnershipTransferCreateNestedManyWithoutFromUserInput
   ownershipTransfersTo?: Prisma.EventOwnershipTransferCreateNestedManyWithoutToUserInput
   ownershipTransfersActed?: Prisma.EventOwnershipTransferCreateNestedManyWithoutActorInput
@@ -5678,6 +7276,7 @@ export type UserCreateWithoutReviewsHiddenInput = {
   checkinLogsAsActor?: Prisma.EventCheckinLogCreateNestedManyWithoutActorInput
   checkinRejections?: Prisma.EventMemberCreateNestedManyWithoutLastCheckinRejectedByInput
   auditLogsAsActor?: Prisma.EventAuditLogCreateNestedManyWithoutActorInput
+  userAuditLogsAsActor?: Prisma.UserAuditLogCreateNestedManyWithoutActorInput
   subscriptions?: Prisma.UserSubscriptionCreateNestedManyWithoutUserInput
   planPeriods?: Prisma.UserPlanPeriodCreateNestedManyWithoutUserInput
   eventSponsorships?: Prisma.EventSponsorshipCreateNestedManyWithoutSponsorInput
@@ -5699,8 +7298,11 @@ export type UserUncheckedCreateWithoutReviewsHiddenInput = {
   role?: $Enums.Role
   verifiedAt?: Date | string | null
   suspendedAt?: Date | string | null
+  suspendedUntil?: Date | string | null
+  suspendedById?: string | null
   suspensionReason?: string | null
   deletedAt?: Date | string | null
+  deletedById?: string | null
   deletedReason?: string | null
   restorationToken?: string | null
   restorationTokenExpiry?: Date | string | null
@@ -5740,6 +7342,8 @@ export type UserUncheckedCreateWithoutReviewsHiddenInput = {
   reportsFiled?: Prisma.ReportUncheckedCreateNestedManyWithoutReporterInput
   blocksInitiated?: Prisma.UserBlockUncheckedCreateNestedManyWithoutBlockerInput
   blocksReceived?: Prisma.UserBlockUncheckedCreateNestedManyWithoutBlockedInput
+  suspendedUsers?: Prisma.UserUncheckedCreateNestedManyWithoutSuspendedByInput
+  deletedUsers?: Prisma.UserUncheckedCreateNestedManyWithoutDeletedByInput
   ownershipTransfersFrom?: Prisma.EventOwnershipTransferUncheckedCreateNestedManyWithoutFromUserInput
   ownershipTransfersTo?: Prisma.EventOwnershipTransferUncheckedCreateNestedManyWithoutToUserInput
   ownershipTransfersActed?: Prisma.EventOwnershipTransferUncheckedCreateNestedManyWithoutActorInput
@@ -5751,6 +7355,7 @@ export type UserUncheckedCreateWithoutReviewsHiddenInput = {
   checkinLogsAsActor?: Prisma.EventCheckinLogUncheckedCreateNestedManyWithoutActorInput
   checkinRejections?: Prisma.EventMemberUncheckedCreateNestedManyWithoutLastCheckinRejectedByInput
   auditLogsAsActor?: Prisma.EventAuditLogUncheckedCreateNestedManyWithoutActorInput
+  userAuditLogsAsActor?: Prisma.UserAuditLogUncheckedCreateNestedManyWithoutActorInput
   subscriptions?: Prisma.UserSubscriptionUncheckedCreateNestedManyWithoutUserInput
   planPeriods?: Prisma.UserPlanPeriodUncheckedCreateNestedManyWithoutUserInput
   eventSponsorships?: Prisma.EventSponsorshipUncheckedCreateNestedManyWithoutSponsorInput
@@ -5777,6 +7382,7 @@ export type UserCreateWithoutReviewsWrittenInput = {
   role?: $Enums.Role
   verifiedAt?: Date | string | null
   suspendedAt?: Date | string | null
+  suspendedUntil?: Date | string | null
   suspensionReason?: string | null
   deletedAt?: Date | string | null
   deletedReason?: string | null
@@ -5818,6 +7424,10 @@ export type UserCreateWithoutReviewsWrittenInput = {
   reportsFiled?: Prisma.ReportCreateNestedManyWithoutReporterInput
   blocksInitiated?: Prisma.UserBlockCreateNestedManyWithoutBlockerInput
   blocksReceived?: Prisma.UserBlockCreateNestedManyWithoutBlockedInput
+  suspendedBy?: Prisma.UserCreateNestedOneWithoutSuspendedUsersInput
+  suspendedUsers?: Prisma.UserCreateNestedManyWithoutSuspendedByInput
+  deletedBy?: Prisma.UserCreateNestedOneWithoutDeletedUsersInput
+  deletedUsers?: Prisma.UserCreateNestedManyWithoutDeletedByInput
   ownershipTransfersFrom?: Prisma.EventOwnershipTransferCreateNestedManyWithoutFromUserInput
   ownershipTransfersTo?: Prisma.EventOwnershipTransferCreateNestedManyWithoutToUserInput
   ownershipTransfersActed?: Prisma.EventOwnershipTransferCreateNestedManyWithoutActorInput
@@ -5829,6 +7439,7 @@ export type UserCreateWithoutReviewsWrittenInput = {
   checkinLogsAsActor?: Prisma.EventCheckinLogCreateNestedManyWithoutActorInput
   checkinRejections?: Prisma.EventMemberCreateNestedManyWithoutLastCheckinRejectedByInput
   auditLogsAsActor?: Prisma.EventAuditLogCreateNestedManyWithoutActorInput
+  userAuditLogsAsActor?: Prisma.UserAuditLogCreateNestedManyWithoutActorInput
   subscriptions?: Prisma.UserSubscriptionCreateNestedManyWithoutUserInput
   planPeriods?: Prisma.UserPlanPeriodCreateNestedManyWithoutUserInput
   eventSponsorships?: Prisma.EventSponsorshipCreateNestedManyWithoutSponsorInput
@@ -5850,8 +7461,11 @@ export type UserUncheckedCreateWithoutReviewsWrittenInput = {
   role?: $Enums.Role
   verifiedAt?: Date | string | null
   suspendedAt?: Date | string | null
+  suspendedUntil?: Date | string | null
+  suspendedById?: string | null
   suspensionReason?: string | null
   deletedAt?: Date | string | null
+  deletedById?: string | null
   deletedReason?: string | null
   restorationToken?: string | null
   restorationTokenExpiry?: Date | string | null
@@ -5891,6 +7505,8 @@ export type UserUncheckedCreateWithoutReviewsWrittenInput = {
   reportsFiled?: Prisma.ReportUncheckedCreateNestedManyWithoutReporterInput
   blocksInitiated?: Prisma.UserBlockUncheckedCreateNestedManyWithoutBlockerInput
   blocksReceived?: Prisma.UserBlockUncheckedCreateNestedManyWithoutBlockedInput
+  suspendedUsers?: Prisma.UserUncheckedCreateNestedManyWithoutSuspendedByInput
+  deletedUsers?: Prisma.UserUncheckedCreateNestedManyWithoutDeletedByInput
   ownershipTransfersFrom?: Prisma.EventOwnershipTransferUncheckedCreateNestedManyWithoutFromUserInput
   ownershipTransfersTo?: Prisma.EventOwnershipTransferUncheckedCreateNestedManyWithoutToUserInput
   ownershipTransfersActed?: Prisma.EventOwnershipTransferUncheckedCreateNestedManyWithoutActorInput
@@ -5902,6 +7518,7 @@ export type UserUncheckedCreateWithoutReviewsWrittenInput = {
   checkinLogsAsActor?: Prisma.EventCheckinLogUncheckedCreateNestedManyWithoutActorInput
   checkinRejections?: Prisma.EventMemberUncheckedCreateNestedManyWithoutLastCheckinRejectedByInput
   auditLogsAsActor?: Prisma.EventAuditLogUncheckedCreateNestedManyWithoutActorInput
+  userAuditLogsAsActor?: Prisma.UserAuditLogUncheckedCreateNestedManyWithoutActorInput
   subscriptions?: Prisma.UserSubscriptionUncheckedCreateNestedManyWithoutUserInput
   planPeriods?: Prisma.UserPlanPeriodUncheckedCreateNestedManyWithoutUserInput
   eventSponsorships?: Prisma.EventSponsorshipUncheckedCreateNestedManyWithoutSponsorInput
@@ -5939,6 +7556,7 @@ export type UserUpdateWithoutReviewsDeletedInput = {
   role?: Prisma.EnumRoleFieldUpdateOperationsInput | $Enums.Role
   verifiedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   suspendedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  suspendedUntil?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   suspensionReason?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   deletedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   deletedReason?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
@@ -5980,6 +7598,10 @@ export type UserUpdateWithoutReviewsDeletedInput = {
   reportsFiled?: Prisma.ReportUpdateManyWithoutReporterNestedInput
   blocksInitiated?: Prisma.UserBlockUpdateManyWithoutBlockerNestedInput
   blocksReceived?: Prisma.UserBlockUpdateManyWithoutBlockedNestedInput
+  suspendedBy?: Prisma.UserUpdateOneWithoutSuspendedUsersNestedInput
+  suspendedUsers?: Prisma.UserUpdateManyWithoutSuspendedByNestedInput
+  deletedBy?: Prisma.UserUpdateOneWithoutDeletedUsersNestedInput
+  deletedUsers?: Prisma.UserUpdateManyWithoutDeletedByNestedInput
   ownershipTransfersFrom?: Prisma.EventOwnershipTransferUpdateManyWithoutFromUserNestedInput
   ownershipTransfersTo?: Prisma.EventOwnershipTransferUpdateManyWithoutToUserNestedInput
   ownershipTransfersActed?: Prisma.EventOwnershipTransferUpdateManyWithoutActorNestedInput
@@ -5991,6 +7613,7 @@ export type UserUpdateWithoutReviewsDeletedInput = {
   checkinLogsAsActor?: Prisma.EventCheckinLogUpdateManyWithoutActorNestedInput
   checkinRejections?: Prisma.EventMemberUpdateManyWithoutLastCheckinRejectedByNestedInput
   auditLogsAsActor?: Prisma.EventAuditLogUpdateManyWithoutActorNestedInput
+  userAuditLogsAsActor?: Prisma.UserAuditLogUpdateManyWithoutActorNestedInput
   subscriptions?: Prisma.UserSubscriptionUpdateManyWithoutUserNestedInput
   planPeriods?: Prisma.UserPlanPeriodUpdateManyWithoutUserNestedInput
   eventSponsorships?: Prisma.EventSponsorshipUpdateManyWithoutSponsorNestedInput
@@ -6012,8 +7635,11 @@ export type UserUncheckedUpdateWithoutReviewsDeletedInput = {
   role?: Prisma.EnumRoleFieldUpdateOperationsInput | $Enums.Role
   verifiedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   suspendedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  suspendedUntil?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  suspendedById?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   suspensionReason?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   deletedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  deletedById?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   deletedReason?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   restorationToken?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   restorationTokenExpiry?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
@@ -6053,6 +7679,8 @@ export type UserUncheckedUpdateWithoutReviewsDeletedInput = {
   reportsFiled?: Prisma.ReportUncheckedUpdateManyWithoutReporterNestedInput
   blocksInitiated?: Prisma.UserBlockUncheckedUpdateManyWithoutBlockerNestedInput
   blocksReceived?: Prisma.UserBlockUncheckedUpdateManyWithoutBlockedNestedInput
+  suspendedUsers?: Prisma.UserUncheckedUpdateManyWithoutSuspendedByNestedInput
+  deletedUsers?: Prisma.UserUncheckedUpdateManyWithoutDeletedByNestedInput
   ownershipTransfersFrom?: Prisma.EventOwnershipTransferUncheckedUpdateManyWithoutFromUserNestedInput
   ownershipTransfersTo?: Prisma.EventOwnershipTransferUncheckedUpdateManyWithoutToUserNestedInput
   ownershipTransfersActed?: Prisma.EventOwnershipTransferUncheckedUpdateManyWithoutActorNestedInput
@@ -6064,6 +7692,7 @@ export type UserUncheckedUpdateWithoutReviewsDeletedInput = {
   checkinLogsAsActor?: Prisma.EventCheckinLogUncheckedUpdateManyWithoutActorNestedInput
   checkinRejections?: Prisma.EventMemberUncheckedUpdateManyWithoutLastCheckinRejectedByNestedInput
   auditLogsAsActor?: Prisma.EventAuditLogUncheckedUpdateManyWithoutActorNestedInput
+  userAuditLogsAsActor?: Prisma.UserAuditLogUncheckedUpdateManyWithoutActorNestedInput
   subscriptions?: Prisma.UserSubscriptionUncheckedUpdateManyWithoutUserNestedInput
   planPeriods?: Prisma.UserPlanPeriodUncheckedUpdateManyWithoutUserNestedInput
   eventSponsorships?: Prisma.EventSponsorshipUncheckedUpdateManyWithoutSponsorNestedInput
@@ -6096,6 +7725,7 @@ export type UserUpdateWithoutReviewsHiddenInput = {
   role?: Prisma.EnumRoleFieldUpdateOperationsInput | $Enums.Role
   verifiedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   suspendedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  suspendedUntil?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   suspensionReason?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   deletedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   deletedReason?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
@@ -6137,6 +7767,10 @@ export type UserUpdateWithoutReviewsHiddenInput = {
   reportsFiled?: Prisma.ReportUpdateManyWithoutReporterNestedInput
   blocksInitiated?: Prisma.UserBlockUpdateManyWithoutBlockerNestedInput
   blocksReceived?: Prisma.UserBlockUpdateManyWithoutBlockedNestedInput
+  suspendedBy?: Prisma.UserUpdateOneWithoutSuspendedUsersNestedInput
+  suspendedUsers?: Prisma.UserUpdateManyWithoutSuspendedByNestedInput
+  deletedBy?: Prisma.UserUpdateOneWithoutDeletedUsersNestedInput
+  deletedUsers?: Prisma.UserUpdateManyWithoutDeletedByNestedInput
   ownershipTransfersFrom?: Prisma.EventOwnershipTransferUpdateManyWithoutFromUserNestedInput
   ownershipTransfersTo?: Prisma.EventOwnershipTransferUpdateManyWithoutToUserNestedInput
   ownershipTransfersActed?: Prisma.EventOwnershipTransferUpdateManyWithoutActorNestedInput
@@ -6148,6 +7782,7 @@ export type UserUpdateWithoutReviewsHiddenInput = {
   checkinLogsAsActor?: Prisma.EventCheckinLogUpdateManyWithoutActorNestedInput
   checkinRejections?: Prisma.EventMemberUpdateManyWithoutLastCheckinRejectedByNestedInput
   auditLogsAsActor?: Prisma.EventAuditLogUpdateManyWithoutActorNestedInput
+  userAuditLogsAsActor?: Prisma.UserAuditLogUpdateManyWithoutActorNestedInput
   subscriptions?: Prisma.UserSubscriptionUpdateManyWithoutUserNestedInput
   planPeriods?: Prisma.UserPlanPeriodUpdateManyWithoutUserNestedInput
   eventSponsorships?: Prisma.EventSponsorshipUpdateManyWithoutSponsorNestedInput
@@ -6169,8 +7804,11 @@ export type UserUncheckedUpdateWithoutReviewsHiddenInput = {
   role?: Prisma.EnumRoleFieldUpdateOperationsInput | $Enums.Role
   verifiedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   suspendedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  suspendedUntil?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  suspendedById?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   suspensionReason?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   deletedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  deletedById?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   deletedReason?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   restorationToken?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   restorationTokenExpiry?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
@@ -6210,6 +7848,8 @@ export type UserUncheckedUpdateWithoutReviewsHiddenInput = {
   reportsFiled?: Prisma.ReportUncheckedUpdateManyWithoutReporterNestedInput
   blocksInitiated?: Prisma.UserBlockUncheckedUpdateManyWithoutBlockerNestedInput
   blocksReceived?: Prisma.UserBlockUncheckedUpdateManyWithoutBlockedNestedInput
+  suspendedUsers?: Prisma.UserUncheckedUpdateManyWithoutSuspendedByNestedInput
+  deletedUsers?: Prisma.UserUncheckedUpdateManyWithoutDeletedByNestedInput
   ownershipTransfersFrom?: Prisma.EventOwnershipTransferUncheckedUpdateManyWithoutFromUserNestedInput
   ownershipTransfersTo?: Prisma.EventOwnershipTransferUncheckedUpdateManyWithoutToUserNestedInput
   ownershipTransfersActed?: Prisma.EventOwnershipTransferUncheckedUpdateManyWithoutActorNestedInput
@@ -6221,6 +7861,7 @@ export type UserUncheckedUpdateWithoutReviewsHiddenInput = {
   checkinLogsAsActor?: Prisma.EventCheckinLogUncheckedUpdateManyWithoutActorNestedInput
   checkinRejections?: Prisma.EventMemberUncheckedUpdateManyWithoutLastCheckinRejectedByNestedInput
   auditLogsAsActor?: Prisma.EventAuditLogUncheckedUpdateManyWithoutActorNestedInput
+  userAuditLogsAsActor?: Prisma.UserAuditLogUncheckedUpdateManyWithoutActorNestedInput
   subscriptions?: Prisma.UserSubscriptionUncheckedUpdateManyWithoutUserNestedInput
   planPeriods?: Prisma.UserPlanPeriodUncheckedUpdateManyWithoutUserNestedInput
   eventSponsorships?: Prisma.EventSponsorshipUncheckedUpdateManyWithoutSponsorNestedInput
@@ -6253,6 +7894,7 @@ export type UserUpdateWithoutReviewsWrittenInput = {
   role?: Prisma.EnumRoleFieldUpdateOperationsInput | $Enums.Role
   verifiedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   suspendedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  suspendedUntil?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   suspensionReason?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   deletedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   deletedReason?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
@@ -6294,6 +7936,10 @@ export type UserUpdateWithoutReviewsWrittenInput = {
   reportsFiled?: Prisma.ReportUpdateManyWithoutReporterNestedInput
   blocksInitiated?: Prisma.UserBlockUpdateManyWithoutBlockerNestedInput
   blocksReceived?: Prisma.UserBlockUpdateManyWithoutBlockedNestedInput
+  suspendedBy?: Prisma.UserUpdateOneWithoutSuspendedUsersNestedInput
+  suspendedUsers?: Prisma.UserUpdateManyWithoutSuspendedByNestedInput
+  deletedBy?: Prisma.UserUpdateOneWithoutDeletedUsersNestedInput
+  deletedUsers?: Prisma.UserUpdateManyWithoutDeletedByNestedInput
   ownershipTransfersFrom?: Prisma.EventOwnershipTransferUpdateManyWithoutFromUserNestedInput
   ownershipTransfersTo?: Prisma.EventOwnershipTransferUpdateManyWithoutToUserNestedInput
   ownershipTransfersActed?: Prisma.EventOwnershipTransferUpdateManyWithoutActorNestedInput
@@ -6305,6 +7951,7 @@ export type UserUpdateWithoutReviewsWrittenInput = {
   checkinLogsAsActor?: Prisma.EventCheckinLogUpdateManyWithoutActorNestedInput
   checkinRejections?: Prisma.EventMemberUpdateManyWithoutLastCheckinRejectedByNestedInput
   auditLogsAsActor?: Prisma.EventAuditLogUpdateManyWithoutActorNestedInput
+  userAuditLogsAsActor?: Prisma.UserAuditLogUpdateManyWithoutActorNestedInput
   subscriptions?: Prisma.UserSubscriptionUpdateManyWithoutUserNestedInput
   planPeriods?: Prisma.UserPlanPeriodUpdateManyWithoutUserNestedInput
   eventSponsorships?: Prisma.EventSponsorshipUpdateManyWithoutSponsorNestedInput
@@ -6326,8 +7973,11 @@ export type UserUncheckedUpdateWithoutReviewsWrittenInput = {
   role?: Prisma.EnumRoleFieldUpdateOperationsInput | $Enums.Role
   verifiedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   suspendedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  suspendedUntil?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  suspendedById?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   suspensionReason?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   deletedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  deletedById?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   deletedReason?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   restorationToken?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   restorationTokenExpiry?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
@@ -6367,6 +8017,8 @@ export type UserUncheckedUpdateWithoutReviewsWrittenInput = {
   reportsFiled?: Prisma.ReportUncheckedUpdateManyWithoutReporterNestedInput
   blocksInitiated?: Prisma.UserBlockUncheckedUpdateManyWithoutBlockerNestedInput
   blocksReceived?: Prisma.UserBlockUncheckedUpdateManyWithoutBlockedNestedInput
+  suspendedUsers?: Prisma.UserUncheckedUpdateManyWithoutSuspendedByNestedInput
+  deletedUsers?: Prisma.UserUncheckedUpdateManyWithoutDeletedByNestedInput
   ownershipTransfersFrom?: Prisma.EventOwnershipTransferUncheckedUpdateManyWithoutFromUserNestedInput
   ownershipTransfersTo?: Prisma.EventOwnershipTransferUncheckedUpdateManyWithoutToUserNestedInput
   ownershipTransfersActed?: Prisma.EventOwnershipTransferUncheckedUpdateManyWithoutActorNestedInput
@@ -6378,6 +8030,7 @@ export type UserUncheckedUpdateWithoutReviewsWrittenInput = {
   checkinLogsAsActor?: Prisma.EventCheckinLogUncheckedUpdateManyWithoutActorNestedInput
   checkinRejections?: Prisma.EventMemberUncheckedUpdateManyWithoutLastCheckinRejectedByNestedInput
   auditLogsAsActor?: Prisma.EventAuditLogUncheckedUpdateManyWithoutActorNestedInput
+  userAuditLogsAsActor?: Prisma.UserAuditLogUncheckedUpdateManyWithoutActorNestedInput
   subscriptions?: Prisma.UserSubscriptionUncheckedUpdateManyWithoutUserNestedInput
   planPeriods?: Prisma.UserPlanPeriodUncheckedUpdateManyWithoutUserNestedInput
   eventSponsorships?: Prisma.EventSponsorshipUncheckedUpdateManyWithoutSponsorNestedInput
@@ -6399,6 +8052,7 @@ export type UserCreateWithoutDmThreadsAInput = {
   role?: $Enums.Role
   verifiedAt?: Date | string | null
   suspendedAt?: Date | string | null
+  suspendedUntil?: Date | string | null
   suspensionReason?: string | null
   deletedAt?: Date | string | null
   deletedReason?: string | null
@@ -6440,6 +8094,10 @@ export type UserCreateWithoutDmThreadsAInput = {
   reportsFiled?: Prisma.ReportCreateNestedManyWithoutReporterInput
   blocksInitiated?: Prisma.UserBlockCreateNestedManyWithoutBlockerInput
   blocksReceived?: Prisma.UserBlockCreateNestedManyWithoutBlockedInput
+  suspendedBy?: Prisma.UserCreateNestedOneWithoutSuspendedUsersInput
+  suspendedUsers?: Prisma.UserCreateNestedManyWithoutSuspendedByInput
+  deletedBy?: Prisma.UserCreateNestedOneWithoutDeletedUsersInput
+  deletedUsers?: Prisma.UserCreateNestedManyWithoutDeletedByInput
   ownershipTransfersFrom?: Prisma.EventOwnershipTransferCreateNestedManyWithoutFromUserInput
   ownershipTransfersTo?: Prisma.EventOwnershipTransferCreateNestedManyWithoutToUserInput
   ownershipTransfersActed?: Prisma.EventOwnershipTransferCreateNestedManyWithoutActorInput
@@ -6451,6 +8109,7 @@ export type UserCreateWithoutDmThreadsAInput = {
   checkinLogsAsActor?: Prisma.EventCheckinLogCreateNestedManyWithoutActorInput
   checkinRejections?: Prisma.EventMemberCreateNestedManyWithoutLastCheckinRejectedByInput
   auditLogsAsActor?: Prisma.EventAuditLogCreateNestedManyWithoutActorInput
+  userAuditLogsAsActor?: Prisma.UserAuditLogCreateNestedManyWithoutActorInput
   subscriptions?: Prisma.UserSubscriptionCreateNestedManyWithoutUserInput
   planPeriods?: Prisma.UserPlanPeriodCreateNestedManyWithoutUserInput
   eventSponsorships?: Prisma.EventSponsorshipCreateNestedManyWithoutSponsorInput
@@ -6472,8 +8131,11 @@ export type UserUncheckedCreateWithoutDmThreadsAInput = {
   role?: $Enums.Role
   verifiedAt?: Date | string | null
   suspendedAt?: Date | string | null
+  suspendedUntil?: Date | string | null
+  suspendedById?: string | null
   suspensionReason?: string | null
   deletedAt?: Date | string | null
+  deletedById?: string | null
   deletedReason?: string | null
   restorationToken?: string | null
   restorationTokenExpiry?: Date | string | null
@@ -6513,6 +8175,8 @@ export type UserUncheckedCreateWithoutDmThreadsAInput = {
   reportsFiled?: Prisma.ReportUncheckedCreateNestedManyWithoutReporterInput
   blocksInitiated?: Prisma.UserBlockUncheckedCreateNestedManyWithoutBlockerInput
   blocksReceived?: Prisma.UserBlockUncheckedCreateNestedManyWithoutBlockedInput
+  suspendedUsers?: Prisma.UserUncheckedCreateNestedManyWithoutSuspendedByInput
+  deletedUsers?: Prisma.UserUncheckedCreateNestedManyWithoutDeletedByInput
   ownershipTransfersFrom?: Prisma.EventOwnershipTransferUncheckedCreateNestedManyWithoutFromUserInput
   ownershipTransfersTo?: Prisma.EventOwnershipTransferUncheckedCreateNestedManyWithoutToUserInput
   ownershipTransfersActed?: Prisma.EventOwnershipTransferUncheckedCreateNestedManyWithoutActorInput
@@ -6524,6 +8188,7 @@ export type UserUncheckedCreateWithoutDmThreadsAInput = {
   checkinLogsAsActor?: Prisma.EventCheckinLogUncheckedCreateNestedManyWithoutActorInput
   checkinRejections?: Prisma.EventMemberUncheckedCreateNestedManyWithoutLastCheckinRejectedByInput
   auditLogsAsActor?: Prisma.EventAuditLogUncheckedCreateNestedManyWithoutActorInput
+  userAuditLogsAsActor?: Prisma.UserAuditLogUncheckedCreateNestedManyWithoutActorInput
   subscriptions?: Prisma.UserSubscriptionUncheckedCreateNestedManyWithoutUserInput
   planPeriods?: Prisma.UserPlanPeriodUncheckedCreateNestedManyWithoutUserInput
   eventSponsorships?: Prisma.EventSponsorshipUncheckedCreateNestedManyWithoutSponsorInput
@@ -6550,6 +8215,7 @@ export type UserCreateWithoutDmThreadsBInput = {
   role?: $Enums.Role
   verifiedAt?: Date | string | null
   suspendedAt?: Date | string | null
+  suspendedUntil?: Date | string | null
   suspensionReason?: string | null
   deletedAt?: Date | string | null
   deletedReason?: string | null
@@ -6591,6 +8257,10 @@ export type UserCreateWithoutDmThreadsBInput = {
   reportsFiled?: Prisma.ReportCreateNestedManyWithoutReporterInput
   blocksInitiated?: Prisma.UserBlockCreateNestedManyWithoutBlockerInput
   blocksReceived?: Prisma.UserBlockCreateNestedManyWithoutBlockedInput
+  suspendedBy?: Prisma.UserCreateNestedOneWithoutSuspendedUsersInput
+  suspendedUsers?: Prisma.UserCreateNestedManyWithoutSuspendedByInput
+  deletedBy?: Prisma.UserCreateNestedOneWithoutDeletedUsersInput
+  deletedUsers?: Prisma.UserCreateNestedManyWithoutDeletedByInput
   ownershipTransfersFrom?: Prisma.EventOwnershipTransferCreateNestedManyWithoutFromUserInput
   ownershipTransfersTo?: Prisma.EventOwnershipTransferCreateNestedManyWithoutToUserInput
   ownershipTransfersActed?: Prisma.EventOwnershipTransferCreateNestedManyWithoutActorInput
@@ -6602,6 +8272,7 @@ export type UserCreateWithoutDmThreadsBInput = {
   checkinLogsAsActor?: Prisma.EventCheckinLogCreateNestedManyWithoutActorInput
   checkinRejections?: Prisma.EventMemberCreateNestedManyWithoutLastCheckinRejectedByInput
   auditLogsAsActor?: Prisma.EventAuditLogCreateNestedManyWithoutActorInput
+  userAuditLogsAsActor?: Prisma.UserAuditLogCreateNestedManyWithoutActorInput
   subscriptions?: Prisma.UserSubscriptionCreateNestedManyWithoutUserInput
   planPeriods?: Prisma.UserPlanPeriodCreateNestedManyWithoutUserInput
   eventSponsorships?: Prisma.EventSponsorshipCreateNestedManyWithoutSponsorInput
@@ -6623,8 +8294,11 @@ export type UserUncheckedCreateWithoutDmThreadsBInput = {
   role?: $Enums.Role
   verifiedAt?: Date | string | null
   suspendedAt?: Date | string | null
+  suspendedUntil?: Date | string | null
+  suspendedById?: string | null
   suspensionReason?: string | null
   deletedAt?: Date | string | null
+  deletedById?: string | null
   deletedReason?: string | null
   restorationToken?: string | null
   restorationTokenExpiry?: Date | string | null
@@ -6664,6 +8338,8 @@ export type UserUncheckedCreateWithoutDmThreadsBInput = {
   reportsFiled?: Prisma.ReportUncheckedCreateNestedManyWithoutReporterInput
   blocksInitiated?: Prisma.UserBlockUncheckedCreateNestedManyWithoutBlockerInput
   blocksReceived?: Prisma.UserBlockUncheckedCreateNestedManyWithoutBlockedInput
+  suspendedUsers?: Prisma.UserUncheckedCreateNestedManyWithoutSuspendedByInput
+  deletedUsers?: Prisma.UserUncheckedCreateNestedManyWithoutDeletedByInput
   ownershipTransfersFrom?: Prisma.EventOwnershipTransferUncheckedCreateNestedManyWithoutFromUserInput
   ownershipTransfersTo?: Prisma.EventOwnershipTransferUncheckedCreateNestedManyWithoutToUserInput
   ownershipTransfersActed?: Prisma.EventOwnershipTransferUncheckedCreateNestedManyWithoutActorInput
@@ -6675,6 +8351,7 @@ export type UserUncheckedCreateWithoutDmThreadsBInput = {
   checkinLogsAsActor?: Prisma.EventCheckinLogUncheckedCreateNestedManyWithoutActorInput
   checkinRejections?: Prisma.EventMemberUncheckedCreateNestedManyWithoutLastCheckinRejectedByInput
   auditLogsAsActor?: Prisma.EventAuditLogUncheckedCreateNestedManyWithoutActorInput
+  userAuditLogsAsActor?: Prisma.UserAuditLogUncheckedCreateNestedManyWithoutActorInput
   subscriptions?: Prisma.UserSubscriptionUncheckedCreateNestedManyWithoutUserInput
   planPeriods?: Prisma.UserPlanPeriodUncheckedCreateNestedManyWithoutUserInput
   eventSponsorships?: Prisma.EventSponsorshipUncheckedCreateNestedManyWithoutSponsorInput
@@ -6712,6 +8389,7 @@ export type UserUpdateWithoutDmThreadsAInput = {
   role?: Prisma.EnumRoleFieldUpdateOperationsInput | $Enums.Role
   verifiedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   suspendedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  suspendedUntil?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   suspensionReason?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   deletedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   deletedReason?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
@@ -6753,6 +8431,10 @@ export type UserUpdateWithoutDmThreadsAInput = {
   reportsFiled?: Prisma.ReportUpdateManyWithoutReporterNestedInput
   blocksInitiated?: Prisma.UserBlockUpdateManyWithoutBlockerNestedInput
   blocksReceived?: Prisma.UserBlockUpdateManyWithoutBlockedNestedInput
+  suspendedBy?: Prisma.UserUpdateOneWithoutSuspendedUsersNestedInput
+  suspendedUsers?: Prisma.UserUpdateManyWithoutSuspendedByNestedInput
+  deletedBy?: Prisma.UserUpdateOneWithoutDeletedUsersNestedInput
+  deletedUsers?: Prisma.UserUpdateManyWithoutDeletedByNestedInput
   ownershipTransfersFrom?: Prisma.EventOwnershipTransferUpdateManyWithoutFromUserNestedInput
   ownershipTransfersTo?: Prisma.EventOwnershipTransferUpdateManyWithoutToUserNestedInput
   ownershipTransfersActed?: Prisma.EventOwnershipTransferUpdateManyWithoutActorNestedInput
@@ -6764,6 +8446,7 @@ export type UserUpdateWithoutDmThreadsAInput = {
   checkinLogsAsActor?: Prisma.EventCheckinLogUpdateManyWithoutActorNestedInput
   checkinRejections?: Prisma.EventMemberUpdateManyWithoutLastCheckinRejectedByNestedInput
   auditLogsAsActor?: Prisma.EventAuditLogUpdateManyWithoutActorNestedInput
+  userAuditLogsAsActor?: Prisma.UserAuditLogUpdateManyWithoutActorNestedInput
   subscriptions?: Prisma.UserSubscriptionUpdateManyWithoutUserNestedInput
   planPeriods?: Prisma.UserPlanPeriodUpdateManyWithoutUserNestedInput
   eventSponsorships?: Prisma.EventSponsorshipUpdateManyWithoutSponsorNestedInput
@@ -6785,8 +8468,11 @@ export type UserUncheckedUpdateWithoutDmThreadsAInput = {
   role?: Prisma.EnumRoleFieldUpdateOperationsInput | $Enums.Role
   verifiedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   suspendedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  suspendedUntil?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  suspendedById?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   suspensionReason?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   deletedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  deletedById?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   deletedReason?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   restorationToken?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   restorationTokenExpiry?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
@@ -6826,6 +8512,8 @@ export type UserUncheckedUpdateWithoutDmThreadsAInput = {
   reportsFiled?: Prisma.ReportUncheckedUpdateManyWithoutReporterNestedInput
   blocksInitiated?: Prisma.UserBlockUncheckedUpdateManyWithoutBlockerNestedInput
   blocksReceived?: Prisma.UserBlockUncheckedUpdateManyWithoutBlockedNestedInput
+  suspendedUsers?: Prisma.UserUncheckedUpdateManyWithoutSuspendedByNestedInput
+  deletedUsers?: Prisma.UserUncheckedUpdateManyWithoutDeletedByNestedInput
   ownershipTransfersFrom?: Prisma.EventOwnershipTransferUncheckedUpdateManyWithoutFromUserNestedInput
   ownershipTransfersTo?: Prisma.EventOwnershipTransferUncheckedUpdateManyWithoutToUserNestedInput
   ownershipTransfersActed?: Prisma.EventOwnershipTransferUncheckedUpdateManyWithoutActorNestedInput
@@ -6837,6 +8525,7 @@ export type UserUncheckedUpdateWithoutDmThreadsAInput = {
   checkinLogsAsActor?: Prisma.EventCheckinLogUncheckedUpdateManyWithoutActorNestedInput
   checkinRejections?: Prisma.EventMemberUncheckedUpdateManyWithoutLastCheckinRejectedByNestedInput
   auditLogsAsActor?: Prisma.EventAuditLogUncheckedUpdateManyWithoutActorNestedInput
+  userAuditLogsAsActor?: Prisma.UserAuditLogUncheckedUpdateManyWithoutActorNestedInput
   subscriptions?: Prisma.UserSubscriptionUncheckedUpdateManyWithoutUserNestedInput
   planPeriods?: Prisma.UserPlanPeriodUncheckedUpdateManyWithoutUserNestedInput
   eventSponsorships?: Prisma.EventSponsorshipUncheckedUpdateManyWithoutSponsorNestedInput
@@ -6869,6 +8558,7 @@ export type UserUpdateWithoutDmThreadsBInput = {
   role?: Prisma.EnumRoleFieldUpdateOperationsInput | $Enums.Role
   verifiedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   suspendedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  suspendedUntil?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   suspensionReason?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   deletedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   deletedReason?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
@@ -6910,6 +8600,10 @@ export type UserUpdateWithoutDmThreadsBInput = {
   reportsFiled?: Prisma.ReportUpdateManyWithoutReporterNestedInput
   blocksInitiated?: Prisma.UserBlockUpdateManyWithoutBlockerNestedInput
   blocksReceived?: Prisma.UserBlockUpdateManyWithoutBlockedNestedInput
+  suspendedBy?: Prisma.UserUpdateOneWithoutSuspendedUsersNestedInput
+  suspendedUsers?: Prisma.UserUpdateManyWithoutSuspendedByNestedInput
+  deletedBy?: Prisma.UserUpdateOneWithoutDeletedUsersNestedInput
+  deletedUsers?: Prisma.UserUpdateManyWithoutDeletedByNestedInput
   ownershipTransfersFrom?: Prisma.EventOwnershipTransferUpdateManyWithoutFromUserNestedInput
   ownershipTransfersTo?: Prisma.EventOwnershipTransferUpdateManyWithoutToUserNestedInput
   ownershipTransfersActed?: Prisma.EventOwnershipTransferUpdateManyWithoutActorNestedInput
@@ -6921,6 +8615,7 @@ export type UserUpdateWithoutDmThreadsBInput = {
   checkinLogsAsActor?: Prisma.EventCheckinLogUpdateManyWithoutActorNestedInput
   checkinRejections?: Prisma.EventMemberUpdateManyWithoutLastCheckinRejectedByNestedInput
   auditLogsAsActor?: Prisma.EventAuditLogUpdateManyWithoutActorNestedInput
+  userAuditLogsAsActor?: Prisma.UserAuditLogUpdateManyWithoutActorNestedInput
   subscriptions?: Prisma.UserSubscriptionUpdateManyWithoutUserNestedInput
   planPeriods?: Prisma.UserPlanPeriodUpdateManyWithoutUserNestedInput
   eventSponsorships?: Prisma.EventSponsorshipUpdateManyWithoutSponsorNestedInput
@@ -6942,8 +8637,11 @@ export type UserUncheckedUpdateWithoutDmThreadsBInput = {
   role?: Prisma.EnumRoleFieldUpdateOperationsInput | $Enums.Role
   verifiedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   suspendedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  suspendedUntil?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  suspendedById?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   suspensionReason?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   deletedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  deletedById?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   deletedReason?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   restorationToken?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   restorationTokenExpiry?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
@@ -6983,6 +8681,8 @@ export type UserUncheckedUpdateWithoutDmThreadsBInput = {
   reportsFiled?: Prisma.ReportUncheckedUpdateManyWithoutReporterNestedInput
   blocksInitiated?: Prisma.UserBlockUncheckedUpdateManyWithoutBlockerNestedInput
   blocksReceived?: Prisma.UserBlockUncheckedUpdateManyWithoutBlockedNestedInput
+  suspendedUsers?: Prisma.UserUncheckedUpdateManyWithoutSuspendedByNestedInput
+  deletedUsers?: Prisma.UserUncheckedUpdateManyWithoutDeletedByNestedInput
   ownershipTransfersFrom?: Prisma.EventOwnershipTransferUncheckedUpdateManyWithoutFromUserNestedInput
   ownershipTransfersTo?: Prisma.EventOwnershipTransferUncheckedUpdateManyWithoutToUserNestedInput
   ownershipTransfersActed?: Prisma.EventOwnershipTransferUncheckedUpdateManyWithoutActorNestedInput
@@ -6994,6 +8694,7 @@ export type UserUncheckedUpdateWithoutDmThreadsBInput = {
   checkinLogsAsActor?: Prisma.EventCheckinLogUncheckedUpdateManyWithoutActorNestedInput
   checkinRejections?: Prisma.EventMemberUncheckedUpdateManyWithoutLastCheckinRejectedByNestedInput
   auditLogsAsActor?: Prisma.EventAuditLogUncheckedUpdateManyWithoutActorNestedInput
+  userAuditLogsAsActor?: Prisma.UserAuditLogUncheckedUpdateManyWithoutActorNestedInput
   subscriptions?: Prisma.UserSubscriptionUncheckedUpdateManyWithoutUserNestedInput
   planPeriods?: Prisma.UserPlanPeriodUncheckedUpdateManyWithoutUserNestedInput
   eventSponsorships?: Prisma.EventSponsorshipUncheckedUpdateManyWithoutSponsorNestedInput
@@ -7015,6 +8716,7 @@ export type UserCreateWithoutDmMessagesInput = {
   role?: $Enums.Role
   verifiedAt?: Date | string | null
   suspendedAt?: Date | string | null
+  suspendedUntil?: Date | string | null
   suspensionReason?: string | null
   deletedAt?: Date | string | null
   deletedReason?: string | null
@@ -7056,6 +8758,10 @@ export type UserCreateWithoutDmMessagesInput = {
   reportsFiled?: Prisma.ReportCreateNestedManyWithoutReporterInput
   blocksInitiated?: Prisma.UserBlockCreateNestedManyWithoutBlockerInput
   blocksReceived?: Prisma.UserBlockCreateNestedManyWithoutBlockedInput
+  suspendedBy?: Prisma.UserCreateNestedOneWithoutSuspendedUsersInput
+  suspendedUsers?: Prisma.UserCreateNestedManyWithoutSuspendedByInput
+  deletedBy?: Prisma.UserCreateNestedOneWithoutDeletedUsersInput
+  deletedUsers?: Prisma.UserCreateNestedManyWithoutDeletedByInput
   ownershipTransfersFrom?: Prisma.EventOwnershipTransferCreateNestedManyWithoutFromUserInput
   ownershipTransfersTo?: Prisma.EventOwnershipTransferCreateNestedManyWithoutToUserInput
   ownershipTransfersActed?: Prisma.EventOwnershipTransferCreateNestedManyWithoutActorInput
@@ -7067,6 +8773,7 @@ export type UserCreateWithoutDmMessagesInput = {
   checkinLogsAsActor?: Prisma.EventCheckinLogCreateNestedManyWithoutActorInput
   checkinRejections?: Prisma.EventMemberCreateNestedManyWithoutLastCheckinRejectedByInput
   auditLogsAsActor?: Prisma.EventAuditLogCreateNestedManyWithoutActorInput
+  userAuditLogsAsActor?: Prisma.UserAuditLogCreateNestedManyWithoutActorInput
   subscriptions?: Prisma.UserSubscriptionCreateNestedManyWithoutUserInput
   planPeriods?: Prisma.UserPlanPeriodCreateNestedManyWithoutUserInput
   eventSponsorships?: Prisma.EventSponsorshipCreateNestedManyWithoutSponsorInput
@@ -7088,8 +8795,11 @@ export type UserUncheckedCreateWithoutDmMessagesInput = {
   role?: $Enums.Role
   verifiedAt?: Date | string | null
   suspendedAt?: Date | string | null
+  suspendedUntil?: Date | string | null
+  suspendedById?: string | null
   suspensionReason?: string | null
   deletedAt?: Date | string | null
+  deletedById?: string | null
   deletedReason?: string | null
   restorationToken?: string | null
   restorationTokenExpiry?: Date | string | null
@@ -7129,6 +8839,8 @@ export type UserUncheckedCreateWithoutDmMessagesInput = {
   reportsFiled?: Prisma.ReportUncheckedCreateNestedManyWithoutReporterInput
   blocksInitiated?: Prisma.UserBlockUncheckedCreateNestedManyWithoutBlockerInput
   blocksReceived?: Prisma.UserBlockUncheckedCreateNestedManyWithoutBlockedInput
+  suspendedUsers?: Prisma.UserUncheckedCreateNestedManyWithoutSuspendedByInput
+  deletedUsers?: Prisma.UserUncheckedCreateNestedManyWithoutDeletedByInput
   ownershipTransfersFrom?: Prisma.EventOwnershipTransferUncheckedCreateNestedManyWithoutFromUserInput
   ownershipTransfersTo?: Prisma.EventOwnershipTransferUncheckedCreateNestedManyWithoutToUserInput
   ownershipTransfersActed?: Prisma.EventOwnershipTransferUncheckedCreateNestedManyWithoutActorInput
@@ -7140,6 +8852,7 @@ export type UserUncheckedCreateWithoutDmMessagesInput = {
   checkinLogsAsActor?: Prisma.EventCheckinLogUncheckedCreateNestedManyWithoutActorInput
   checkinRejections?: Prisma.EventMemberUncheckedCreateNestedManyWithoutLastCheckinRejectedByInput
   auditLogsAsActor?: Prisma.EventAuditLogUncheckedCreateNestedManyWithoutActorInput
+  userAuditLogsAsActor?: Prisma.UserAuditLogUncheckedCreateNestedManyWithoutActorInput
   subscriptions?: Prisma.UserSubscriptionUncheckedCreateNestedManyWithoutUserInput
   planPeriods?: Prisma.UserPlanPeriodUncheckedCreateNestedManyWithoutUserInput
   eventSponsorships?: Prisma.EventSponsorshipUncheckedCreateNestedManyWithoutSponsorInput
@@ -7177,6 +8890,7 @@ export type UserUpdateWithoutDmMessagesInput = {
   role?: Prisma.EnumRoleFieldUpdateOperationsInput | $Enums.Role
   verifiedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   suspendedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  suspendedUntil?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   suspensionReason?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   deletedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   deletedReason?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
@@ -7218,6 +8932,10 @@ export type UserUpdateWithoutDmMessagesInput = {
   reportsFiled?: Prisma.ReportUpdateManyWithoutReporterNestedInput
   blocksInitiated?: Prisma.UserBlockUpdateManyWithoutBlockerNestedInput
   blocksReceived?: Prisma.UserBlockUpdateManyWithoutBlockedNestedInput
+  suspendedBy?: Prisma.UserUpdateOneWithoutSuspendedUsersNestedInput
+  suspendedUsers?: Prisma.UserUpdateManyWithoutSuspendedByNestedInput
+  deletedBy?: Prisma.UserUpdateOneWithoutDeletedUsersNestedInput
+  deletedUsers?: Prisma.UserUpdateManyWithoutDeletedByNestedInput
   ownershipTransfersFrom?: Prisma.EventOwnershipTransferUpdateManyWithoutFromUserNestedInput
   ownershipTransfersTo?: Prisma.EventOwnershipTransferUpdateManyWithoutToUserNestedInput
   ownershipTransfersActed?: Prisma.EventOwnershipTransferUpdateManyWithoutActorNestedInput
@@ -7229,6 +8947,7 @@ export type UserUpdateWithoutDmMessagesInput = {
   checkinLogsAsActor?: Prisma.EventCheckinLogUpdateManyWithoutActorNestedInput
   checkinRejections?: Prisma.EventMemberUpdateManyWithoutLastCheckinRejectedByNestedInput
   auditLogsAsActor?: Prisma.EventAuditLogUpdateManyWithoutActorNestedInput
+  userAuditLogsAsActor?: Prisma.UserAuditLogUpdateManyWithoutActorNestedInput
   subscriptions?: Prisma.UserSubscriptionUpdateManyWithoutUserNestedInput
   planPeriods?: Prisma.UserPlanPeriodUpdateManyWithoutUserNestedInput
   eventSponsorships?: Prisma.EventSponsorshipUpdateManyWithoutSponsorNestedInput
@@ -7250,8 +8969,11 @@ export type UserUncheckedUpdateWithoutDmMessagesInput = {
   role?: Prisma.EnumRoleFieldUpdateOperationsInput | $Enums.Role
   verifiedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   suspendedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  suspendedUntil?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  suspendedById?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   suspensionReason?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   deletedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  deletedById?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   deletedReason?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   restorationToken?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   restorationTokenExpiry?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
@@ -7291,6 +9013,8 @@ export type UserUncheckedUpdateWithoutDmMessagesInput = {
   reportsFiled?: Prisma.ReportUncheckedUpdateManyWithoutReporterNestedInput
   blocksInitiated?: Prisma.UserBlockUncheckedUpdateManyWithoutBlockerNestedInput
   blocksReceived?: Prisma.UserBlockUncheckedUpdateManyWithoutBlockedNestedInput
+  suspendedUsers?: Prisma.UserUncheckedUpdateManyWithoutSuspendedByNestedInput
+  deletedUsers?: Prisma.UserUncheckedUpdateManyWithoutDeletedByNestedInput
   ownershipTransfersFrom?: Prisma.EventOwnershipTransferUncheckedUpdateManyWithoutFromUserNestedInput
   ownershipTransfersTo?: Prisma.EventOwnershipTransferUncheckedUpdateManyWithoutToUserNestedInput
   ownershipTransfersActed?: Prisma.EventOwnershipTransferUncheckedUpdateManyWithoutActorNestedInput
@@ -7302,6 +9026,7 @@ export type UserUncheckedUpdateWithoutDmMessagesInput = {
   checkinLogsAsActor?: Prisma.EventCheckinLogUncheckedUpdateManyWithoutActorNestedInput
   checkinRejections?: Prisma.EventMemberUncheckedUpdateManyWithoutLastCheckinRejectedByNestedInput
   auditLogsAsActor?: Prisma.EventAuditLogUncheckedUpdateManyWithoutActorNestedInput
+  userAuditLogsAsActor?: Prisma.UserAuditLogUncheckedUpdateManyWithoutActorNestedInput
   subscriptions?: Prisma.UserSubscriptionUncheckedUpdateManyWithoutUserNestedInput
   planPeriods?: Prisma.UserPlanPeriodUncheckedUpdateManyWithoutUserNestedInput
   eventSponsorships?: Prisma.EventSponsorshipUncheckedUpdateManyWithoutSponsorNestedInput
@@ -7323,6 +9048,7 @@ export type UserCreateWithoutDmMessageReactionsInput = {
   role?: $Enums.Role
   verifiedAt?: Date | string | null
   suspendedAt?: Date | string | null
+  suspendedUntil?: Date | string | null
   suspensionReason?: string | null
   deletedAt?: Date | string | null
   deletedReason?: string | null
@@ -7364,6 +9090,10 @@ export type UserCreateWithoutDmMessageReactionsInput = {
   reportsFiled?: Prisma.ReportCreateNestedManyWithoutReporterInput
   blocksInitiated?: Prisma.UserBlockCreateNestedManyWithoutBlockerInput
   blocksReceived?: Prisma.UserBlockCreateNestedManyWithoutBlockedInput
+  suspendedBy?: Prisma.UserCreateNestedOneWithoutSuspendedUsersInput
+  suspendedUsers?: Prisma.UserCreateNestedManyWithoutSuspendedByInput
+  deletedBy?: Prisma.UserCreateNestedOneWithoutDeletedUsersInput
+  deletedUsers?: Prisma.UserCreateNestedManyWithoutDeletedByInput
   ownershipTransfersFrom?: Prisma.EventOwnershipTransferCreateNestedManyWithoutFromUserInput
   ownershipTransfersTo?: Prisma.EventOwnershipTransferCreateNestedManyWithoutToUserInput
   ownershipTransfersActed?: Prisma.EventOwnershipTransferCreateNestedManyWithoutActorInput
@@ -7375,6 +9105,7 @@ export type UserCreateWithoutDmMessageReactionsInput = {
   checkinLogsAsActor?: Prisma.EventCheckinLogCreateNestedManyWithoutActorInput
   checkinRejections?: Prisma.EventMemberCreateNestedManyWithoutLastCheckinRejectedByInput
   auditLogsAsActor?: Prisma.EventAuditLogCreateNestedManyWithoutActorInput
+  userAuditLogsAsActor?: Prisma.UserAuditLogCreateNestedManyWithoutActorInput
   subscriptions?: Prisma.UserSubscriptionCreateNestedManyWithoutUserInput
   planPeriods?: Prisma.UserPlanPeriodCreateNestedManyWithoutUserInput
   eventSponsorships?: Prisma.EventSponsorshipCreateNestedManyWithoutSponsorInput
@@ -7396,8 +9127,11 @@ export type UserUncheckedCreateWithoutDmMessageReactionsInput = {
   role?: $Enums.Role
   verifiedAt?: Date | string | null
   suspendedAt?: Date | string | null
+  suspendedUntil?: Date | string | null
+  suspendedById?: string | null
   suspensionReason?: string | null
   deletedAt?: Date | string | null
+  deletedById?: string | null
   deletedReason?: string | null
   restorationToken?: string | null
   restorationTokenExpiry?: Date | string | null
@@ -7437,6 +9171,8 @@ export type UserUncheckedCreateWithoutDmMessageReactionsInput = {
   reportsFiled?: Prisma.ReportUncheckedCreateNestedManyWithoutReporterInput
   blocksInitiated?: Prisma.UserBlockUncheckedCreateNestedManyWithoutBlockerInput
   blocksReceived?: Prisma.UserBlockUncheckedCreateNestedManyWithoutBlockedInput
+  suspendedUsers?: Prisma.UserUncheckedCreateNestedManyWithoutSuspendedByInput
+  deletedUsers?: Prisma.UserUncheckedCreateNestedManyWithoutDeletedByInput
   ownershipTransfersFrom?: Prisma.EventOwnershipTransferUncheckedCreateNestedManyWithoutFromUserInput
   ownershipTransfersTo?: Prisma.EventOwnershipTransferUncheckedCreateNestedManyWithoutToUserInput
   ownershipTransfersActed?: Prisma.EventOwnershipTransferUncheckedCreateNestedManyWithoutActorInput
@@ -7448,6 +9184,7 @@ export type UserUncheckedCreateWithoutDmMessageReactionsInput = {
   checkinLogsAsActor?: Prisma.EventCheckinLogUncheckedCreateNestedManyWithoutActorInput
   checkinRejections?: Prisma.EventMemberUncheckedCreateNestedManyWithoutLastCheckinRejectedByInput
   auditLogsAsActor?: Prisma.EventAuditLogUncheckedCreateNestedManyWithoutActorInput
+  userAuditLogsAsActor?: Prisma.UserAuditLogUncheckedCreateNestedManyWithoutActorInput
   subscriptions?: Prisma.UserSubscriptionUncheckedCreateNestedManyWithoutUserInput
   planPeriods?: Prisma.UserPlanPeriodUncheckedCreateNestedManyWithoutUserInput
   eventSponsorships?: Prisma.EventSponsorshipUncheckedCreateNestedManyWithoutSponsorInput
@@ -7485,6 +9222,7 @@ export type UserUpdateWithoutDmMessageReactionsInput = {
   role?: Prisma.EnumRoleFieldUpdateOperationsInput | $Enums.Role
   verifiedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   suspendedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  suspendedUntil?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   suspensionReason?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   deletedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   deletedReason?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
@@ -7526,6 +9264,10 @@ export type UserUpdateWithoutDmMessageReactionsInput = {
   reportsFiled?: Prisma.ReportUpdateManyWithoutReporterNestedInput
   blocksInitiated?: Prisma.UserBlockUpdateManyWithoutBlockerNestedInput
   blocksReceived?: Prisma.UserBlockUpdateManyWithoutBlockedNestedInput
+  suspendedBy?: Prisma.UserUpdateOneWithoutSuspendedUsersNestedInput
+  suspendedUsers?: Prisma.UserUpdateManyWithoutSuspendedByNestedInput
+  deletedBy?: Prisma.UserUpdateOneWithoutDeletedUsersNestedInput
+  deletedUsers?: Prisma.UserUpdateManyWithoutDeletedByNestedInput
   ownershipTransfersFrom?: Prisma.EventOwnershipTransferUpdateManyWithoutFromUserNestedInput
   ownershipTransfersTo?: Prisma.EventOwnershipTransferUpdateManyWithoutToUserNestedInput
   ownershipTransfersActed?: Prisma.EventOwnershipTransferUpdateManyWithoutActorNestedInput
@@ -7537,6 +9279,7 @@ export type UserUpdateWithoutDmMessageReactionsInput = {
   checkinLogsAsActor?: Prisma.EventCheckinLogUpdateManyWithoutActorNestedInput
   checkinRejections?: Prisma.EventMemberUpdateManyWithoutLastCheckinRejectedByNestedInput
   auditLogsAsActor?: Prisma.EventAuditLogUpdateManyWithoutActorNestedInput
+  userAuditLogsAsActor?: Prisma.UserAuditLogUpdateManyWithoutActorNestedInput
   subscriptions?: Prisma.UserSubscriptionUpdateManyWithoutUserNestedInput
   planPeriods?: Prisma.UserPlanPeriodUpdateManyWithoutUserNestedInput
   eventSponsorships?: Prisma.EventSponsorshipUpdateManyWithoutSponsorNestedInput
@@ -7558,8 +9301,11 @@ export type UserUncheckedUpdateWithoutDmMessageReactionsInput = {
   role?: Prisma.EnumRoleFieldUpdateOperationsInput | $Enums.Role
   verifiedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   suspendedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  suspendedUntil?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  suspendedById?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   suspensionReason?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   deletedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  deletedById?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   deletedReason?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   restorationToken?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   restorationTokenExpiry?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
@@ -7599,6 +9345,8 @@ export type UserUncheckedUpdateWithoutDmMessageReactionsInput = {
   reportsFiled?: Prisma.ReportUncheckedUpdateManyWithoutReporterNestedInput
   blocksInitiated?: Prisma.UserBlockUncheckedUpdateManyWithoutBlockerNestedInput
   blocksReceived?: Prisma.UserBlockUncheckedUpdateManyWithoutBlockedNestedInput
+  suspendedUsers?: Prisma.UserUncheckedUpdateManyWithoutSuspendedByNestedInput
+  deletedUsers?: Prisma.UserUncheckedUpdateManyWithoutDeletedByNestedInput
   ownershipTransfersFrom?: Prisma.EventOwnershipTransferUncheckedUpdateManyWithoutFromUserNestedInput
   ownershipTransfersTo?: Prisma.EventOwnershipTransferUncheckedUpdateManyWithoutToUserNestedInput
   ownershipTransfersActed?: Prisma.EventOwnershipTransferUncheckedUpdateManyWithoutActorNestedInput
@@ -7610,6 +9358,7 @@ export type UserUncheckedUpdateWithoutDmMessageReactionsInput = {
   checkinLogsAsActor?: Prisma.EventCheckinLogUncheckedUpdateManyWithoutActorNestedInput
   checkinRejections?: Prisma.EventMemberUncheckedUpdateManyWithoutLastCheckinRejectedByNestedInput
   auditLogsAsActor?: Prisma.EventAuditLogUncheckedUpdateManyWithoutActorNestedInput
+  userAuditLogsAsActor?: Prisma.UserAuditLogUncheckedUpdateManyWithoutActorNestedInput
   subscriptions?: Prisma.UserSubscriptionUncheckedUpdateManyWithoutUserNestedInput
   planPeriods?: Prisma.UserPlanPeriodUncheckedUpdateManyWithoutUserNestedInput
   eventSponsorships?: Prisma.EventSponsorshipUncheckedUpdateManyWithoutSponsorNestedInput
@@ -7631,6 +9380,7 @@ export type UserCreateWithoutNotificationsInput = {
   role?: $Enums.Role
   verifiedAt?: Date | string | null
   suspendedAt?: Date | string | null
+  suspendedUntil?: Date | string | null
   suspensionReason?: string | null
   deletedAt?: Date | string | null
   deletedReason?: string | null
@@ -7672,6 +9422,10 @@ export type UserCreateWithoutNotificationsInput = {
   reportsFiled?: Prisma.ReportCreateNestedManyWithoutReporterInput
   blocksInitiated?: Prisma.UserBlockCreateNestedManyWithoutBlockerInput
   blocksReceived?: Prisma.UserBlockCreateNestedManyWithoutBlockedInput
+  suspendedBy?: Prisma.UserCreateNestedOneWithoutSuspendedUsersInput
+  suspendedUsers?: Prisma.UserCreateNestedManyWithoutSuspendedByInput
+  deletedBy?: Prisma.UserCreateNestedOneWithoutDeletedUsersInput
+  deletedUsers?: Prisma.UserCreateNestedManyWithoutDeletedByInput
   ownershipTransfersFrom?: Prisma.EventOwnershipTransferCreateNestedManyWithoutFromUserInput
   ownershipTransfersTo?: Prisma.EventOwnershipTransferCreateNestedManyWithoutToUserInput
   ownershipTransfersActed?: Prisma.EventOwnershipTransferCreateNestedManyWithoutActorInput
@@ -7683,6 +9437,7 @@ export type UserCreateWithoutNotificationsInput = {
   checkinLogsAsActor?: Prisma.EventCheckinLogCreateNestedManyWithoutActorInput
   checkinRejections?: Prisma.EventMemberCreateNestedManyWithoutLastCheckinRejectedByInput
   auditLogsAsActor?: Prisma.EventAuditLogCreateNestedManyWithoutActorInput
+  userAuditLogsAsActor?: Prisma.UserAuditLogCreateNestedManyWithoutActorInput
   subscriptions?: Prisma.UserSubscriptionCreateNestedManyWithoutUserInput
   planPeriods?: Prisma.UserPlanPeriodCreateNestedManyWithoutUserInput
   eventSponsorships?: Prisma.EventSponsorshipCreateNestedManyWithoutSponsorInput
@@ -7704,8 +9459,11 @@ export type UserUncheckedCreateWithoutNotificationsInput = {
   role?: $Enums.Role
   verifiedAt?: Date | string | null
   suspendedAt?: Date | string | null
+  suspendedUntil?: Date | string | null
+  suspendedById?: string | null
   suspensionReason?: string | null
   deletedAt?: Date | string | null
+  deletedById?: string | null
   deletedReason?: string | null
   restorationToken?: string | null
   restorationTokenExpiry?: Date | string | null
@@ -7745,6 +9503,8 @@ export type UserUncheckedCreateWithoutNotificationsInput = {
   reportsFiled?: Prisma.ReportUncheckedCreateNestedManyWithoutReporterInput
   blocksInitiated?: Prisma.UserBlockUncheckedCreateNestedManyWithoutBlockerInput
   blocksReceived?: Prisma.UserBlockUncheckedCreateNestedManyWithoutBlockedInput
+  suspendedUsers?: Prisma.UserUncheckedCreateNestedManyWithoutSuspendedByInput
+  deletedUsers?: Prisma.UserUncheckedCreateNestedManyWithoutDeletedByInput
   ownershipTransfersFrom?: Prisma.EventOwnershipTransferUncheckedCreateNestedManyWithoutFromUserInput
   ownershipTransfersTo?: Prisma.EventOwnershipTransferUncheckedCreateNestedManyWithoutToUserInput
   ownershipTransfersActed?: Prisma.EventOwnershipTransferUncheckedCreateNestedManyWithoutActorInput
@@ -7756,6 +9516,7 @@ export type UserUncheckedCreateWithoutNotificationsInput = {
   checkinLogsAsActor?: Prisma.EventCheckinLogUncheckedCreateNestedManyWithoutActorInput
   checkinRejections?: Prisma.EventMemberUncheckedCreateNestedManyWithoutLastCheckinRejectedByInput
   auditLogsAsActor?: Prisma.EventAuditLogUncheckedCreateNestedManyWithoutActorInput
+  userAuditLogsAsActor?: Prisma.UserAuditLogUncheckedCreateNestedManyWithoutActorInput
   subscriptions?: Prisma.UserSubscriptionUncheckedCreateNestedManyWithoutUserInput
   planPeriods?: Prisma.UserPlanPeriodUncheckedCreateNestedManyWithoutUserInput
   eventSponsorships?: Prisma.EventSponsorshipUncheckedCreateNestedManyWithoutSponsorInput
@@ -7782,6 +9543,7 @@ export type UserCreateWithoutActedNotificationsInput = {
   role?: $Enums.Role
   verifiedAt?: Date | string | null
   suspendedAt?: Date | string | null
+  suspendedUntil?: Date | string | null
   suspensionReason?: string | null
   deletedAt?: Date | string | null
   deletedReason?: string | null
@@ -7823,6 +9585,10 @@ export type UserCreateWithoutActedNotificationsInput = {
   reportsFiled?: Prisma.ReportCreateNestedManyWithoutReporterInput
   blocksInitiated?: Prisma.UserBlockCreateNestedManyWithoutBlockerInput
   blocksReceived?: Prisma.UserBlockCreateNestedManyWithoutBlockedInput
+  suspendedBy?: Prisma.UserCreateNestedOneWithoutSuspendedUsersInput
+  suspendedUsers?: Prisma.UserCreateNestedManyWithoutSuspendedByInput
+  deletedBy?: Prisma.UserCreateNestedOneWithoutDeletedUsersInput
+  deletedUsers?: Prisma.UserCreateNestedManyWithoutDeletedByInput
   ownershipTransfersFrom?: Prisma.EventOwnershipTransferCreateNestedManyWithoutFromUserInput
   ownershipTransfersTo?: Prisma.EventOwnershipTransferCreateNestedManyWithoutToUserInput
   ownershipTransfersActed?: Prisma.EventOwnershipTransferCreateNestedManyWithoutActorInput
@@ -7834,6 +9600,7 @@ export type UserCreateWithoutActedNotificationsInput = {
   checkinLogsAsActor?: Prisma.EventCheckinLogCreateNestedManyWithoutActorInput
   checkinRejections?: Prisma.EventMemberCreateNestedManyWithoutLastCheckinRejectedByInput
   auditLogsAsActor?: Prisma.EventAuditLogCreateNestedManyWithoutActorInput
+  userAuditLogsAsActor?: Prisma.UserAuditLogCreateNestedManyWithoutActorInput
   subscriptions?: Prisma.UserSubscriptionCreateNestedManyWithoutUserInput
   planPeriods?: Prisma.UserPlanPeriodCreateNestedManyWithoutUserInput
   eventSponsorships?: Prisma.EventSponsorshipCreateNestedManyWithoutSponsorInput
@@ -7855,8 +9622,11 @@ export type UserUncheckedCreateWithoutActedNotificationsInput = {
   role?: $Enums.Role
   verifiedAt?: Date | string | null
   suspendedAt?: Date | string | null
+  suspendedUntil?: Date | string | null
+  suspendedById?: string | null
   suspensionReason?: string | null
   deletedAt?: Date | string | null
+  deletedById?: string | null
   deletedReason?: string | null
   restorationToken?: string | null
   restorationTokenExpiry?: Date | string | null
@@ -7896,6 +9666,8 @@ export type UserUncheckedCreateWithoutActedNotificationsInput = {
   reportsFiled?: Prisma.ReportUncheckedCreateNestedManyWithoutReporterInput
   blocksInitiated?: Prisma.UserBlockUncheckedCreateNestedManyWithoutBlockerInput
   blocksReceived?: Prisma.UserBlockUncheckedCreateNestedManyWithoutBlockedInput
+  suspendedUsers?: Prisma.UserUncheckedCreateNestedManyWithoutSuspendedByInput
+  deletedUsers?: Prisma.UserUncheckedCreateNestedManyWithoutDeletedByInput
   ownershipTransfersFrom?: Prisma.EventOwnershipTransferUncheckedCreateNestedManyWithoutFromUserInput
   ownershipTransfersTo?: Prisma.EventOwnershipTransferUncheckedCreateNestedManyWithoutToUserInput
   ownershipTransfersActed?: Prisma.EventOwnershipTransferUncheckedCreateNestedManyWithoutActorInput
@@ -7907,6 +9679,7 @@ export type UserUncheckedCreateWithoutActedNotificationsInput = {
   checkinLogsAsActor?: Prisma.EventCheckinLogUncheckedCreateNestedManyWithoutActorInput
   checkinRejections?: Prisma.EventMemberUncheckedCreateNestedManyWithoutLastCheckinRejectedByInput
   auditLogsAsActor?: Prisma.EventAuditLogUncheckedCreateNestedManyWithoutActorInput
+  userAuditLogsAsActor?: Prisma.UserAuditLogUncheckedCreateNestedManyWithoutActorInput
   subscriptions?: Prisma.UserSubscriptionUncheckedCreateNestedManyWithoutUserInput
   planPeriods?: Prisma.UserPlanPeriodUncheckedCreateNestedManyWithoutUserInput
   eventSponsorships?: Prisma.EventSponsorshipUncheckedCreateNestedManyWithoutSponsorInput
@@ -7944,6 +9717,7 @@ export type UserUpdateWithoutNotificationsInput = {
   role?: Prisma.EnumRoleFieldUpdateOperationsInput | $Enums.Role
   verifiedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   suspendedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  suspendedUntil?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   suspensionReason?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   deletedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   deletedReason?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
@@ -7985,6 +9759,10 @@ export type UserUpdateWithoutNotificationsInput = {
   reportsFiled?: Prisma.ReportUpdateManyWithoutReporterNestedInput
   blocksInitiated?: Prisma.UserBlockUpdateManyWithoutBlockerNestedInput
   blocksReceived?: Prisma.UserBlockUpdateManyWithoutBlockedNestedInput
+  suspendedBy?: Prisma.UserUpdateOneWithoutSuspendedUsersNestedInput
+  suspendedUsers?: Prisma.UserUpdateManyWithoutSuspendedByNestedInput
+  deletedBy?: Prisma.UserUpdateOneWithoutDeletedUsersNestedInput
+  deletedUsers?: Prisma.UserUpdateManyWithoutDeletedByNestedInput
   ownershipTransfersFrom?: Prisma.EventOwnershipTransferUpdateManyWithoutFromUserNestedInput
   ownershipTransfersTo?: Prisma.EventOwnershipTransferUpdateManyWithoutToUserNestedInput
   ownershipTransfersActed?: Prisma.EventOwnershipTransferUpdateManyWithoutActorNestedInput
@@ -7996,6 +9774,7 @@ export type UserUpdateWithoutNotificationsInput = {
   checkinLogsAsActor?: Prisma.EventCheckinLogUpdateManyWithoutActorNestedInput
   checkinRejections?: Prisma.EventMemberUpdateManyWithoutLastCheckinRejectedByNestedInput
   auditLogsAsActor?: Prisma.EventAuditLogUpdateManyWithoutActorNestedInput
+  userAuditLogsAsActor?: Prisma.UserAuditLogUpdateManyWithoutActorNestedInput
   subscriptions?: Prisma.UserSubscriptionUpdateManyWithoutUserNestedInput
   planPeriods?: Prisma.UserPlanPeriodUpdateManyWithoutUserNestedInput
   eventSponsorships?: Prisma.EventSponsorshipUpdateManyWithoutSponsorNestedInput
@@ -8017,8 +9796,11 @@ export type UserUncheckedUpdateWithoutNotificationsInput = {
   role?: Prisma.EnumRoleFieldUpdateOperationsInput | $Enums.Role
   verifiedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   suspendedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  suspendedUntil?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  suspendedById?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   suspensionReason?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   deletedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  deletedById?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   deletedReason?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   restorationToken?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   restorationTokenExpiry?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
@@ -8058,6 +9840,8 @@ export type UserUncheckedUpdateWithoutNotificationsInput = {
   reportsFiled?: Prisma.ReportUncheckedUpdateManyWithoutReporterNestedInput
   blocksInitiated?: Prisma.UserBlockUncheckedUpdateManyWithoutBlockerNestedInput
   blocksReceived?: Prisma.UserBlockUncheckedUpdateManyWithoutBlockedNestedInput
+  suspendedUsers?: Prisma.UserUncheckedUpdateManyWithoutSuspendedByNestedInput
+  deletedUsers?: Prisma.UserUncheckedUpdateManyWithoutDeletedByNestedInput
   ownershipTransfersFrom?: Prisma.EventOwnershipTransferUncheckedUpdateManyWithoutFromUserNestedInput
   ownershipTransfersTo?: Prisma.EventOwnershipTransferUncheckedUpdateManyWithoutToUserNestedInput
   ownershipTransfersActed?: Prisma.EventOwnershipTransferUncheckedUpdateManyWithoutActorNestedInput
@@ -8069,6 +9853,7 @@ export type UserUncheckedUpdateWithoutNotificationsInput = {
   checkinLogsAsActor?: Prisma.EventCheckinLogUncheckedUpdateManyWithoutActorNestedInput
   checkinRejections?: Prisma.EventMemberUncheckedUpdateManyWithoutLastCheckinRejectedByNestedInput
   auditLogsAsActor?: Prisma.EventAuditLogUncheckedUpdateManyWithoutActorNestedInput
+  userAuditLogsAsActor?: Prisma.UserAuditLogUncheckedUpdateManyWithoutActorNestedInput
   subscriptions?: Prisma.UserSubscriptionUncheckedUpdateManyWithoutUserNestedInput
   planPeriods?: Prisma.UserPlanPeriodUncheckedUpdateManyWithoutUserNestedInput
   eventSponsorships?: Prisma.EventSponsorshipUncheckedUpdateManyWithoutSponsorNestedInput
@@ -8101,6 +9886,7 @@ export type UserUpdateWithoutActedNotificationsInput = {
   role?: Prisma.EnumRoleFieldUpdateOperationsInput | $Enums.Role
   verifiedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   suspendedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  suspendedUntil?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   suspensionReason?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   deletedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   deletedReason?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
@@ -8142,6 +9928,10 @@ export type UserUpdateWithoutActedNotificationsInput = {
   reportsFiled?: Prisma.ReportUpdateManyWithoutReporterNestedInput
   blocksInitiated?: Prisma.UserBlockUpdateManyWithoutBlockerNestedInput
   blocksReceived?: Prisma.UserBlockUpdateManyWithoutBlockedNestedInput
+  suspendedBy?: Prisma.UserUpdateOneWithoutSuspendedUsersNestedInput
+  suspendedUsers?: Prisma.UserUpdateManyWithoutSuspendedByNestedInput
+  deletedBy?: Prisma.UserUpdateOneWithoutDeletedUsersNestedInput
+  deletedUsers?: Prisma.UserUpdateManyWithoutDeletedByNestedInput
   ownershipTransfersFrom?: Prisma.EventOwnershipTransferUpdateManyWithoutFromUserNestedInput
   ownershipTransfersTo?: Prisma.EventOwnershipTransferUpdateManyWithoutToUserNestedInput
   ownershipTransfersActed?: Prisma.EventOwnershipTransferUpdateManyWithoutActorNestedInput
@@ -8153,6 +9943,7 @@ export type UserUpdateWithoutActedNotificationsInput = {
   checkinLogsAsActor?: Prisma.EventCheckinLogUpdateManyWithoutActorNestedInput
   checkinRejections?: Prisma.EventMemberUpdateManyWithoutLastCheckinRejectedByNestedInput
   auditLogsAsActor?: Prisma.EventAuditLogUpdateManyWithoutActorNestedInput
+  userAuditLogsAsActor?: Prisma.UserAuditLogUpdateManyWithoutActorNestedInput
   subscriptions?: Prisma.UserSubscriptionUpdateManyWithoutUserNestedInput
   planPeriods?: Prisma.UserPlanPeriodUpdateManyWithoutUserNestedInput
   eventSponsorships?: Prisma.EventSponsorshipUpdateManyWithoutSponsorNestedInput
@@ -8174,8 +9965,11 @@ export type UserUncheckedUpdateWithoutActedNotificationsInput = {
   role?: Prisma.EnumRoleFieldUpdateOperationsInput | $Enums.Role
   verifiedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   suspendedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  suspendedUntil?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  suspendedById?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   suspensionReason?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   deletedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  deletedById?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   deletedReason?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   restorationToken?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   restorationTokenExpiry?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
@@ -8215,6 +10009,8 @@ export type UserUncheckedUpdateWithoutActedNotificationsInput = {
   reportsFiled?: Prisma.ReportUncheckedUpdateManyWithoutReporterNestedInput
   blocksInitiated?: Prisma.UserBlockUncheckedUpdateManyWithoutBlockerNestedInput
   blocksReceived?: Prisma.UserBlockUncheckedUpdateManyWithoutBlockedNestedInput
+  suspendedUsers?: Prisma.UserUncheckedUpdateManyWithoutSuspendedByNestedInput
+  deletedUsers?: Prisma.UserUncheckedUpdateManyWithoutDeletedByNestedInput
   ownershipTransfersFrom?: Prisma.EventOwnershipTransferUncheckedUpdateManyWithoutFromUserNestedInput
   ownershipTransfersTo?: Prisma.EventOwnershipTransferUncheckedUpdateManyWithoutToUserNestedInput
   ownershipTransfersActed?: Prisma.EventOwnershipTransferUncheckedUpdateManyWithoutActorNestedInput
@@ -8226,6 +10022,7 @@ export type UserUncheckedUpdateWithoutActedNotificationsInput = {
   checkinLogsAsActor?: Prisma.EventCheckinLogUncheckedUpdateManyWithoutActorNestedInput
   checkinRejections?: Prisma.EventMemberUncheckedUpdateManyWithoutLastCheckinRejectedByNestedInput
   auditLogsAsActor?: Prisma.EventAuditLogUncheckedUpdateManyWithoutActorNestedInput
+  userAuditLogsAsActor?: Prisma.UserAuditLogUncheckedUpdateManyWithoutActorNestedInput
   subscriptions?: Prisma.UserSubscriptionUncheckedUpdateManyWithoutUserNestedInput
   planPeriods?: Prisma.UserPlanPeriodUncheckedUpdateManyWithoutUserNestedInput
   eventSponsorships?: Prisma.EventSponsorshipUncheckedUpdateManyWithoutSponsorNestedInput
@@ -8247,6 +10044,7 @@ export type UserCreateWithoutEventChatMessagesInput = {
   role?: $Enums.Role
   verifiedAt?: Date | string | null
   suspendedAt?: Date | string | null
+  suspendedUntil?: Date | string | null
   suspensionReason?: string | null
   deletedAt?: Date | string | null
   deletedReason?: string | null
@@ -8288,6 +10086,10 @@ export type UserCreateWithoutEventChatMessagesInput = {
   reportsFiled?: Prisma.ReportCreateNestedManyWithoutReporterInput
   blocksInitiated?: Prisma.UserBlockCreateNestedManyWithoutBlockerInput
   blocksReceived?: Prisma.UserBlockCreateNestedManyWithoutBlockedInput
+  suspendedBy?: Prisma.UserCreateNestedOneWithoutSuspendedUsersInput
+  suspendedUsers?: Prisma.UserCreateNestedManyWithoutSuspendedByInput
+  deletedBy?: Prisma.UserCreateNestedOneWithoutDeletedUsersInput
+  deletedUsers?: Prisma.UserCreateNestedManyWithoutDeletedByInput
   ownershipTransfersFrom?: Prisma.EventOwnershipTransferCreateNestedManyWithoutFromUserInput
   ownershipTransfersTo?: Prisma.EventOwnershipTransferCreateNestedManyWithoutToUserInput
   ownershipTransfersActed?: Prisma.EventOwnershipTransferCreateNestedManyWithoutActorInput
@@ -8299,6 +10101,7 @@ export type UserCreateWithoutEventChatMessagesInput = {
   checkinLogsAsActor?: Prisma.EventCheckinLogCreateNestedManyWithoutActorInput
   checkinRejections?: Prisma.EventMemberCreateNestedManyWithoutLastCheckinRejectedByInput
   auditLogsAsActor?: Prisma.EventAuditLogCreateNestedManyWithoutActorInput
+  userAuditLogsAsActor?: Prisma.UserAuditLogCreateNestedManyWithoutActorInput
   subscriptions?: Prisma.UserSubscriptionCreateNestedManyWithoutUserInput
   planPeriods?: Prisma.UserPlanPeriodCreateNestedManyWithoutUserInput
   eventSponsorships?: Prisma.EventSponsorshipCreateNestedManyWithoutSponsorInput
@@ -8320,8 +10123,11 @@ export type UserUncheckedCreateWithoutEventChatMessagesInput = {
   role?: $Enums.Role
   verifiedAt?: Date | string | null
   suspendedAt?: Date | string | null
+  suspendedUntil?: Date | string | null
+  suspendedById?: string | null
   suspensionReason?: string | null
   deletedAt?: Date | string | null
+  deletedById?: string | null
   deletedReason?: string | null
   restorationToken?: string | null
   restorationTokenExpiry?: Date | string | null
@@ -8361,6 +10167,8 @@ export type UserUncheckedCreateWithoutEventChatMessagesInput = {
   reportsFiled?: Prisma.ReportUncheckedCreateNestedManyWithoutReporterInput
   blocksInitiated?: Prisma.UserBlockUncheckedCreateNestedManyWithoutBlockerInput
   blocksReceived?: Prisma.UserBlockUncheckedCreateNestedManyWithoutBlockedInput
+  suspendedUsers?: Prisma.UserUncheckedCreateNestedManyWithoutSuspendedByInput
+  deletedUsers?: Prisma.UserUncheckedCreateNestedManyWithoutDeletedByInput
   ownershipTransfersFrom?: Prisma.EventOwnershipTransferUncheckedCreateNestedManyWithoutFromUserInput
   ownershipTransfersTo?: Prisma.EventOwnershipTransferUncheckedCreateNestedManyWithoutToUserInput
   ownershipTransfersActed?: Prisma.EventOwnershipTransferUncheckedCreateNestedManyWithoutActorInput
@@ -8372,6 +10180,7 @@ export type UserUncheckedCreateWithoutEventChatMessagesInput = {
   checkinLogsAsActor?: Prisma.EventCheckinLogUncheckedCreateNestedManyWithoutActorInput
   checkinRejections?: Prisma.EventMemberUncheckedCreateNestedManyWithoutLastCheckinRejectedByInput
   auditLogsAsActor?: Prisma.EventAuditLogUncheckedCreateNestedManyWithoutActorInput
+  userAuditLogsAsActor?: Prisma.UserAuditLogUncheckedCreateNestedManyWithoutActorInput
   subscriptions?: Prisma.UserSubscriptionUncheckedCreateNestedManyWithoutUserInput
   planPeriods?: Prisma.UserPlanPeriodUncheckedCreateNestedManyWithoutUserInput
   eventSponsorships?: Prisma.EventSponsorshipUncheckedCreateNestedManyWithoutSponsorInput
@@ -8409,6 +10218,7 @@ export type UserUpdateWithoutEventChatMessagesInput = {
   role?: Prisma.EnumRoleFieldUpdateOperationsInput | $Enums.Role
   verifiedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   suspendedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  suspendedUntil?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   suspensionReason?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   deletedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   deletedReason?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
@@ -8450,6 +10260,10 @@ export type UserUpdateWithoutEventChatMessagesInput = {
   reportsFiled?: Prisma.ReportUpdateManyWithoutReporterNestedInput
   blocksInitiated?: Prisma.UserBlockUpdateManyWithoutBlockerNestedInput
   blocksReceived?: Prisma.UserBlockUpdateManyWithoutBlockedNestedInput
+  suspendedBy?: Prisma.UserUpdateOneWithoutSuspendedUsersNestedInput
+  suspendedUsers?: Prisma.UserUpdateManyWithoutSuspendedByNestedInput
+  deletedBy?: Prisma.UserUpdateOneWithoutDeletedUsersNestedInput
+  deletedUsers?: Prisma.UserUpdateManyWithoutDeletedByNestedInput
   ownershipTransfersFrom?: Prisma.EventOwnershipTransferUpdateManyWithoutFromUserNestedInput
   ownershipTransfersTo?: Prisma.EventOwnershipTransferUpdateManyWithoutToUserNestedInput
   ownershipTransfersActed?: Prisma.EventOwnershipTransferUpdateManyWithoutActorNestedInput
@@ -8461,6 +10275,7 @@ export type UserUpdateWithoutEventChatMessagesInput = {
   checkinLogsAsActor?: Prisma.EventCheckinLogUpdateManyWithoutActorNestedInput
   checkinRejections?: Prisma.EventMemberUpdateManyWithoutLastCheckinRejectedByNestedInput
   auditLogsAsActor?: Prisma.EventAuditLogUpdateManyWithoutActorNestedInput
+  userAuditLogsAsActor?: Prisma.UserAuditLogUpdateManyWithoutActorNestedInput
   subscriptions?: Prisma.UserSubscriptionUpdateManyWithoutUserNestedInput
   planPeriods?: Prisma.UserPlanPeriodUpdateManyWithoutUserNestedInput
   eventSponsorships?: Prisma.EventSponsorshipUpdateManyWithoutSponsorNestedInput
@@ -8482,8 +10297,11 @@ export type UserUncheckedUpdateWithoutEventChatMessagesInput = {
   role?: Prisma.EnumRoleFieldUpdateOperationsInput | $Enums.Role
   verifiedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   suspendedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  suspendedUntil?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  suspendedById?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   suspensionReason?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   deletedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  deletedById?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   deletedReason?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   restorationToken?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   restorationTokenExpiry?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
@@ -8523,6 +10341,8 @@ export type UserUncheckedUpdateWithoutEventChatMessagesInput = {
   reportsFiled?: Prisma.ReportUncheckedUpdateManyWithoutReporterNestedInput
   blocksInitiated?: Prisma.UserBlockUncheckedUpdateManyWithoutBlockerNestedInput
   blocksReceived?: Prisma.UserBlockUncheckedUpdateManyWithoutBlockedNestedInput
+  suspendedUsers?: Prisma.UserUncheckedUpdateManyWithoutSuspendedByNestedInput
+  deletedUsers?: Prisma.UserUncheckedUpdateManyWithoutDeletedByNestedInput
   ownershipTransfersFrom?: Prisma.EventOwnershipTransferUncheckedUpdateManyWithoutFromUserNestedInput
   ownershipTransfersTo?: Prisma.EventOwnershipTransferUncheckedUpdateManyWithoutToUserNestedInput
   ownershipTransfersActed?: Prisma.EventOwnershipTransferUncheckedUpdateManyWithoutActorNestedInput
@@ -8534,6 +10354,7 @@ export type UserUncheckedUpdateWithoutEventChatMessagesInput = {
   checkinLogsAsActor?: Prisma.EventCheckinLogUncheckedUpdateManyWithoutActorNestedInput
   checkinRejections?: Prisma.EventMemberUncheckedUpdateManyWithoutLastCheckinRejectedByNestedInput
   auditLogsAsActor?: Prisma.EventAuditLogUncheckedUpdateManyWithoutActorNestedInput
+  userAuditLogsAsActor?: Prisma.UserAuditLogUncheckedUpdateManyWithoutActorNestedInput
   subscriptions?: Prisma.UserSubscriptionUncheckedUpdateManyWithoutUserNestedInput
   planPeriods?: Prisma.UserPlanPeriodUncheckedUpdateManyWithoutUserNestedInput
   eventSponsorships?: Prisma.EventSponsorshipUncheckedUpdateManyWithoutSponsorNestedInput
@@ -8555,6 +10376,7 @@ export type UserCreateWithoutEventChatMessageReactionsInput = {
   role?: $Enums.Role
   verifiedAt?: Date | string | null
   suspendedAt?: Date | string | null
+  suspendedUntil?: Date | string | null
   suspensionReason?: string | null
   deletedAt?: Date | string | null
   deletedReason?: string | null
@@ -8596,6 +10418,10 @@ export type UserCreateWithoutEventChatMessageReactionsInput = {
   reportsFiled?: Prisma.ReportCreateNestedManyWithoutReporterInput
   blocksInitiated?: Prisma.UserBlockCreateNestedManyWithoutBlockerInput
   blocksReceived?: Prisma.UserBlockCreateNestedManyWithoutBlockedInput
+  suspendedBy?: Prisma.UserCreateNestedOneWithoutSuspendedUsersInput
+  suspendedUsers?: Prisma.UserCreateNestedManyWithoutSuspendedByInput
+  deletedBy?: Prisma.UserCreateNestedOneWithoutDeletedUsersInput
+  deletedUsers?: Prisma.UserCreateNestedManyWithoutDeletedByInput
   ownershipTransfersFrom?: Prisma.EventOwnershipTransferCreateNestedManyWithoutFromUserInput
   ownershipTransfersTo?: Prisma.EventOwnershipTransferCreateNestedManyWithoutToUserInput
   ownershipTransfersActed?: Prisma.EventOwnershipTransferCreateNestedManyWithoutActorInput
@@ -8607,6 +10433,7 @@ export type UserCreateWithoutEventChatMessageReactionsInput = {
   checkinLogsAsActor?: Prisma.EventCheckinLogCreateNestedManyWithoutActorInput
   checkinRejections?: Prisma.EventMemberCreateNestedManyWithoutLastCheckinRejectedByInput
   auditLogsAsActor?: Prisma.EventAuditLogCreateNestedManyWithoutActorInput
+  userAuditLogsAsActor?: Prisma.UserAuditLogCreateNestedManyWithoutActorInput
   subscriptions?: Prisma.UserSubscriptionCreateNestedManyWithoutUserInput
   planPeriods?: Prisma.UserPlanPeriodCreateNestedManyWithoutUserInput
   eventSponsorships?: Prisma.EventSponsorshipCreateNestedManyWithoutSponsorInput
@@ -8628,8 +10455,11 @@ export type UserUncheckedCreateWithoutEventChatMessageReactionsInput = {
   role?: $Enums.Role
   verifiedAt?: Date | string | null
   suspendedAt?: Date | string | null
+  suspendedUntil?: Date | string | null
+  suspendedById?: string | null
   suspensionReason?: string | null
   deletedAt?: Date | string | null
+  deletedById?: string | null
   deletedReason?: string | null
   restorationToken?: string | null
   restorationTokenExpiry?: Date | string | null
@@ -8669,6 +10499,8 @@ export type UserUncheckedCreateWithoutEventChatMessageReactionsInput = {
   reportsFiled?: Prisma.ReportUncheckedCreateNestedManyWithoutReporterInput
   blocksInitiated?: Prisma.UserBlockUncheckedCreateNestedManyWithoutBlockerInput
   blocksReceived?: Prisma.UserBlockUncheckedCreateNestedManyWithoutBlockedInput
+  suspendedUsers?: Prisma.UserUncheckedCreateNestedManyWithoutSuspendedByInput
+  deletedUsers?: Prisma.UserUncheckedCreateNestedManyWithoutDeletedByInput
   ownershipTransfersFrom?: Prisma.EventOwnershipTransferUncheckedCreateNestedManyWithoutFromUserInput
   ownershipTransfersTo?: Prisma.EventOwnershipTransferUncheckedCreateNestedManyWithoutToUserInput
   ownershipTransfersActed?: Prisma.EventOwnershipTransferUncheckedCreateNestedManyWithoutActorInput
@@ -8680,6 +10512,7 @@ export type UserUncheckedCreateWithoutEventChatMessageReactionsInput = {
   checkinLogsAsActor?: Prisma.EventCheckinLogUncheckedCreateNestedManyWithoutActorInput
   checkinRejections?: Prisma.EventMemberUncheckedCreateNestedManyWithoutLastCheckinRejectedByInput
   auditLogsAsActor?: Prisma.EventAuditLogUncheckedCreateNestedManyWithoutActorInput
+  userAuditLogsAsActor?: Prisma.UserAuditLogUncheckedCreateNestedManyWithoutActorInput
   subscriptions?: Prisma.UserSubscriptionUncheckedCreateNestedManyWithoutUserInput
   planPeriods?: Prisma.UserPlanPeriodUncheckedCreateNestedManyWithoutUserInput
   eventSponsorships?: Prisma.EventSponsorshipUncheckedCreateNestedManyWithoutSponsorInput
@@ -8717,6 +10550,7 @@ export type UserUpdateWithoutEventChatMessageReactionsInput = {
   role?: Prisma.EnumRoleFieldUpdateOperationsInput | $Enums.Role
   verifiedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   suspendedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  suspendedUntil?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   suspensionReason?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   deletedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   deletedReason?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
@@ -8758,6 +10592,10 @@ export type UserUpdateWithoutEventChatMessageReactionsInput = {
   reportsFiled?: Prisma.ReportUpdateManyWithoutReporterNestedInput
   blocksInitiated?: Prisma.UserBlockUpdateManyWithoutBlockerNestedInput
   blocksReceived?: Prisma.UserBlockUpdateManyWithoutBlockedNestedInput
+  suspendedBy?: Prisma.UserUpdateOneWithoutSuspendedUsersNestedInput
+  suspendedUsers?: Prisma.UserUpdateManyWithoutSuspendedByNestedInput
+  deletedBy?: Prisma.UserUpdateOneWithoutDeletedUsersNestedInput
+  deletedUsers?: Prisma.UserUpdateManyWithoutDeletedByNestedInput
   ownershipTransfersFrom?: Prisma.EventOwnershipTransferUpdateManyWithoutFromUserNestedInput
   ownershipTransfersTo?: Prisma.EventOwnershipTransferUpdateManyWithoutToUserNestedInput
   ownershipTransfersActed?: Prisma.EventOwnershipTransferUpdateManyWithoutActorNestedInput
@@ -8769,6 +10607,7 @@ export type UserUpdateWithoutEventChatMessageReactionsInput = {
   checkinLogsAsActor?: Prisma.EventCheckinLogUpdateManyWithoutActorNestedInput
   checkinRejections?: Prisma.EventMemberUpdateManyWithoutLastCheckinRejectedByNestedInput
   auditLogsAsActor?: Prisma.EventAuditLogUpdateManyWithoutActorNestedInput
+  userAuditLogsAsActor?: Prisma.UserAuditLogUpdateManyWithoutActorNestedInput
   subscriptions?: Prisma.UserSubscriptionUpdateManyWithoutUserNestedInput
   planPeriods?: Prisma.UserPlanPeriodUpdateManyWithoutUserNestedInput
   eventSponsorships?: Prisma.EventSponsorshipUpdateManyWithoutSponsorNestedInput
@@ -8790,8 +10629,11 @@ export type UserUncheckedUpdateWithoutEventChatMessageReactionsInput = {
   role?: Prisma.EnumRoleFieldUpdateOperationsInput | $Enums.Role
   verifiedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   suspendedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  suspendedUntil?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  suspendedById?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   suspensionReason?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   deletedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  deletedById?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   deletedReason?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   restorationToken?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   restorationTokenExpiry?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
@@ -8831,6 +10673,8 @@ export type UserUncheckedUpdateWithoutEventChatMessageReactionsInput = {
   reportsFiled?: Prisma.ReportUncheckedUpdateManyWithoutReporterNestedInput
   blocksInitiated?: Prisma.UserBlockUncheckedUpdateManyWithoutBlockerNestedInput
   blocksReceived?: Prisma.UserBlockUncheckedUpdateManyWithoutBlockedNestedInput
+  suspendedUsers?: Prisma.UserUncheckedUpdateManyWithoutSuspendedByNestedInput
+  deletedUsers?: Prisma.UserUncheckedUpdateManyWithoutDeletedByNestedInput
   ownershipTransfersFrom?: Prisma.EventOwnershipTransferUncheckedUpdateManyWithoutFromUserNestedInput
   ownershipTransfersTo?: Prisma.EventOwnershipTransferUncheckedUpdateManyWithoutToUserNestedInput
   ownershipTransfersActed?: Prisma.EventOwnershipTransferUncheckedUpdateManyWithoutActorNestedInput
@@ -8842,6 +10686,7 @@ export type UserUncheckedUpdateWithoutEventChatMessageReactionsInput = {
   checkinLogsAsActor?: Prisma.EventCheckinLogUncheckedUpdateManyWithoutActorNestedInput
   checkinRejections?: Prisma.EventMemberUncheckedUpdateManyWithoutLastCheckinRejectedByNestedInput
   auditLogsAsActor?: Prisma.EventAuditLogUncheckedUpdateManyWithoutActorNestedInput
+  userAuditLogsAsActor?: Prisma.UserAuditLogUncheckedUpdateManyWithoutActorNestedInput
   subscriptions?: Prisma.UserSubscriptionUncheckedUpdateManyWithoutUserNestedInput
   planPeriods?: Prisma.UserPlanPeriodUncheckedUpdateManyWithoutUserNestedInput
   eventSponsorships?: Prisma.EventSponsorshipUncheckedUpdateManyWithoutSponsorNestedInput
@@ -8863,6 +10708,7 @@ export type UserCreateWithoutEventChatReadsInput = {
   role?: $Enums.Role
   verifiedAt?: Date | string | null
   suspendedAt?: Date | string | null
+  suspendedUntil?: Date | string | null
   suspensionReason?: string | null
   deletedAt?: Date | string | null
   deletedReason?: string | null
@@ -8904,6 +10750,10 @@ export type UserCreateWithoutEventChatReadsInput = {
   reportsFiled?: Prisma.ReportCreateNestedManyWithoutReporterInput
   blocksInitiated?: Prisma.UserBlockCreateNestedManyWithoutBlockerInput
   blocksReceived?: Prisma.UserBlockCreateNestedManyWithoutBlockedInput
+  suspendedBy?: Prisma.UserCreateNestedOneWithoutSuspendedUsersInput
+  suspendedUsers?: Prisma.UserCreateNestedManyWithoutSuspendedByInput
+  deletedBy?: Prisma.UserCreateNestedOneWithoutDeletedUsersInput
+  deletedUsers?: Prisma.UserCreateNestedManyWithoutDeletedByInput
   ownershipTransfersFrom?: Prisma.EventOwnershipTransferCreateNestedManyWithoutFromUserInput
   ownershipTransfersTo?: Prisma.EventOwnershipTransferCreateNestedManyWithoutToUserInput
   ownershipTransfersActed?: Prisma.EventOwnershipTransferCreateNestedManyWithoutActorInput
@@ -8915,6 +10765,7 @@ export type UserCreateWithoutEventChatReadsInput = {
   checkinLogsAsActor?: Prisma.EventCheckinLogCreateNestedManyWithoutActorInput
   checkinRejections?: Prisma.EventMemberCreateNestedManyWithoutLastCheckinRejectedByInput
   auditLogsAsActor?: Prisma.EventAuditLogCreateNestedManyWithoutActorInput
+  userAuditLogsAsActor?: Prisma.UserAuditLogCreateNestedManyWithoutActorInput
   subscriptions?: Prisma.UserSubscriptionCreateNestedManyWithoutUserInput
   planPeriods?: Prisma.UserPlanPeriodCreateNestedManyWithoutUserInput
   eventSponsorships?: Prisma.EventSponsorshipCreateNestedManyWithoutSponsorInput
@@ -8936,8 +10787,11 @@ export type UserUncheckedCreateWithoutEventChatReadsInput = {
   role?: $Enums.Role
   verifiedAt?: Date | string | null
   suspendedAt?: Date | string | null
+  suspendedUntil?: Date | string | null
+  suspendedById?: string | null
   suspensionReason?: string | null
   deletedAt?: Date | string | null
+  deletedById?: string | null
   deletedReason?: string | null
   restorationToken?: string | null
   restorationTokenExpiry?: Date | string | null
@@ -8977,6 +10831,8 @@ export type UserUncheckedCreateWithoutEventChatReadsInput = {
   reportsFiled?: Prisma.ReportUncheckedCreateNestedManyWithoutReporterInput
   blocksInitiated?: Prisma.UserBlockUncheckedCreateNestedManyWithoutBlockerInput
   blocksReceived?: Prisma.UserBlockUncheckedCreateNestedManyWithoutBlockedInput
+  suspendedUsers?: Prisma.UserUncheckedCreateNestedManyWithoutSuspendedByInput
+  deletedUsers?: Prisma.UserUncheckedCreateNestedManyWithoutDeletedByInput
   ownershipTransfersFrom?: Prisma.EventOwnershipTransferUncheckedCreateNestedManyWithoutFromUserInput
   ownershipTransfersTo?: Prisma.EventOwnershipTransferUncheckedCreateNestedManyWithoutToUserInput
   ownershipTransfersActed?: Prisma.EventOwnershipTransferUncheckedCreateNestedManyWithoutActorInput
@@ -8988,6 +10844,7 @@ export type UserUncheckedCreateWithoutEventChatReadsInput = {
   checkinLogsAsActor?: Prisma.EventCheckinLogUncheckedCreateNestedManyWithoutActorInput
   checkinRejections?: Prisma.EventMemberUncheckedCreateNestedManyWithoutLastCheckinRejectedByInput
   auditLogsAsActor?: Prisma.EventAuditLogUncheckedCreateNestedManyWithoutActorInput
+  userAuditLogsAsActor?: Prisma.UserAuditLogUncheckedCreateNestedManyWithoutActorInput
   subscriptions?: Prisma.UserSubscriptionUncheckedCreateNestedManyWithoutUserInput
   planPeriods?: Prisma.UserPlanPeriodUncheckedCreateNestedManyWithoutUserInput
   eventSponsorships?: Prisma.EventSponsorshipUncheckedCreateNestedManyWithoutSponsorInput
@@ -9025,6 +10882,7 @@ export type UserUpdateWithoutEventChatReadsInput = {
   role?: Prisma.EnumRoleFieldUpdateOperationsInput | $Enums.Role
   verifiedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   suspendedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  suspendedUntil?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   suspensionReason?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   deletedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   deletedReason?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
@@ -9066,6 +10924,10 @@ export type UserUpdateWithoutEventChatReadsInput = {
   reportsFiled?: Prisma.ReportUpdateManyWithoutReporterNestedInput
   blocksInitiated?: Prisma.UserBlockUpdateManyWithoutBlockerNestedInput
   blocksReceived?: Prisma.UserBlockUpdateManyWithoutBlockedNestedInput
+  suspendedBy?: Prisma.UserUpdateOneWithoutSuspendedUsersNestedInput
+  suspendedUsers?: Prisma.UserUpdateManyWithoutSuspendedByNestedInput
+  deletedBy?: Prisma.UserUpdateOneWithoutDeletedUsersNestedInput
+  deletedUsers?: Prisma.UserUpdateManyWithoutDeletedByNestedInput
   ownershipTransfersFrom?: Prisma.EventOwnershipTransferUpdateManyWithoutFromUserNestedInput
   ownershipTransfersTo?: Prisma.EventOwnershipTransferUpdateManyWithoutToUserNestedInput
   ownershipTransfersActed?: Prisma.EventOwnershipTransferUpdateManyWithoutActorNestedInput
@@ -9077,6 +10939,7 @@ export type UserUpdateWithoutEventChatReadsInput = {
   checkinLogsAsActor?: Prisma.EventCheckinLogUpdateManyWithoutActorNestedInput
   checkinRejections?: Prisma.EventMemberUpdateManyWithoutLastCheckinRejectedByNestedInput
   auditLogsAsActor?: Prisma.EventAuditLogUpdateManyWithoutActorNestedInput
+  userAuditLogsAsActor?: Prisma.UserAuditLogUpdateManyWithoutActorNestedInput
   subscriptions?: Prisma.UserSubscriptionUpdateManyWithoutUserNestedInput
   planPeriods?: Prisma.UserPlanPeriodUpdateManyWithoutUserNestedInput
   eventSponsorships?: Prisma.EventSponsorshipUpdateManyWithoutSponsorNestedInput
@@ -9098,8 +10961,11 @@ export type UserUncheckedUpdateWithoutEventChatReadsInput = {
   role?: Prisma.EnumRoleFieldUpdateOperationsInput | $Enums.Role
   verifiedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   suspendedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  suspendedUntil?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  suspendedById?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   suspensionReason?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   deletedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  deletedById?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   deletedReason?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   restorationToken?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   restorationTokenExpiry?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
@@ -9139,6 +11005,8 @@ export type UserUncheckedUpdateWithoutEventChatReadsInput = {
   reportsFiled?: Prisma.ReportUncheckedUpdateManyWithoutReporterNestedInput
   blocksInitiated?: Prisma.UserBlockUncheckedUpdateManyWithoutBlockerNestedInput
   blocksReceived?: Prisma.UserBlockUncheckedUpdateManyWithoutBlockedNestedInput
+  suspendedUsers?: Prisma.UserUncheckedUpdateManyWithoutSuspendedByNestedInput
+  deletedUsers?: Prisma.UserUncheckedUpdateManyWithoutDeletedByNestedInput
   ownershipTransfersFrom?: Prisma.EventOwnershipTransferUncheckedUpdateManyWithoutFromUserNestedInput
   ownershipTransfersTo?: Prisma.EventOwnershipTransferUncheckedUpdateManyWithoutToUserNestedInput
   ownershipTransfersActed?: Prisma.EventOwnershipTransferUncheckedUpdateManyWithoutActorNestedInput
@@ -9150,6 +11018,7 @@ export type UserUncheckedUpdateWithoutEventChatReadsInput = {
   checkinLogsAsActor?: Prisma.EventCheckinLogUncheckedUpdateManyWithoutActorNestedInput
   checkinRejections?: Prisma.EventMemberUncheckedUpdateManyWithoutLastCheckinRejectedByNestedInput
   auditLogsAsActor?: Prisma.EventAuditLogUncheckedUpdateManyWithoutActorNestedInput
+  userAuditLogsAsActor?: Prisma.UserAuditLogUncheckedUpdateManyWithoutActorNestedInput
   subscriptions?: Prisma.UserSubscriptionUncheckedUpdateManyWithoutUserNestedInput
   planPeriods?: Prisma.UserPlanPeriodUncheckedUpdateManyWithoutUserNestedInput
   eventSponsorships?: Prisma.EventSponsorshipUncheckedUpdateManyWithoutSponsorNestedInput
@@ -9171,6 +11040,7 @@ export type UserCreateWithoutDmReadsInput = {
   role?: $Enums.Role
   verifiedAt?: Date | string | null
   suspendedAt?: Date | string | null
+  suspendedUntil?: Date | string | null
   suspensionReason?: string | null
   deletedAt?: Date | string | null
   deletedReason?: string | null
@@ -9212,6 +11082,10 @@ export type UserCreateWithoutDmReadsInput = {
   reportsFiled?: Prisma.ReportCreateNestedManyWithoutReporterInput
   blocksInitiated?: Prisma.UserBlockCreateNestedManyWithoutBlockerInput
   blocksReceived?: Prisma.UserBlockCreateNestedManyWithoutBlockedInput
+  suspendedBy?: Prisma.UserCreateNestedOneWithoutSuspendedUsersInput
+  suspendedUsers?: Prisma.UserCreateNestedManyWithoutSuspendedByInput
+  deletedBy?: Prisma.UserCreateNestedOneWithoutDeletedUsersInput
+  deletedUsers?: Prisma.UserCreateNestedManyWithoutDeletedByInput
   ownershipTransfersFrom?: Prisma.EventOwnershipTransferCreateNestedManyWithoutFromUserInput
   ownershipTransfersTo?: Prisma.EventOwnershipTransferCreateNestedManyWithoutToUserInput
   ownershipTransfersActed?: Prisma.EventOwnershipTransferCreateNestedManyWithoutActorInput
@@ -9223,6 +11097,7 @@ export type UserCreateWithoutDmReadsInput = {
   checkinLogsAsActor?: Prisma.EventCheckinLogCreateNestedManyWithoutActorInput
   checkinRejections?: Prisma.EventMemberCreateNestedManyWithoutLastCheckinRejectedByInput
   auditLogsAsActor?: Prisma.EventAuditLogCreateNestedManyWithoutActorInput
+  userAuditLogsAsActor?: Prisma.UserAuditLogCreateNestedManyWithoutActorInput
   subscriptions?: Prisma.UserSubscriptionCreateNestedManyWithoutUserInput
   planPeriods?: Prisma.UserPlanPeriodCreateNestedManyWithoutUserInput
   eventSponsorships?: Prisma.EventSponsorshipCreateNestedManyWithoutSponsorInput
@@ -9244,8 +11119,11 @@ export type UserUncheckedCreateWithoutDmReadsInput = {
   role?: $Enums.Role
   verifiedAt?: Date | string | null
   suspendedAt?: Date | string | null
+  suspendedUntil?: Date | string | null
+  suspendedById?: string | null
   suspensionReason?: string | null
   deletedAt?: Date | string | null
+  deletedById?: string | null
   deletedReason?: string | null
   restorationToken?: string | null
   restorationTokenExpiry?: Date | string | null
@@ -9285,6 +11163,8 @@ export type UserUncheckedCreateWithoutDmReadsInput = {
   reportsFiled?: Prisma.ReportUncheckedCreateNestedManyWithoutReporterInput
   blocksInitiated?: Prisma.UserBlockUncheckedCreateNestedManyWithoutBlockerInput
   blocksReceived?: Prisma.UserBlockUncheckedCreateNestedManyWithoutBlockedInput
+  suspendedUsers?: Prisma.UserUncheckedCreateNestedManyWithoutSuspendedByInput
+  deletedUsers?: Prisma.UserUncheckedCreateNestedManyWithoutDeletedByInput
   ownershipTransfersFrom?: Prisma.EventOwnershipTransferUncheckedCreateNestedManyWithoutFromUserInput
   ownershipTransfersTo?: Prisma.EventOwnershipTransferUncheckedCreateNestedManyWithoutToUserInput
   ownershipTransfersActed?: Prisma.EventOwnershipTransferUncheckedCreateNestedManyWithoutActorInput
@@ -9296,6 +11176,7 @@ export type UserUncheckedCreateWithoutDmReadsInput = {
   checkinLogsAsActor?: Prisma.EventCheckinLogUncheckedCreateNestedManyWithoutActorInput
   checkinRejections?: Prisma.EventMemberUncheckedCreateNestedManyWithoutLastCheckinRejectedByInput
   auditLogsAsActor?: Prisma.EventAuditLogUncheckedCreateNestedManyWithoutActorInput
+  userAuditLogsAsActor?: Prisma.UserAuditLogUncheckedCreateNestedManyWithoutActorInput
   subscriptions?: Prisma.UserSubscriptionUncheckedCreateNestedManyWithoutUserInput
   planPeriods?: Prisma.UserPlanPeriodUncheckedCreateNestedManyWithoutUserInput
   eventSponsorships?: Prisma.EventSponsorshipUncheckedCreateNestedManyWithoutSponsorInput
@@ -9333,6 +11214,7 @@ export type UserUpdateWithoutDmReadsInput = {
   role?: Prisma.EnumRoleFieldUpdateOperationsInput | $Enums.Role
   verifiedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   suspendedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  suspendedUntil?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   suspensionReason?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   deletedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   deletedReason?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
@@ -9374,6 +11256,10 @@ export type UserUpdateWithoutDmReadsInput = {
   reportsFiled?: Prisma.ReportUpdateManyWithoutReporterNestedInput
   blocksInitiated?: Prisma.UserBlockUpdateManyWithoutBlockerNestedInput
   blocksReceived?: Prisma.UserBlockUpdateManyWithoutBlockedNestedInput
+  suspendedBy?: Prisma.UserUpdateOneWithoutSuspendedUsersNestedInput
+  suspendedUsers?: Prisma.UserUpdateManyWithoutSuspendedByNestedInput
+  deletedBy?: Prisma.UserUpdateOneWithoutDeletedUsersNestedInput
+  deletedUsers?: Prisma.UserUpdateManyWithoutDeletedByNestedInput
   ownershipTransfersFrom?: Prisma.EventOwnershipTransferUpdateManyWithoutFromUserNestedInput
   ownershipTransfersTo?: Prisma.EventOwnershipTransferUpdateManyWithoutToUserNestedInput
   ownershipTransfersActed?: Prisma.EventOwnershipTransferUpdateManyWithoutActorNestedInput
@@ -9385,6 +11271,7 @@ export type UserUpdateWithoutDmReadsInput = {
   checkinLogsAsActor?: Prisma.EventCheckinLogUpdateManyWithoutActorNestedInput
   checkinRejections?: Prisma.EventMemberUpdateManyWithoutLastCheckinRejectedByNestedInput
   auditLogsAsActor?: Prisma.EventAuditLogUpdateManyWithoutActorNestedInput
+  userAuditLogsAsActor?: Prisma.UserAuditLogUpdateManyWithoutActorNestedInput
   subscriptions?: Prisma.UserSubscriptionUpdateManyWithoutUserNestedInput
   planPeriods?: Prisma.UserPlanPeriodUpdateManyWithoutUserNestedInput
   eventSponsorships?: Prisma.EventSponsorshipUpdateManyWithoutSponsorNestedInput
@@ -9406,8 +11293,11 @@ export type UserUncheckedUpdateWithoutDmReadsInput = {
   role?: Prisma.EnumRoleFieldUpdateOperationsInput | $Enums.Role
   verifiedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   suspendedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  suspendedUntil?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  suspendedById?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   suspensionReason?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   deletedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  deletedById?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   deletedReason?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   restorationToken?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   restorationTokenExpiry?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
@@ -9447,6 +11337,8 @@ export type UserUncheckedUpdateWithoutDmReadsInput = {
   reportsFiled?: Prisma.ReportUncheckedUpdateManyWithoutReporterNestedInput
   blocksInitiated?: Prisma.UserBlockUncheckedUpdateManyWithoutBlockerNestedInput
   blocksReceived?: Prisma.UserBlockUncheckedUpdateManyWithoutBlockedNestedInput
+  suspendedUsers?: Prisma.UserUncheckedUpdateManyWithoutSuspendedByNestedInput
+  deletedUsers?: Prisma.UserUncheckedUpdateManyWithoutDeletedByNestedInput
   ownershipTransfersFrom?: Prisma.EventOwnershipTransferUncheckedUpdateManyWithoutFromUserNestedInput
   ownershipTransfersTo?: Prisma.EventOwnershipTransferUncheckedUpdateManyWithoutToUserNestedInput
   ownershipTransfersActed?: Prisma.EventOwnershipTransferUncheckedUpdateManyWithoutActorNestedInput
@@ -9458,6 +11350,7 @@ export type UserUncheckedUpdateWithoutDmReadsInput = {
   checkinLogsAsActor?: Prisma.EventCheckinLogUncheckedUpdateManyWithoutActorNestedInput
   checkinRejections?: Prisma.EventMemberUncheckedUpdateManyWithoutLastCheckinRejectedByNestedInput
   auditLogsAsActor?: Prisma.EventAuditLogUncheckedUpdateManyWithoutActorNestedInput
+  userAuditLogsAsActor?: Prisma.UserAuditLogUncheckedUpdateManyWithoutActorNestedInput
   subscriptions?: Prisma.UserSubscriptionUncheckedUpdateManyWithoutUserNestedInput
   planPeriods?: Prisma.UserPlanPeriodUncheckedUpdateManyWithoutUserNestedInput
   eventSponsorships?: Prisma.EventSponsorshipUncheckedUpdateManyWithoutSponsorNestedInput
@@ -9479,6 +11372,7 @@ export type UserCreateWithoutBlocksInitiatedInput = {
   role?: $Enums.Role
   verifiedAt?: Date | string | null
   suspendedAt?: Date | string | null
+  suspendedUntil?: Date | string | null
   suspensionReason?: string | null
   deletedAt?: Date | string | null
   deletedReason?: string | null
@@ -9520,6 +11414,10 @@ export type UserCreateWithoutBlocksInitiatedInput = {
   eventMutes?: Prisma.EventMuteCreateNestedManyWithoutUserInput
   reportsFiled?: Prisma.ReportCreateNestedManyWithoutReporterInput
   blocksReceived?: Prisma.UserBlockCreateNestedManyWithoutBlockedInput
+  suspendedBy?: Prisma.UserCreateNestedOneWithoutSuspendedUsersInput
+  suspendedUsers?: Prisma.UserCreateNestedManyWithoutSuspendedByInput
+  deletedBy?: Prisma.UserCreateNestedOneWithoutDeletedUsersInput
+  deletedUsers?: Prisma.UserCreateNestedManyWithoutDeletedByInput
   ownershipTransfersFrom?: Prisma.EventOwnershipTransferCreateNestedManyWithoutFromUserInput
   ownershipTransfersTo?: Prisma.EventOwnershipTransferCreateNestedManyWithoutToUserInput
   ownershipTransfersActed?: Prisma.EventOwnershipTransferCreateNestedManyWithoutActorInput
@@ -9531,6 +11429,7 @@ export type UserCreateWithoutBlocksInitiatedInput = {
   checkinLogsAsActor?: Prisma.EventCheckinLogCreateNestedManyWithoutActorInput
   checkinRejections?: Prisma.EventMemberCreateNestedManyWithoutLastCheckinRejectedByInput
   auditLogsAsActor?: Prisma.EventAuditLogCreateNestedManyWithoutActorInput
+  userAuditLogsAsActor?: Prisma.UserAuditLogCreateNestedManyWithoutActorInput
   subscriptions?: Prisma.UserSubscriptionCreateNestedManyWithoutUserInput
   planPeriods?: Prisma.UserPlanPeriodCreateNestedManyWithoutUserInput
   eventSponsorships?: Prisma.EventSponsorshipCreateNestedManyWithoutSponsorInput
@@ -9552,8 +11451,11 @@ export type UserUncheckedCreateWithoutBlocksInitiatedInput = {
   role?: $Enums.Role
   verifiedAt?: Date | string | null
   suspendedAt?: Date | string | null
+  suspendedUntil?: Date | string | null
+  suspendedById?: string | null
   suspensionReason?: string | null
   deletedAt?: Date | string | null
+  deletedById?: string | null
   deletedReason?: string | null
   restorationToken?: string | null
   restorationTokenExpiry?: Date | string | null
@@ -9593,6 +11495,8 @@ export type UserUncheckedCreateWithoutBlocksInitiatedInput = {
   eventMutes?: Prisma.EventMuteUncheckedCreateNestedManyWithoutUserInput
   reportsFiled?: Prisma.ReportUncheckedCreateNestedManyWithoutReporterInput
   blocksReceived?: Prisma.UserBlockUncheckedCreateNestedManyWithoutBlockedInput
+  suspendedUsers?: Prisma.UserUncheckedCreateNestedManyWithoutSuspendedByInput
+  deletedUsers?: Prisma.UserUncheckedCreateNestedManyWithoutDeletedByInput
   ownershipTransfersFrom?: Prisma.EventOwnershipTransferUncheckedCreateNestedManyWithoutFromUserInput
   ownershipTransfersTo?: Prisma.EventOwnershipTransferUncheckedCreateNestedManyWithoutToUserInput
   ownershipTransfersActed?: Prisma.EventOwnershipTransferUncheckedCreateNestedManyWithoutActorInput
@@ -9604,6 +11508,7 @@ export type UserUncheckedCreateWithoutBlocksInitiatedInput = {
   checkinLogsAsActor?: Prisma.EventCheckinLogUncheckedCreateNestedManyWithoutActorInput
   checkinRejections?: Prisma.EventMemberUncheckedCreateNestedManyWithoutLastCheckinRejectedByInput
   auditLogsAsActor?: Prisma.EventAuditLogUncheckedCreateNestedManyWithoutActorInput
+  userAuditLogsAsActor?: Prisma.UserAuditLogUncheckedCreateNestedManyWithoutActorInput
   subscriptions?: Prisma.UserSubscriptionUncheckedCreateNestedManyWithoutUserInput
   planPeriods?: Prisma.UserPlanPeriodUncheckedCreateNestedManyWithoutUserInput
   eventSponsorships?: Prisma.EventSponsorshipUncheckedCreateNestedManyWithoutSponsorInput
@@ -9630,6 +11535,7 @@ export type UserCreateWithoutBlocksReceivedInput = {
   role?: $Enums.Role
   verifiedAt?: Date | string | null
   suspendedAt?: Date | string | null
+  suspendedUntil?: Date | string | null
   suspensionReason?: string | null
   deletedAt?: Date | string | null
   deletedReason?: string | null
@@ -9671,6 +11577,10 @@ export type UserCreateWithoutBlocksReceivedInput = {
   eventMutes?: Prisma.EventMuteCreateNestedManyWithoutUserInput
   reportsFiled?: Prisma.ReportCreateNestedManyWithoutReporterInput
   blocksInitiated?: Prisma.UserBlockCreateNestedManyWithoutBlockerInput
+  suspendedBy?: Prisma.UserCreateNestedOneWithoutSuspendedUsersInput
+  suspendedUsers?: Prisma.UserCreateNestedManyWithoutSuspendedByInput
+  deletedBy?: Prisma.UserCreateNestedOneWithoutDeletedUsersInput
+  deletedUsers?: Prisma.UserCreateNestedManyWithoutDeletedByInput
   ownershipTransfersFrom?: Prisma.EventOwnershipTransferCreateNestedManyWithoutFromUserInput
   ownershipTransfersTo?: Prisma.EventOwnershipTransferCreateNestedManyWithoutToUserInput
   ownershipTransfersActed?: Prisma.EventOwnershipTransferCreateNestedManyWithoutActorInput
@@ -9682,6 +11592,7 @@ export type UserCreateWithoutBlocksReceivedInput = {
   checkinLogsAsActor?: Prisma.EventCheckinLogCreateNestedManyWithoutActorInput
   checkinRejections?: Prisma.EventMemberCreateNestedManyWithoutLastCheckinRejectedByInput
   auditLogsAsActor?: Prisma.EventAuditLogCreateNestedManyWithoutActorInput
+  userAuditLogsAsActor?: Prisma.UserAuditLogCreateNestedManyWithoutActorInput
   subscriptions?: Prisma.UserSubscriptionCreateNestedManyWithoutUserInput
   planPeriods?: Prisma.UserPlanPeriodCreateNestedManyWithoutUserInput
   eventSponsorships?: Prisma.EventSponsorshipCreateNestedManyWithoutSponsorInput
@@ -9703,8 +11614,11 @@ export type UserUncheckedCreateWithoutBlocksReceivedInput = {
   role?: $Enums.Role
   verifiedAt?: Date | string | null
   suspendedAt?: Date | string | null
+  suspendedUntil?: Date | string | null
+  suspendedById?: string | null
   suspensionReason?: string | null
   deletedAt?: Date | string | null
+  deletedById?: string | null
   deletedReason?: string | null
   restorationToken?: string | null
   restorationTokenExpiry?: Date | string | null
@@ -9744,6 +11658,8 @@ export type UserUncheckedCreateWithoutBlocksReceivedInput = {
   eventMutes?: Prisma.EventMuteUncheckedCreateNestedManyWithoutUserInput
   reportsFiled?: Prisma.ReportUncheckedCreateNestedManyWithoutReporterInput
   blocksInitiated?: Prisma.UserBlockUncheckedCreateNestedManyWithoutBlockerInput
+  suspendedUsers?: Prisma.UserUncheckedCreateNestedManyWithoutSuspendedByInput
+  deletedUsers?: Prisma.UserUncheckedCreateNestedManyWithoutDeletedByInput
   ownershipTransfersFrom?: Prisma.EventOwnershipTransferUncheckedCreateNestedManyWithoutFromUserInput
   ownershipTransfersTo?: Prisma.EventOwnershipTransferUncheckedCreateNestedManyWithoutToUserInput
   ownershipTransfersActed?: Prisma.EventOwnershipTransferUncheckedCreateNestedManyWithoutActorInput
@@ -9755,6 +11671,7 @@ export type UserUncheckedCreateWithoutBlocksReceivedInput = {
   checkinLogsAsActor?: Prisma.EventCheckinLogUncheckedCreateNestedManyWithoutActorInput
   checkinRejections?: Prisma.EventMemberUncheckedCreateNestedManyWithoutLastCheckinRejectedByInput
   auditLogsAsActor?: Prisma.EventAuditLogUncheckedCreateNestedManyWithoutActorInput
+  userAuditLogsAsActor?: Prisma.UserAuditLogUncheckedCreateNestedManyWithoutActorInput
   subscriptions?: Prisma.UserSubscriptionUncheckedCreateNestedManyWithoutUserInput
   planPeriods?: Prisma.UserPlanPeriodUncheckedCreateNestedManyWithoutUserInput
   eventSponsorships?: Prisma.EventSponsorshipUncheckedCreateNestedManyWithoutSponsorInput
@@ -9792,6 +11709,7 @@ export type UserUpdateWithoutBlocksInitiatedInput = {
   role?: Prisma.EnumRoleFieldUpdateOperationsInput | $Enums.Role
   verifiedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   suspendedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  suspendedUntil?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   suspensionReason?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   deletedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   deletedReason?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
@@ -9833,6 +11751,10 @@ export type UserUpdateWithoutBlocksInitiatedInput = {
   eventMutes?: Prisma.EventMuteUpdateManyWithoutUserNestedInput
   reportsFiled?: Prisma.ReportUpdateManyWithoutReporterNestedInput
   blocksReceived?: Prisma.UserBlockUpdateManyWithoutBlockedNestedInput
+  suspendedBy?: Prisma.UserUpdateOneWithoutSuspendedUsersNestedInput
+  suspendedUsers?: Prisma.UserUpdateManyWithoutSuspendedByNestedInput
+  deletedBy?: Prisma.UserUpdateOneWithoutDeletedUsersNestedInput
+  deletedUsers?: Prisma.UserUpdateManyWithoutDeletedByNestedInput
   ownershipTransfersFrom?: Prisma.EventOwnershipTransferUpdateManyWithoutFromUserNestedInput
   ownershipTransfersTo?: Prisma.EventOwnershipTransferUpdateManyWithoutToUserNestedInput
   ownershipTransfersActed?: Prisma.EventOwnershipTransferUpdateManyWithoutActorNestedInput
@@ -9844,6 +11766,7 @@ export type UserUpdateWithoutBlocksInitiatedInput = {
   checkinLogsAsActor?: Prisma.EventCheckinLogUpdateManyWithoutActorNestedInput
   checkinRejections?: Prisma.EventMemberUpdateManyWithoutLastCheckinRejectedByNestedInput
   auditLogsAsActor?: Prisma.EventAuditLogUpdateManyWithoutActorNestedInput
+  userAuditLogsAsActor?: Prisma.UserAuditLogUpdateManyWithoutActorNestedInput
   subscriptions?: Prisma.UserSubscriptionUpdateManyWithoutUserNestedInput
   planPeriods?: Prisma.UserPlanPeriodUpdateManyWithoutUserNestedInput
   eventSponsorships?: Prisma.EventSponsorshipUpdateManyWithoutSponsorNestedInput
@@ -9865,8 +11788,11 @@ export type UserUncheckedUpdateWithoutBlocksInitiatedInput = {
   role?: Prisma.EnumRoleFieldUpdateOperationsInput | $Enums.Role
   verifiedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   suspendedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  suspendedUntil?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  suspendedById?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   suspensionReason?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   deletedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  deletedById?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   deletedReason?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   restorationToken?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   restorationTokenExpiry?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
@@ -9906,6 +11832,8 @@ export type UserUncheckedUpdateWithoutBlocksInitiatedInput = {
   eventMutes?: Prisma.EventMuteUncheckedUpdateManyWithoutUserNestedInput
   reportsFiled?: Prisma.ReportUncheckedUpdateManyWithoutReporterNestedInput
   blocksReceived?: Prisma.UserBlockUncheckedUpdateManyWithoutBlockedNestedInput
+  suspendedUsers?: Prisma.UserUncheckedUpdateManyWithoutSuspendedByNestedInput
+  deletedUsers?: Prisma.UserUncheckedUpdateManyWithoutDeletedByNestedInput
   ownershipTransfersFrom?: Prisma.EventOwnershipTransferUncheckedUpdateManyWithoutFromUserNestedInput
   ownershipTransfersTo?: Prisma.EventOwnershipTransferUncheckedUpdateManyWithoutToUserNestedInput
   ownershipTransfersActed?: Prisma.EventOwnershipTransferUncheckedUpdateManyWithoutActorNestedInput
@@ -9917,6 +11845,7 @@ export type UserUncheckedUpdateWithoutBlocksInitiatedInput = {
   checkinLogsAsActor?: Prisma.EventCheckinLogUncheckedUpdateManyWithoutActorNestedInput
   checkinRejections?: Prisma.EventMemberUncheckedUpdateManyWithoutLastCheckinRejectedByNestedInput
   auditLogsAsActor?: Prisma.EventAuditLogUncheckedUpdateManyWithoutActorNestedInput
+  userAuditLogsAsActor?: Prisma.UserAuditLogUncheckedUpdateManyWithoutActorNestedInput
   subscriptions?: Prisma.UserSubscriptionUncheckedUpdateManyWithoutUserNestedInput
   planPeriods?: Prisma.UserPlanPeriodUncheckedUpdateManyWithoutUserNestedInput
   eventSponsorships?: Prisma.EventSponsorshipUncheckedUpdateManyWithoutSponsorNestedInput
@@ -9949,6 +11878,7 @@ export type UserUpdateWithoutBlocksReceivedInput = {
   role?: Prisma.EnumRoleFieldUpdateOperationsInput | $Enums.Role
   verifiedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   suspendedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  suspendedUntil?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   suspensionReason?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   deletedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   deletedReason?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
@@ -9990,6 +11920,10 @@ export type UserUpdateWithoutBlocksReceivedInput = {
   eventMutes?: Prisma.EventMuteUpdateManyWithoutUserNestedInput
   reportsFiled?: Prisma.ReportUpdateManyWithoutReporterNestedInput
   blocksInitiated?: Prisma.UserBlockUpdateManyWithoutBlockerNestedInput
+  suspendedBy?: Prisma.UserUpdateOneWithoutSuspendedUsersNestedInput
+  suspendedUsers?: Prisma.UserUpdateManyWithoutSuspendedByNestedInput
+  deletedBy?: Prisma.UserUpdateOneWithoutDeletedUsersNestedInput
+  deletedUsers?: Prisma.UserUpdateManyWithoutDeletedByNestedInput
   ownershipTransfersFrom?: Prisma.EventOwnershipTransferUpdateManyWithoutFromUserNestedInput
   ownershipTransfersTo?: Prisma.EventOwnershipTransferUpdateManyWithoutToUserNestedInput
   ownershipTransfersActed?: Prisma.EventOwnershipTransferUpdateManyWithoutActorNestedInput
@@ -10001,6 +11935,7 @@ export type UserUpdateWithoutBlocksReceivedInput = {
   checkinLogsAsActor?: Prisma.EventCheckinLogUpdateManyWithoutActorNestedInput
   checkinRejections?: Prisma.EventMemberUpdateManyWithoutLastCheckinRejectedByNestedInput
   auditLogsAsActor?: Prisma.EventAuditLogUpdateManyWithoutActorNestedInput
+  userAuditLogsAsActor?: Prisma.UserAuditLogUpdateManyWithoutActorNestedInput
   subscriptions?: Prisma.UserSubscriptionUpdateManyWithoutUserNestedInput
   planPeriods?: Prisma.UserPlanPeriodUpdateManyWithoutUserNestedInput
   eventSponsorships?: Prisma.EventSponsorshipUpdateManyWithoutSponsorNestedInput
@@ -10022,8 +11957,11 @@ export type UserUncheckedUpdateWithoutBlocksReceivedInput = {
   role?: Prisma.EnumRoleFieldUpdateOperationsInput | $Enums.Role
   verifiedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   suspendedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  suspendedUntil?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  suspendedById?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   suspensionReason?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   deletedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  deletedById?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   deletedReason?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   restorationToken?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   restorationTokenExpiry?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
@@ -10063,6 +12001,8 @@ export type UserUncheckedUpdateWithoutBlocksReceivedInput = {
   eventMutes?: Prisma.EventMuteUncheckedUpdateManyWithoutUserNestedInput
   reportsFiled?: Prisma.ReportUncheckedUpdateManyWithoutReporterNestedInput
   blocksInitiated?: Prisma.UserBlockUncheckedUpdateManyWithoutBlockerNestedInput
+  suspendedUsers?: Prisma.UserUncheckedUpdateManyWithoutSuspendedByNestedInput
+  deletedUsers?: Prisma.UserUncheckedUpdateManyWithoutDeletedByNestedInput
   ownershipTransfersFrom?: Prisma.EventOwnershipTransferUncheckedUpdateManyWithoutFromUserNestedInput
   ownershipTransfersTo?: Prisma.EventOwnershipTransferUncheckedUpdateManyWithoutToUserNestedInput
   ownershipTransfersActed?: Prisma.EventOwnershipTransferUncheckedUpdateManyWithoutActorNestedInput
@@ -10074,6 +12014,7 @@ export type UserUncheckedUpdateWithoutBlocksReceivedInput = {
   checkinLogsAsActor?: Prisma.EventCheckinLogUncheckedUpdateManyWithoutActorNestedInput
   checkinRejections?: Prisma.EventMemberUncheckedUpdateManyWithoutLastCheckinRejectedByNestedInput
   auditLogsAsActor?: Prisma.EventAuditLogUncheckedUpdateManyWithoutActorNestedInput
+  userAuditLogsAsActor?: Prisma.UserAuditLogUncheckedUpdateManyWithoutActorNestedInput
   subscriptions?: Prisma.UserSubscriptionUncheckedUpdateManyWithoutUserNestedInput
   planPeriods?: Prisma.UserPlanPeriodUncheckedUpdateManyWithoutUserNestedInput
   eventSponsorships?: Prisma.EventSponsorshipUncheckedUpdateManyWithoutSponsorNestedInput
@@ -10095,6 +12036,7 @@ export type UserCreateWithoutReportsFiledInput = {
   role?: $Enums.Role
   verifiedAt?: Date | string | null
   suspendedAt?: Date | string | null
+  suspendedUntil?: Date | string | null
   suspensionReason?: string | null
   deletedAt?: Date | string | null
   deletedReason?: string | null
@@ -10136,6 +12078,10 @@ export type UserCreateWithoutReportsFiledInput = {
   eventMutes?: Prisma.EventMuteCreateNestedManyWithoutUserInput
   blocksInitiated?: Prisma.UserBlockCreateNestedManyWithoutBlockerInput
   blocksReceived?: Prisma.UserBlockCreateNestedManyWithoutBlockedInput
+  suspendedBy?: Prisma.UserCreateNestedOneWithoutSuspendedUsersInput
+  suspendedUsers?: Prisma.UserCreateNestedManyWithoutSuspendedByInput
+  deletedBy?: Prisma.UserCreateNestedOneWithoutDeletedUsersInput
+  deletedUsers?: Prisma.UserCreateNestedManyWithoutDeletedByInput
   ownershipTransfersFrom?: Prisma.EventOwnershipTransferCreateNestedManyWithoutFromUserInput
   ownershipTransfersTo?: Prisma.EventOwnershipTransferCreateNestedManyWithoutToUserInput
   ownershipTransfersActed?: Prisma.EventOwnershipTransferCreateNestedManyWithoutActorInput
@@ -10147,6 +12093,7 @@ export type UserCreateWithoutReportsFiledInput = {
   checkinLogsAsActor?: Prisma.EventCheckinLogCreateNestedManyWithoutActorInput
   checkinRejections?: Prisma.EventMemberCreateNestedManyWithoutLastCheckinRejectedByInput
   auditLogsAsActor?: Prisma.EventAuditLogCreateNestedManyWithoutActorInput
+  userAuditLogsAsActor?: Prisma.UserAuditLogCreateNestedManyWithoutActorInput
   subscriptions?: Prisma.UserSubscriptionCreateNestedManyWithoutUserInput
   planPeriods?: Prisma.UserPlanPeriodCreateNestedManyWithoutUserInput
   eventSponsorships?: Prisma.EventSponsorshipCreateNestedManyWithoutSponsorInput
@@ -10168,8 +12115,11 @@ export type UserUncheckedCreateWithoutReportsFiledInput = {
   role?: $Enums.Role
   verifiedAt?: Date | string | null
   suspendedAt?: Date | string | null
+  suspendedUntil?: Date | string | null
+  suspendedById?: string | null
   suspensionReason?: string | null
   deletedAt?: Date | string | null
+  deletedById?: string | null
   deletedReason?: string | null
   restorationToken?: string | null
   restorationTokenExpiry?: Date | string | null
@@ -10209,6 +12159,8 @@ export type UserUncheckedCreateWithoutReportsFiledInput = {
   eventMutes?: Prisma.EventMuteUncheckedCreateNestedManyWithoutUserInput
   blocksInitiated?: Prisma.UserBlockUncheckedCreateNestedManyWithoutBlockerInput
   blocksReceived?: Prisma.UserBlockUncheckedCreateNestedManyWithoutBlockedInput
+  suspendedUsers?: Prisma.UserUncheckedCreateNestedManyWithoutSuspendedByInput
+  deletedUsers?: Prisma.UserUncheckedCreateNestedManyWithoutDeletedByInput
   ownershipTransfersFrom?: Prisma.EventOwnershipTransferUncheckedCreateNestedManyWithoutFromUserInput
   ownershipTransfersTo?: Prisma.EventOwnershipTransferUncheckedCreateNestedManyWithoutToUserInput
   ownershipTransfersActed?: Prisma.EventOwnershipTransferUncheckedCreateNestedManyWithoutActorInput
@@ -10220,6 +12172,7 @@ export type UserUncheckedCreateWithoutReportsFiledInput = {
   checkinLogsAsActor?: Prisma.EventCheckinLogUncheckedCreateNestedManyWithoutActorInput
   checkinRejections?: Prisma.EventMemberUncheckedCreateNestedManyWithoutLastCheckinRejectedByInput
   auditLogsAsActor?: Prisma.EventAuditLogUncheckedCreateNestedManyWithoutActorInput
+  userAuditLogsAsActor?: Prisma.UserAuditLogUncheckedCreateNestedManyWithoutActorInput
   subscriptions?: Prisma.UserSubscriptionUncheckedCreateNestedManyWithoutUserInput
   planPeriods?: Prisma.UserPlanPeriodUncheckedCreateNestedManyWithoutUserInput
   eventSponsorships?: Prisma.EventSponsorshipUncheckedCreateNestedManyWithoutSponsorInput
@@ -10257,6 +12210,7 @@ export type UserUpdateWithoutReportsFiledInput = {
   role?: Prisma.EnumRoleFieldUpdateOperationsInput | $Enums.Role
   verifiedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   suspendedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  suspendedUntil?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   suspensionReason?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   deletedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   deletedReason?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
@@ -10298,6 +12252,10 @@ export type UserUpdateWithoutReportsFiledInput = {
   eventMutes?: Prisma.EventMuteUpdateManyWithoutUserNestedInput
   blocksInitiated?: Prisma.UserBlockUpdateManyWithoutBlockerNestedInput
   blocksReceived?: Prisma.UserBlockUpdateManyWithoutBlockedNestedInput
+  suspendedBy?: Prisma.UserUpdateOneWithoutSuspendedUsersNestedInput
+  suspendedUsers?: Prisma.UserUpdateManyWithoutSuspendedByNestedInput
+  deletedBy?: Prisma.UserUpdateOneWithoutDeletedUsersNestedInput
+  deletedUsers?: Prisma.UserUpdateManyWithoutDeletedByNestedInput
   ownershipTransfersFrom?: Prisma.EventOwnershipTransferUpdateManyWithoutFromUserNestedInput
   ownershipTransfersTo?: Prisma.EventOwnershipTransferUpdateManyWithoutToUserNestedInput
   ownershipTransfersActed?: Prisma.EventOwnershipTransferUpdateManyWithoutActorNestedInput
@@ -10309,6 +12267,7 @@ export type UserUpdateWithoutReportsFiledInput = {
   checkinLogsAsActor?: Prisma.EventCheckinLogUpdateManyWithoutActorNestedInput
   checkinRejections?: Prisma.EventMemberUpdateManyWithoutLastCheckinRejectedByNestedInput
   auditLogsAsActor?: Prisma.EventAuditLogUpdateManyWithoutActorNestedInput
+  userAuditLogsAsActor?: Prisma.UserAuditLogUpdateManyWithoutActorNestedInput
   subscriptions?: Prisma.UserSubscriptionUpdateManyWithoutUserNestedInput
   planPeriods?: Prisma.UserPlanPeriodUpdateManyWithoutUserNestedInput
   eventSponsorships?: Prisma.EventSponsorshipUpdateManyWithoutSponsorNestedInput
@@ -10330,8 +12289,11 @@ export type UserUncheckedUpdateWithoutReportsFiledInput = {
   role?: Prisma.EnumRoleFieldUpdateOperationsInput | $Enums.Role
   verifiedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   suspendedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  suspendedUntil?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  suspendedById?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   suspensionReason?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   deletedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  deletedById?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   deletedReason?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   restorationToken?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   restorationTokenExpiry?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
@@ -10371,6 +12333,8 @@ export type UserUncheckedUpdateWithoutReportsFiledInput = {
   eventMutes?: Prisma.EventMuteUncheckedUpdateManyWithoutUserNestedInput
   blocksInitiated?: Prisma.UserBlockUncheckedUpdateManyWithoutBlockerNestedInput
   blocksReceived?: Prisma.UserBlockUncheckedUpdateManyWithoutBlockedNestedInput
+  suspendedUsers?: Prisma.UserUncheckedUpdateManyWithoutSuspendedByNestedInput
+  deletedUsers?: Prisma.UserUncheckedUpdateManyWithoutDeletedByNestedInput
   ownershipTransfersFrom?: Prisma.EventOwnershipTransferUncheckedUpdateManyWithoutFromUserNestedInput
   ownershipTransfersTo?: Prisma.EventOwnershipTransferUncheckedUpdateManyWithoutToUserNestedInput
   ownershipTransfersActed?: Prisma.EventOwnershipTransferUncheckedUpdateManyWithoutActorNestedInput
@@ -10382,6 +12346,7 @@ export type UserUncheckedUpdateWithoutReportsFiledInput = {
   checkinLogsAsActor?: Prisma.EventCheckinLogUncheckedUpdateManyWithoutActorNestedInput
   checkinRejections?: Prisma.EventMemberUncheckedUpdateManyWithoutLastCheckinRejectedByNestedInput
   auditLogsAsActor?: Prisma.EventAuditLogUncheckedUpdateManyWithoutActorNestedInput
+  userAuditLogsAsActor?: Prisma.UserAuditLogUncheckedUpdateManyWithoutActorNestedInput
   subscriptions?: Prisma.UserSubscriptionUncheckedUpdateManyWithoutUserNestedInput
   planPeriods?: Prisma.UserPlanPeriodUncheckedUpdateManyWithoutUserNestedInput
   eventSponsorships?: Prisma.EventSponsorshipUncheckedUpdateManyWithoutSponsorNestedInput
@@ -10403,6 +12368,7 @@ export type UserCreateWithoutSubscriptionsInput = {
   role?: $Enums.Role
   verifiedAt?: Date | string | null
   suspendedAt?: Date | string | null
+  suspendedUntil?: Date | string | null
   suspensionReason?: string | null
   deletedAt?: Date | string | null
   deletedReason?: string | null
@@ -10445,6 +12411,10 @@ export type UserCreateWithoutSubscriptionsInput = {
   reportsFiled?: Prisma.ReportCreateNestedManyWithoutReporterInput
   blocksInitiated?: Prisma.UserBlockCreateNestedManyWithoutBlockerInput
   blocksReceived?: Prisma.UserBlockCreateNestedManyWithoutBlockedInput
+  suspendedBy?: Prisma.UserCreateNestedOneWithoutSuspendedUsersInput
+  suspendedUsers?: Prisma.UserCreateNestedManyWithoutSuspendedByInput
+  deletedBy?: Prisma.UserCreateNestedOneWithoutDeletedUsersInput
+  deletedUsers?: Prisma.UserCreateNestedManyWithoutDeletedByInput
   ownershipTransfersFrom?: Prisma.EventOwnershipTransferCreateNestedManyWithoutFromUserInput
   ownershipTransfersTo?: Prisma.EventOwnershipTransferCreateNestedManyWithoutToUserInput
   ownershipTransfersActed?: Prisma.EventOwnershipTransferCreateNestedManyWithoutActorInput
@@ -10456,6 +12426,7 @@ export type UserCreateWithoutSubscriptionsInput = {
   checkinLogsAsActor?: Prisma.EventCheckinLogCreateNestedManyWithoutActorInput
   checkinRejections?: Prisma.EventMemberCreateNestedManyWithoutLastCheckinRejectedByInput
   auditLogsAsActor?: Prisma.EventAuditLogCreateNestedManyWithoutActorInput
+  userAuditLogsAsActor?: Prisma.UserAuditLogCreateNestedManyWithoutActorInput
   planPeriods?: Prisma.UserPlanPeriodCreateNestedManyWithoutUserInput
   eventSponsorships?: Prisma.EventSponsorshipCreateNestedManyWithoutSponsorInput
   eventSponsorshipPeriods?: Prisma.EventSponsorshipPeriodCreateNestedManyWithoutSponsorInput
@@ -10476,8 +12447,11 @@ export type UserUncheckedCreateWithoutSubscriptionsInput = {
   role?: $Enums.Role
   verifiedAt?: Date | string | null
   suspendedAt?: Date | string | null
+  suspendedUntil?: Date | string | null
+  suspendedById?: string | null
   suspensionReason?: string | null
   deletedAt?: Date | string | null
+  deletedById?: string | null
   deletedReason?: string | null
   restorationToken?: string | null
   restorationTokenExpiry?: Date | string | null
@@ -10518,6 +12492,8 @@ export type UserUncheckedCreateWithoutSubscriptionsInput = {
   reportsFiled?: Prisma.ReportUncheckedCreateNestedManyWithoutReporterInput
   blocksInitiated?: Prisma.UserBlockUncheckedCreateNestedManyWithoutBlockerInput
   blocksReceived?: Prisma.UserBlockUncheckedCreateNestedManyWithoutBlockedInput
+  suspendedUsers?: Prisma.UserUncheckedCreateNestedManyWithoutSuspendedByInput
+  deletedUsers?: Prisma.UserUncheckedCreateNestedManyWithoutDeletedByInput
   ownershipTransfersFrom?: Prisma.EventOwnershipTransferUncheckedCreateNestedManyWithoutFromUserInput
   ownershipTransfersTo?: Prisma.EventOwnershipTransferUncheckedCreateNestedManyWithoutToUserInput
   ownershipTransfersActed?: Prisma.EventOwnershipTransferUncheckedCreateNestedManyWithoutActorInput
@@ -10529,6 +12505,7 @@ export type UserUncheckedCreateWithoutSubscriptionsInput = {
   checkinLogsAsActor?: Prisma.EventCheckinLogUncheckedCreateNestedManyWithoutActorInput
   checkinRejections?: Prisma.EventMemberUncheckedCreateNestedManyWithoutLastCheckinRejectedByInput
   auditLogsAsActor?: Prisma.EventAuditLogUncheckedCreateNestedManyWithoutActorInput
+  userAuditLogsAsActor?: Prisma.UserAuditLogUncheckedCreateNestedManyWithoutActorInput
   planPeriods?: Prisma.UserPlanPeriodUncheckedCreateNestedManyWithoutUserInput
   eventSponsorships?: Prisma.EventSponsorshipUncheckedCreateNestedManyWithoutSponsorInput
   eventSponsorshipPeriods?: Prisma.EventSponsorshipPeriodUncheckedCreateNestedManyWithoutSponsorInput
@@ -10565,6 +12542,7 @@ export type UserUpdateWithoutSubscriptionsInput = {
   role?: Prisma.EnumRoleFieldUpdateOperationsInput | $Enums.Role
   verifiedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   suspendedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  suspendedUntil?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   suspensionReason?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   deletedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   deletedReason?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
@@ -10607,6 +12585,10 @@ export type UserUpdateWithoutSubscriptionsInput = {
   reportsFiled?: Prisma.ReportUpdateManyWithoutReporterNestedInput
   blocksInitiated?: Prisma.UserBlockUpdateManyWithoutBlockerNestedInput
   blocksReceived?: Prisma.UserBlockUpdateManyWithoutBlockedNestedInput
+  suspendedBy?: Prisma.UserUpdateOneWithoutSuspendedUsersNestedInput
+  suspendedUsers?: Prisma.UserUpdateManyWithoutSuspendedByNestedInput
+  deletedBy?: Prisma.UserUpdateOneWithoutDeletedUsersNestedInput
+  deletedUsers?: Prisma.UserUpdateManyWithoutDeletedByNestedInput
   ownershipTransfersFrom?: Prisma.EventOwnershipTransferUpdateManyWithoutFromUserNestedInput
   ownershipTransfersTo?: Prisma.EventOwnershipTransferUpdateManyWithoutToUserNestedInput
   ownershipTransfersActed?: Prisma.EventOwnershipTransferUpdateManyWithoutActorNestedInput
@@ -10618,6 +12600,7 @@ export type UserUpdateWithoutSubscriptionsInput = {
   checkinLogsAsActor?: Prisma.EventCheckinLogUpdateManyWithoutActorNestedInput
   checkinRejections?: Prisma.EventMemberUpdateManyWithoutLastCheckinRejectedByNestedInput
   auditLogsAsActor?: Prisma.EventAuditLogUpdateManyWithoutActorNestedInput
+  userAuditLogsAsActor?: Prisma.UserAuditLogUpdateManyWithoutActorNestedInput
   planPeriods?: Prisma.UserPlanPeriodUpdateManyWithoutUserNestedInput
   eventSponsorships?: Prisma.EventSponsorshipUpdateManyWithoutSponsorNestedInput
   eventSponsorshipPeriods?: Prisma.EventSponsorshipPeriodUpdateManyWithoutSponsorNestedInput
@@ -10638,8 +12621,11 @@ export type UserUncheckedUpdateWithoutSubscriptionsInput = {
   role?: Prisma.EnumRoleFieldUpdateOperationsInput | $Enums.Role
   verifiedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   suspendedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  suspendedUntil?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  suspendedById?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   suspensionReason?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   deletedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  deletedById?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   deletedReason?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   restorationToken?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   restorationTokenExpiry?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
@@ -10680,6 +12666,8 @@ export type UserUncheckedUpdateWithoutSubscriptionsInput = {
   reportsFiled?: Prisma.ReportUncheckedUpdateManyWithoutReporterNestedInput
   blocksInitiated?: Prisma.UserBlockUncheckedUpdateManyWithoutBlockerNestedInput
   blocksReceived?: Prisma.UserBlockUncheckedUpdateManyWithoutBlockedNestedInput
+  suspendedUsers?: Prisma.UserUncheckedUpdateManyWithoutSuspendedByNestedInput
+  deletedUsers?: Prisma.UserUncheckedUpdateManyWithoutDeletedByNestedInput
   ownershipTransfersFrom?: Prisma.EventOwnershipTransferUncheckedUpdateManyWithoutFromUserNestedInput
   ownershipTransfersTo?: Prisma.EventOwnershipTransferUncheckedUpdateManyWithoutToUserNestedInput
   ownershipTransfersActed?: Prisma.EventOwnershipTransferUncheckedUpdateManyWithoutActorNestedInput
@@ -10691,6 +12679,7 @@ export type UserUncheckedUpdateWithoutSubscriptionsInput = {
   checkinLogsAsActor?: Prisma.EventCheckinLogUncheckedUpdateManyWithoutActorNestedInput
   checkinRejections?: Prisma.EventMemberUncheckedUpdateManyWithoutLastCheckinRejectedByNestedInput
   auditLogsAsActor?: Prisma.EventAuditLogUncheckedUpdateManyWithoutActorNestedInput
+  userAuditLogsAsActor?: Prisma.UserAuditLogUncheckedUpdateManyWithoutActorNestedInput
   planPeriods?: Prisma.UserPlanPeriodUncheckedUpdateManyWithoutUserNestedInput
   eventSponsorships?: Prisma.EventSponsorshipUncheckedUpdateManyWithoutSponsorNestedInput
   eventSponsorshipPeriods?: Prisma.EventSponsorshipPeriodUncheckedUpdateManyWithoutSponsorNestedInput
@@ -10711,6 +12700,7 @@ export type UserCreateWithoutPlanPeriodsInput = {
   role?: $Enums.Role
   verifiedAt?: Date | string | null
   suspendedAt?: Date | string | null
+  suspendedUntil?: Date | string | null
   suspensionReason?: string | null
   deletedAt?: Date | string | null
   deletedReason?: string | null
@@ -10753,6 +12743,10 @@ export type UserCreateWithoutPlanPeriodsInput = {
   reportsFiled?: Prisma.ReportCreateNestedManyWithoutReporterInput
   blocksInitiated?: Prisma.UserBlockCreateNestedManyWithoutBlockerInput
   blocksReceived?: Prisma.UserBlockCreateNestedManyWithoutBlockedInput
+  suspendedBy?: Prisma.UserCreateNestedOneWithoutSuspendedUsersInput
+  suspendedUsers?: Prisma.UserCreateNestedManyWithoutSuspendedByInput
+  deletedBy?: Prisma.UserCreateNestedOneWithoutDeletedUsersInput
+  deletedUsers?: Prisma.UserCreateNestedManyWithoutDeletedByInput
   ownershipTransfersFrom?: Prisma.EventOwnershipTransferCreateNestedManyWithoutFromUserInput
   ownershipTransfersTo?: Prisma.EventOwnershipTransferCreateNestedManyWithoutToUserInput
   ownershipTransfersActed?: Prisma.EventOwnershipTransferCreateNestedManyWithoutActorInput
@@ -10764,6 +12758,7 @@ export type UserCreateWithoutPlanPeriodsInput = {
   checkinLogsAsActor?: Prisma.EventCheckinLogCreateNestedManyWithoutActorInput
   checkinRejections?: Prisma.EventMemberCreateNestedManyWithoutLastCheckinRejectedByInput
   auditLogsAsActor?: Prisma.EventAuditLogCreateNestedManyWithoutActorInput
+  userAuditLogsAsActor?: Prisma.UserAuditLogCreateNestedManyWithoutActorInput
   subscriptions?: Prisma.UserSubscriptionCreateNestedManyWithoutUserInput
   eventSponsorships?: Prisma.EventSponsorshipCreateNestedManyWithoutSponsorInput
   eventSponsorshipPeriods?: Prisma.EventSponsorshipPeriodCreateNestedManyWithoutSponsorInput
@@ -10784,8 +12779,11 @@ export type UserUncheckedCreateWithoutPlanPeriodsInput = {
   role?: $Enums.Role
   verifiedAt?: Date | string | null
   suspendedAt?: Date | string | null
+  suspendedUntil?: Date | string | null
+  suspendedById?: string | null
   suspensionReason?: string | null
   deletedAt?: Date | string | null
+  deletedById?: string | null
   deletedReason?: string | null
   restorationToken?: string | null
   restorationTokenExpiry?: Date | string | null
@@ -10826,6 +12824,8 @@ export type UserUncheckedCreateWithoutPlanPeriodsInput = {
   reportsFiled?: Prisma.ReportUncheckedCreateNestedManyWithoutReporterInput
   blocksInitiated?: Prisma.UserBlockUncheckedCreateNestedManyWithoutBlockerInput
   blocksReceived?: Prisma.UserBlockUncheckedCreateNestedManyWithoutBlockedInput
+  suspendedUsers?: Prisma.UserUncheckedCreateNestedManyWithoutSuspendedByInput
+  deletedUsers?: Prisma.UserUncheckedCreateNestedManyWithoutDeletedByInput
   ownershipTransfersFrom?: Prisma.EventOwnershipTransferUncheckedCreateNestedManyWithoutFromUserInput
   ownershipTransfersTo?: Prisma.EventOwnershipTransferUncheckedCreateNestedManyWithoutToUserInput
   ownershipTransfersActed?: Prisma.EventOwnershipTransferUncheckedCreateNestedManyWithoutActorInput
@@ -10837,6 +12837,7 @@ export type UserUncheckedCreateWithoutPlanPeriodsInput = {
   checkinLogsAsActor?: Prisma.EventCheckinLogUncheckedCreateNestedManyWithoutActorInput
   checkinRejections?: Prisma.EventMemberUncheckedCreateNestedManyWithoutLastCheckinRejectedByInput
   auditLogsAsActor?: Prisma.EventAuditLogUncheckedCreateNestedManyWithoutActorInput
+  userAuditLogsAsActor?: Prisma.UserAuditLogUncheckedCreateNestedManyWithoutActorInput
   subscriptions?: Prisma.UserSubscriptionUncheckedCreateNestedManyWithoutUserInput
   eventSponsorships?: Prisma.EventSponsorshipUncheckedCreateNestedManyWithoutSponsorInput
   eventSponsorshipPeriods?: Prisma.EventSponsorshipPeriodUncheckedCreateNestedManyWithoutSponsorInput
@@ -10873,6 +12874,7 @@ export type UserUpdateWithoutPlanPeriodsInput = {
   role?: Prisma.EnumRoleFieldUpdateOperationsInput | $Enums.Role
   verifiedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   suspendedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  suspendedUntil?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   suspensionReason?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   deletedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   deletedReason?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
@@ -10915,6 +12917,10 @@ export type UserUpdateWithoutPlanPeriodsInput = {
   reportsFiled?: Prisma.ReportUpdateManyWithoutReporterNestedInput
   blocksInitiated?: Prisma.UserBlockUpdateManyWithoutBlockerNestedInput
   blocksReceived?: Prisma.UserBlockUpdateManyWithoutBlockedNestedInput
+  suspendedBy?: Prisma.UserUpdateOneWithoutSuspendedUsersNestedInput
+  suspendedUsers?: Prisma.UserUpdateManyWithoutSuspendedByNestedInput
+  deletedBy?: Prisma.UserUpdateOneWithoutDeletedUsersNestedInput
+  deletedUsers?: Prisma.UserUpdateManyWithoutDeletedByNestedInput
   ownershipTransfersFrom?: Prisma.EventOwnershipTransferUpdateManyWithoutFromUserNestedInput
   ownershipTransfersTo?: Prisma.EventOwnershipTransferUpdateManyWithoutToUserNestedInput
   ownershipTransfersActed?: Prisma.EventOwnershipTransferUpdateManyWithoutActorNestedInput
@@ -10926,6 +12932,7 @@ export type UserUpdateWithoutPlanPeriodsInput = {
   checkinLogsAsActor?: Prisma.EventCheckinLogUpdateManyWithoutActorNestedInput
   checkinRejections?: Prisma.EventMemberUpdateManyWithoutLastCheckinRejectedByNestedInput
   auditLogsAsActor?: Prisma.EventAuditLogUpdateManyWithoutActorNestedInput
+  userAuditLogsAsActor?: Prisma.UserAuditLogUpdateManyWithoutActorNestedInput
   subscriptions?: Prisma.UserSubscriptionUpdateManyWithoutUserNestedInput
   eventSponsorships?: Prisma.EventSponsorshipUpdateManyWithoutSponsorNestedInput
   eventSponsorshipPeriods?: Prisma.EventSponsorshipPeriodUpdateManyWithoutSponsorNestedInput
@@ -10946,8 +12953,11 @@ export type UserUncheckedUpdateWithoutPlanPeriodsInput = {
   role?: Prisma.EnumRoleFieldUpdateOperationsInput | $Enums.Role
   verifiedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   suspendedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  suspendedUntil?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  suspendedById?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   suspensionReason?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   deletedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  deletedById?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   deletedReason?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   restorationToken?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   restorationTokenExpiry?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
@@ -10988,6 +12998,8 @@ export type UserUncheckedUpdateWithoutPlanPeriodsInput = {
   reportsFiled?: Prisma.ReportUncheckedUpdateManyWithoutReporterNestedInput
   blocksInitiated?: Prisma.UserBlockUncheckedUpdateManyWithoutBlockerNestedInput
   blocksReceived?: Prisma.UserBlockUncheckedUpdateManyWithoutBlockedNestedInput
+  suspendedUsers?: Prisma.UserUncheckedUpdateManyWithoutSuspendedByNestedInput
+  deletedUsers?: Prisma.UserUncheckedUpdateManyWithoutDeletedByNestedInput
   ownershipTransfersFrom?: Prisma.EventOwnershipTransferUncheckedUpdateManyWithoutFromUserNestedInput
   ownershipTransfersTo?: Prisma.EventOwnershipTransferUncheckedUpdateManyWithoutToUserNestedInput
   ownershipTransfersActed?: Prisma.EventOwnershipTransferUncheckedUpdateManyWithoutActorNestedInput
@@ -10999,6 +13011,7 @@ export type UserUncheckedUpdateWithoutPlanPeriodsInput = {
   checkinLogsAsActor?: Prisma.EventCheckinLogUncheckedUpdateManyWithoutActorNestedInput
   checkinRejections?: Prisma.EventMemberUncheckedUpdateManyWithoutLastCheckinRejectedByNestedInput
   auditLogsAsActor?: Prisma.EventAuditLogUncheckedUpdateManyWithoutActorNestedInput
+  userAuditLogsAsActor?: Prisma.UserAuditLogUncheckedUpdateManyWithoutActorNestedInput
   subscriptions?: Prisma.UserSubscriptionUncheckedUpdateManyWithoutUserNestedInput
   eventSponsorships?: Prisma.EventSponsorshipUncheckedUpdateManyWithoutSponsorNestedInput
   eventSponsorshipPeriods?: Prisma.EventSponsorshipPeriodUncheckedUpdateManyWithoutSponsorNestedInput
@@ -11019,6 +13032,7 @@ export type UserCreateWithoutEventSponsorshipsInput = {
   role?: $Enums.Role
   verifiedAt?: Date | string | null
   suspendedAt?: Date | string | null
+  suspendedUntil?: Date | string | null
   suspensionReason?: string | null
   deletedAt?: Date | string | null
   deletedReason?: string | null
@@ -11061,6 +13075,10 @@ export type UserCreateWithoutEventSponsorshipsInput = {
   reportsFiled?: Prisma.ReportCreateNestedManyWithoutReporterInput
   blocksInitiated?: Prisma.UserBlockCreateNestedManyWithoutBlockerInput
   blocksReceived?: Prisma.UserBlockCreateNestedManyWithoutBlockedInput
+  suspendedBy?: Prisma.UserCreateNestedOneWithoutSuspendedUsersInput
+  suspendedUsers?: Prisma.UserCreateNestedManyWithoutSuspendedByInput
+  deletedBy?: Prisma.UserCreateNestedOneWithoutDeletedUsersInput
+  deletedUsers?: Prisma.UserCreateNestedManyWithoutDeletedByInput
   ownershipTransfersFrom?: Prisma.EventOwnershipTransferCreateNestedManyWithoutFromUserInput
   ownershipTransfersTo?: Prisma.EventOwnershipTransferCreateNestedManyWithoutToUserInput
   ownershipTransfersActed?: Prisma.EventOwnershipTransferCreateNestedManyWithoutActorInput
@@ -11072,6 +13090,7 @@ export type UserCreateWithoutEventSponsorshipsInput = {
   checkinLogsAsActor?: Prisma.EventCheckinLogCreateNestedManyWithoutActorInput
   checkinRejections?: Prisma.EventMemberCreateNestedManyWithoutLastCheckinRejectedByInput
   auditLogsAsActor?: Prisma.EventAuditLogCreateNestedManyWithoutActorInput
+  userAuditLogsAsActor?: Prisma.UserAuditLogCreateNestedManyWithoutActorInput
   subscriptions?: Prisma.UserSubscriptionCreateNestedManyWithoutUserInput
   planPeriods?: Prisma.UserPlanPeriodCreateNestedManyWithoutUserInput
   eventSponsorshipPeriods?: Prisma.EventSponsorshipPeriodCreateNestedManyWithoutSponsorInput
@@ -11092,8 +13111,11 @@ export type UserUncheckedCreateWithoutEventSponsorshipsInput = {
   role?: $Enums.Role
   verifiedAt?: Date | string | null
   suspendedAt?: Date | string | null
+  suspendedUntil?: Date | string | null
+  suspendedById?: string | null
   suspensionReason?: string | null
   deletedAt?: Date | string | null
+  deletedById?: string | null
   deletedReason?: string | null
   restorationToken?: string | null
   restorationTokenExpiry?: Date | string | null
@@ -11134,6 +13156,8 @@ export type UserUncheckedCreateWithoutEventSponsorshipsInput = {
   reportsFiled?: Prisma.ReportUncheckedCreateNestedManyWithoutReporterInput
   blocksInitiated?: Prisma.UserBlockUncheckedCreateNestedManyWithoutBlockerInput
   blocksReceived?: Prisma.UserBlockUncheckedCreateNestedManyWithoutBlockedInput
+  suspendedUsers?: Prisma.UserUncheckedCreateNestedManyWithoutSuspendedByInput
+  deletedUsers?: Prisma.UserUncheckedCreateNestedManyWithoutDeletedByInput
   ownershipTransfersFrom?: Prisma.EventOwnershipTransferUncheckedCreateNestedManyWithoutFromUserInput
   ownershipTransfersTo?: Prisma.EventOwnershipTransferUncheckedCreateNestedManyWithoutToUserInput
   ownershipTransfersActed?: Prisma.EventOwnershipTransferUncheckedCreateNestedManyWithoutActorInput
@@ -11145,6 +13169,7 @@ export type UserUncheckedCreateWithoutEventSponsorshipsInput = {
   checkinLogsAsActor?: Prisma.EventCheckinLogUncheckedCreateNestedManyWithoutActorInput
   checkinRejections?: Prisma.EventMemberUncheckedCreateNestedManyWithoutLastCheckinRejectedByInput
   auditLogsAsActor?: Prisma.EventAuditLogUncheckedCreateNestedManyWithoutActorInput
+  userAuditLogsAsActor?: Prisma.UserAuditLogUncheckedCreateNestedManyWithoutActorInput
   subscriptions?: Prisma.UserSubscriptionUncheckedCreateNestedManyWithoutUserInput
   planPeriods?: Prisma.UserPlanPeriodUncheckedCreateNestedManyWithoutUserInput
   eventSponsorshipPeriods?: Prisma.EventSponsorshipPeriodUncheckedCreateNestedManyWithoutSponsorInput
@@ -11181,6 +13206,7 @@ export type UserUpdateWithoutEventSponsorshipsInput = {
   role?: Prisma.EnumRoleFieldUpdateOperationsInput | $Enums.Role
   verifiedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   suspendedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  suspendedUntil?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   suspensionReason?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   deletedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   deletedReason?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
@@ -11223,6 +13249,10 @@ export type UserUpdateWithoutEventSponsorshipsInput = {
   reportsFiled?: Prisma.ReportUpdateManyWithoutReporterNestedInput
   blocksInitiated?: Prisma.UserBlockUpdateManyWithoutBlockerNestedInput
   blocksReceived?: Prisma.UserBlockUpdateManyWithoutBlockedNestedInput
+  suspendedBy?: Prisma.UserUpdateOneWithoutSuspendedUsersNestedInput
+  suspendedUsers?: Prisma.UserUpdateManyWithoutSuspendedByNestedInput
+  deletedBy?: Prisma.UserUpdateOneWithoutDeletedUsersNestedInput
+  deletedUsers?: Prisma.UserUpdateManyWithoutDeletedByNestedInput
   ownershipTransfersFrom?: Prisma.EventOwnershipTransferUpdateManyWithoutFromUserNestedInput
   ownershipTransfersTo?: Prisma.EventOwnershipTransferUpdateManyWithoutToUserNestedInput
   ownershipTransfersActed?: Prisma.EventOwnershipTransferUpdateManyWithoutActorNestedInput
@@ -11234,6 +13264,7 @@ export type UserUpdateWithoutEventSponsorshipsInput = {
   checkinLogsAsActor?: Prisma.EventCheckinLogUpdateManyWithoutActorNestedInput
   checkinRejections?: Prisma.EventMemberUpdateManyWithoutLastCheckinRejectedByNestedInput
   auditLogsAsActor?: Prisma.EventAuditLogUpdateManyWithoutActorNestedInput
+  userAuditLogsAsActor?: Prisma.UserAuditLogUpdateManyWithoutActorNestedInput
   subscriptions?: Prisma.UserSubscriptionUpdateManyWithoutUserNestedInput
   planPeriods?: Prisma.UserPlanPeriodUpdateManyWithoutUserNestedInput
   eventSponsorshipPeriods?: Prisma.EventSponsorshipPeriodUpdateManyWithoutSponsorNestedInput
@@ -11254,8 +13285,11 @@ export type UserUncheckedUpdateWithoutEventSponsorshipsInput = {
   role?: Prisma.EnumRoleFieldUpdateOperationsInput | $Enums.Role
   verifiedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   suspendedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  suspendedUntil?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  suspendedById?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   suspensionReason?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   deletedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  deletedById?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   deletedReason?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   restorationToken?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   restorationTokenExpiry?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
@@ -11296,6 +13330,8 @@ export type UserUncheckedUpdateWithoutEventSponsorshipsInput = {
   reportsFiled?: Prisma.ReportUncheckedUpdateManyWithoutReporterNestedInput
   blocksInitiated?: Prisma.UserBlockUncheckedUpdateManyWithoutBlockerNestedInput
   blocksReceived?: Prisma.UserBlockUncheckedUpdateManyWithoutBlockedNestedInput
+  suspendedUsers?: Prisma.UserUncheckedUpdateManyWithoutSuspendedByNestedInput
+  deletedUsers?: Prisma.UserUncheckedUpdateManyWithoutDeletedByNestedInput
   ownershipTransfersFrom?: Prisma.EventOwnershipTransferUncheckedUpdateManyWithoutFromUserNestedInput
   ownershipTransfersTo?: Prisma.EventOwnershipTransferUncheckedUpdateManyWithoutToUserNestedInput
   ownershipTransfersActed?: Prisma.EventOwnershipTransferUncheckedUpdateManyWithoutActorNestedInput
@@ -11307,6 +13343,7 @@ export type UserUncheckedUpdateWithoutEventSponsorshipsInput = {
   checkinLogsAsActor?: Prisma.EventCheckinLogUncheckedUpdateManyWithoutActorNestedInput
   checkinRejections?: Prisma.EventMemberUncheckedUpdateManyWithoutLastCheckinRejectedByNestedInput
   auditLogsAsActor?: Prisma.EventAuditLogUncheckedUpdateManyWithoutActorNestedInput
+  userAuditLogsAsActor?: Prisma.UserAuditLogUncheckedUpdateManyWithoutActorNestedInput
   subscriptions?: Prisma.UserSubscriptionUncheckedUpdateManyWithoutUserNestedInput
   planPeriods?: Prisma.UserPlanPeriodUncheckedUpdateManyWithoutUserNestedInput
   eventSponsorshipPeriods?: Prisma.EventSponsorshipPeriodUncheckedUpdateManyWithoutSponsorNestedInput
@@ -11327,6 +13364,7 @@ export type UserCreateWithoutEventSponsorshipPeriodsInput = {
   role?: $Enums.Role
   verifiedAt?: Date | string | null
   suspendedAt?: Date | string | null
+  suspendedUntil?: Date | string | null
   suspensionReason?: string | null
   deletedAt?: Date | string | null
   deletedReason?: string | null
@@ -11369,6 +13407,10 @@ export type UserCreateWithoutEventSponsorshipPeriodsInput = {
   reportsFiled?: Prisma.ReportCreateNestedManyWithoutReporterInput
   blocksInitiated?: Prisma.UserBlockCreateNestedManyWithoutBlockerInput
   blocksReceived?: Prisma.UserBlockCreateNestedManyWithoutBlockedInput
+  suspendedBy?: Prisma.UserCreateNestedOneWithoutSuspendedUsersInput
+  suspendedUsers?: Prisma.UserCreateNestedManyWithoutSuspendedByInput
+  deletedBy?: Prisma.UserCreateNestedOneWithoutDeletedUsersInput
+  deletedUsers?: Prisma.UserCreateNestedManyWithoutDeletedByInput
   ownershipTransfersFrom?: Prisma.EventOwnershipTransferCreateNestedManyWithoutFromUserInput
   ownershipTransfersTo?: Prisma.EventOwnershipTransferCreateNestedManyWithoutToUserInput
   ownershipTransfersActed?: Prisma.EventOwnershipTransferCreateNestedManyWithoutActorInput
@@ -11380,6 +13422,7 @@ export type UserCreateWithoutEventSponsorshipPeriodsInput = {
   checkinLogsAsActor?: Prisma.EventCheckinLogCreateNestedManyWithoutActorInput
   checkinRejections?: Prisma.EventMemberCreateNestedManyWithoutLastCheckinRejectedByInput
   auditLogsAsActor?: Prisma.EventAuditLogCreateNestedManyWithoutActorInput
+  userAuditLogsAsActor?: Prisma.UserAuditLogCreateNestedManyWithoutActorInput
   subscriptions?: Prisma.UserSubscriptionCreateNestedManyWithoutUserInput
   planPeriods?: Prisma.UserPlanPeriodCreateNestedManyWithoutUserInput
   eventSponsorships?: Prisma.EventSponsorshipCreateNestedManyWithoutSponsorInput
@@ -11400,8 +13443,11 @@ export type UserUncheckedCreateWithoutEventSponsorshipPeriodsInput = {
   role?: $Enums.Role
   verifiedAt?: Date | string | null
   suspendedAt?: Date | string | null
+  suspendedUntil?: Date | string | null
+  suspendedById?: string | null
   suspensionReason?: string | null
   deletedAt?: Date | string | null
+  deletedById?: string | null
   deletedReason?: string | null
   restorationToken?: string | null
   restorationTokenExpiry?: Date | string | null
@@ -11442,6 +13488,8 @@ export type UserUncheckedCreateWithoutEventSponsorshipPeriodsInput = {
   reportsFiled?: Prisma.ReportUncheckedCreateNestedManyWithoutReporterInput
   blocksInitiated?: Prisma.UserBlockUncheckedCreateNestedManyWithoutBlockerInput
   blocksReceived?: Prisma.UserBlockUncheckedCreateNestedManyWithoutBlockedInput
+  suspendedUsers?: Prisma.UserUncheckedCreateNestedManyWithoutSuspendedByInput
+  deletedUsers?: Prisma.UserUncheckedCreateNestedManyWithoutDeletedByInput
   ownershipTransfersFrom?: Prisma.EventOwnershipTransferUncheckedCreateNestedManyWithoutFromUserInput
   ownershipTransfersTo?: Prisma.EventOwnershipTransferUncheckedCreateNestedManyWithoutToUserInput
   ownershipTransfersActed?: Prisma.EventOwnershipTransferUncheckedCreateNestedManyWithoutActorInput
@@ -11453,6 +13501,7 @@ export type UserUncheckedCreateWithoutEventSponsorshipPeriodsInput = {
   checkinLogsAsActor?: Prisma.EventCheckinLogUncheckedCreateNestedManyWithoutActorInput
   checkinRejections?: Prisma.EventMemberUncheckedCreateNestedManyWithoutLastCheckinRejectedByInput
   auditLogsAsActor?: Prisma.EventAuditLogUncheckedCreateNestedManyWithoutActorInput
+  userAuditLogsAsActor?: Prisma.UserAuditLogUncheckedCreateNestedManyWithoutActorInput
   subscriptions?: Prisma.UserSubscriptionUncheckedCreateNestedManyWithoutUserInput
   planPeriods?: Prisma.UserPlanPeriodUncheckedCreateNestedManyWithoutUserInput
   eventSponsorships?: Prisma.EventSponsorshipUncheckedCreateNestedManyWithoutSponsorInput
@@ -11489,6 +13538,7 @@ export type UserUpdateWithoutEventSponsorshipPeriodsInput = {
   role?: Prisma.EnumRoleFieldUpdateOperationsInput | $Enums.Role
   verifiedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   suspendedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  suspendedUntil?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   suspensionReason?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   deletedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   deletedReason?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
@@ -11531,6 +13581,10 @@ export type UserUpdateWithoutEventSponsorshipPeriodsInput = {
   reportsFiled?: Prisma.ReportUpdateManyWithoutReporterNestedInput
   blocksInitiated?: Prisma.UserBlockUpdateManyWithoutBlockerNestedInput
   blocksReceived?: Prisma.UserBlockUpdateManyWithoutBlockedNestedInput
+  suspendedBy?: Prisma.UserUpdateOneWithoutSuspendedUsersNestedInput
+  suspendedUsers?: Prisma.UserUpdateManyWithoutSuspendedByNestedInput
+  deletedBy?: Prisma.UserUpdateOneWithoutDeletedUsersNestedInput
+  deletedUsers?: Prisma.UserUpdateManyWithoutDeletedByNestedInput
   ownershipTransfersFrom?: Prisma.EventOwnershipTransferUpdateManyWithoutFromUserNestedInput
   ownershipTransfersTo?: Prisma.EventOwnershipTransferUpdateManyWithoutToUserNestedInput
   ownershipTransfersActed?: Prisma.EventOwnershipTransferUpdateManyWithoutActorNestedInput
@@ -11542,6 +13596,7 @@ export type UserUpdateWithoutEventSponsorshipPeriodsInput = {
   checkinLogsAsActor?: Prisma.EventCheckinLogUpdateManyWithoutActorNestedInput
   checkinRejections?: Prisma.EventMemberUpdateManyWithoutLastCheckinRejectedByNestedInput
   auditLogsAsActor?: Prisma.EventAuditLogUpdateManyWithoutActorNestedInput
+  userAuditLogsAsActor?: Prisma.UserAuditLogUpdateManyWithoutActorNestedInput
   subscriptions?: Prisma.UserSubscriptionUpdateManyWithoutUserNestedInput
   planPeriods?: Prisma.UserPlanPeriodUpdateManyWithoutUserNestedInput
   eventSponsorships?: Prisma.EventSponsorshipUpdateManyWithoutSponsorNestedInput
@@ -11562,8 +13617,11 @@ export type UserUncheckedUpdateWithoutEventSponsorshipPeriodsInput = {
   role?: Prisma.EnumRoleFieldUpdateOperationsInput | $Enums.Role
   verifiedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   suspendedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  suspendedUntil?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  suspendedById?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   suspensionReason?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   deletedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  deletedById?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   deletedReason?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   restorationToken?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   restorationTokenExpiry?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
@@ -11604,6 +13662,8 @@ export type UserUncheckedUpdateWithoutEventSponsorshipPeriodsInput = {
   reportsFiled?: Prisma.ReportUncheckedUpdateManyWithoutReporterNestedInput
   blocksInitiated?: Prisma.UserBlockUncheckedUpdateManyWithoutBlockerNestedInput
   blocksReceived?: Prisma.UserBlockUncheckedUpdateManyWithoutBlockedNestedInput
+  suspendedUsers?: Prisma.UserUncheckedUpdateManyWithoutSuspendedByNestedInput
+  deletedUsers?: Prisma.UserUncheckedUpdateManyWithoutDeletedByNestedInput
   ownershipTransfersFrom?: Prisma.EventOwnershipTransferUncheckedUpdateManyWithoutFromUserNestedInput
   ownershipTransfersTo?: Prisma.EventOwnershipTransferUncheckedUpdateManyWithoutToUserNestedInput
   ownershipTransfersActed?: Prisma.EventOwnershipTransferUncheckedUpdateManyWithoutActorNestedInput
@@ -11615,6 +13675,7 @@ export type UserUncheckedUpdateWithoutEventSponsorshipPeriodsInput = {
   checkinLogsAsActor?: Prisma.EventCheckinLogUncheckedUpdateManyWithoutActorNestedInput
   checkinRejections?: Prisma.EventMemberUncheckedUpdateManyWithoutLastCheckinRejectedByNestedInput
   auditLogsAsActor?: Prisma.EventAuditLogUncheckedUpdateManyWithoutActorNestedInput
+  userAuditLogsAsActor?: Prisma.UserAuditLogUncheckedUpdateManyWithoutActorNestedInput
   subscriptions?: Prisma.UserSubscriptionUncheckedUpdateManyWithoutUserNestedInput
   planPeriods?: Prisma.UserPlanPeriodUncheckedUpdateManyWithoutUserNestedInput
   eventSponsorships?: Prisma.EventSponsorshipUncheckedUpdateManyWithoutSponsorNestedInput
@@ -11635,6 +13696,7 @@ export type UserCreateWithoutCreatedInviteLinksInput = {
   role?: $Enums.Role
   verifiedAt?: Date | string | null
   suspendedAt?: Date | string | null
+  suspendedUntil?: Date | string | null
   suspensionReason?: string | null
   deletedAt?: Date | string | null
   deletedReason?: string | null
@@ -11677,6 +13739,10 @@ export type UserCreateWithoutCreatedInviteLinksInput = {
   reportsFiled?: Prisma.ReportCreateNestedManyWithoutReporterInput
   blocksInitiated?: Prisma.UserBlockCreateNestedManyWithoutBlockerInput
   blocksReceived?: Prisma.UserBlockCreateNestedManyWithoutBlockedInput
+  suspendedBy?: Prisma.UserCreateNestedOneWithoutSuspendedUsersInput
+  suspendedUsers?: Prisma.UserCreateNestedManyWithoutSuspendedByInput
+  deletedBy?: Prisma.UserCreateNestedOneWithoutDeletedUsersInput
+  deletedUsers?: Prisma.UserCreateNestedManyWithoutDeletedByInput
   ownershipTransfersFrom?: Prisma.EventOwnershipTransferCreateNestedManyWithoutFromUserInput
   ownershipTransfersTo?: Prisma.EventOwnershipTransferCreateNestedManyWithoutToUserInput
   ownershipTransfersActed?: Prisma.EventOwnershipTransferCreateNestedManyWithoutActorInput
@@ -11687,6 +13753,7 @@ export type UserCreateWithoutCreatedInviteLinksInput = {
   checkinLogsAsActor?: Prisma.EventCheckinLogCreateNestedManyWithoutActorInput
   checkinRejections?: Prisma.EventMemberCreateNestedManyWithoutLastCheckinRejectedByInput
   auditLogsAsActor?: Prisma.EventAuditLogCreateNestedManyWithoutActorInput
+  userAuditLogsAsActor?: Prisma.UserAuditLogCreateNestedManyWithoutActorInput
   subscriptions?: Prisma.UserSubscriptionCreateNestedManyWithoutUserInput
   planPeriods?: Prisma.UserPlanPeriodCreateNestedManyWithoutUserInput
   eventSponsorships?: Prisma.EventSponsorshipCreateNestedManyWithoutSponsorInput
@@ -11708,8 +13775,11 @@ export type UserUncheckedCreateWithoutCreatedInviteLinksInput = {
   role?: $Enums.Role
   verifiedAt?: Date | string | null
   suspendedAt?: Date | string | null
+  suspendedUntil?: Date | string | null
+  suspendedById?: string | null
   suspensionReason?: string | null
   deletedAt?: Date | string | null
+  deletedById?: string | null
   deletedReason?: string | null
   restorationToken?: string | null
   restorationTokenExpiry?: Date | string | null
@@ -11750,6 +13820,8 @@ export type UserUncheckedCreateWithoutCreatedInviteLinksInput = {
   reportsFiled?: Prisma.ReportUncheckedCreateNestedManyWithoutReporterInput
   blocksInitiated?: Prisma.UserBlockUncheckedCreateNestedManyWithoutBlockerInput
   blocksReceived?: Prisma.UserBlockUncheckedCreateNestedManyWithoutBlockedInput
+  suspendedUsers?: Prisma.UserUncheckedCreateNestedManyWithoutSuspendedByInput
+  deletedUsers?: Prisma.UserUncheckedCreateNestedManyWithoutDeletedByInput
   ownershipTransfersFrom?: Prisma.EventOwnershipTransferUncheckedCreateNestedManyWithoutFromUserInput
   ownershipTransfersTo?: Prisma.EventOwnershipTransferUncheckedCreateNestedManyWithoutToUserInput
   ownershipTransfersActed?: Prisma.EventOwnershipTransferUncheckedCreateNestedManyWithoutActorInput
@@ -11760,6 +13832,7 @@ export type UserUncheckedCreateWithoutCreatedInviteLinksInput = {
   checkinLogsAsActor?: Prisma.EventCheckinLogUncheckedCreateNestedManyWithoutActorInput
   checkinRejections?: Prisma.EventMemberUncheckedCreateNestedManyWithoutLastCheckinRejectedByInput
   auditLogsAsActor?: Prisma.EventAuditLogUncheckedCreateNestedManyWithoutActorInput
+  userAuditLogsAsActor?: Prisma.UserAuditLogUncheckedCreateNestedManyWithoutActorInput
   subscriptions?: Prisma.UserSubscriptionUncheckedCreateNestedManyWithoutUserInput
   planPeriods?: Prisma.UserPlanPeriodUncheckedCreateNestedManyWithoutUserInput
   eventSponsorships?: Prisma.EventSponsorshipUncheckedCreateNestedManyWithoutSponsorInput
@@ -11786,6 +13859,7 @@ export type UserCreateWithoutRevokedInviteLinksInput = {
   role?: $Enums.Role
   verifiedAt?: Date | string | null
   suspendedAt?: Date | string | null
+  suspendedUntil?: Date | string | null
   suspensionReason?: string | null
   deletedAt?: Date | string | null
   deletedReason?: string | null
@@ -11828,6 +13902,10 @@ export type UserCreateWithoutRevokedInviteLinksInput = {
   reportsFiled?: Prisma.ReportCreateNestedManyWithoutReporterInput
   blocksInitiated?: Prisma.UserBlockCreateNestedManyWithoutBlockerInput
   blocksReceived?: Prisma.UserBlockCreateNestedManyWithoutBlockedInput
+  suspendedBy?: Prisma.UserCreateNestedOneWithoutSuspendedUsersInput
+  suspendedUsers?: Prisma.UserCreateNestedManyWithoutSuspendedByInput
+  deletedBy?: Prisma.UserCreateNestedOneWithoutDeletedUsersInput
+  deletedUsers?: Prisma.UserCreateNestedManyWithoutDeletedByInput
   ownershipTransfersFrom?: Prisma.EventOwnershipTransferCreateNestedManyWithoutFromUserInput
   ownershipTransfersTo?: Prisma.EventOwnershipTransferCreateNestedManyWithoutToUserInput
   ownershipTransfersActed?: Prisma.EventOwnershipTransferCreateNestedManyWithoutActorInput
@@ -11838,6 +13916,7 @@ export type UserCreateWithoutRevokedInviteLinksInput = {
   checkinLogsAsActor?: Prisma.EventCheckinLogCreateNestedManyWithoutActorInput
   checkinRejections?: Prisma.EventMemberCreateNestedManyWithoutLastCheckinRejectedByInput
   auditLogsAsActor?: Prisma.EventAuditLogCreateNestedManyWithoutActorInput
+  userAuditLogsAsActor?: Prisma.UserAuditLogCreateNestedManyWithoutActorInput
   subscriptions?: Prisma.UserSubscriptionCreateNestedManyWithoutUserInput
   planPeriods?: Prisma.UserPlanPeriodCreateNestedManyWithoutUserInput
   eventSponsorships?: Prisma.EventSponsorshipCreateNestedManyWithoutSponsorInput
@@ -11859,8 +13938,11 @@ export type UserUncheckedCreateWithoutRevokedInviteLinksInput = {
   role?: $Enums.Role
   verifiedAt?: Date | string | null
   suspendedAt?: Date | string | null
+  suspendedUntil?: Date | string | null
+  suspendedById?: string | null
   suspensionReason?: string | null
   deletedAt?: Date | string | null
+  deletedById?: string | null
   deletedReason?: string | null
   restorationToken?: string | null
   restorationTokenExpiry?: Date | string | null
@@ -11901,6 +13983,8 @@ export type UserUncheckedCreateWithoutRevokedInviteLinksInput = {
   reportsFiled?: Prisma.ReportUncheckedCreateNestedManyWithoutReporterInput
   blocksInitiated?: Prisma.UserBlockUncheckedCreateNestedManyWithoutBlockerInput
   blocksReceived?: Prisma.UserBlockUncheckedCreateNestedManyWithoutBlockedInput
+  suspendedUsers?: Prisma.UserUncheckedCreateNestedManyWithoutSuspendedByInput
+  deletedUsers?: Prisma.UserUncheckedCreateNestedManyWithoutDeletedByInput
   ownershipTransfersFrom?: Prisma.EventOwnershipTransferUncheckedCreateNestedManyWithoutFromUserInput
   ownershipTransfersTo?: Prisma.EventOwnershipTransferUncheckedCreateNestedManyWithoutToUserInput
   ownershipTransfersActed?: Prisma.EventOwnershipTransferUncheckedCreateNestedManyWithoutActorInput
@@ -11911,6 +13995,7 @@ export type UserUncheckedCreateWithoutRevokedInviteLinksInput = {
   checkinLogsAsActor?: Prisma.EventCheckinLogUncheckedCreateNestedManyWithoutActorInput
   checkinRejections?: Prisma.EventMemberUncheckedCreateNestedManyWithoutLastCheckinRejectedByInput
   auditLogsAsActor?: Prisma.EventAuditLogUncheckedCreateNestedManyWithoutActorInput
+  userAuditLogsAsActor?: Prisma.UserAuditLogUncheckedCreateNestedManyWithoutActorInput
   subscriptions?: Prisma.UserSubscriptionUncheckedCreateNestedManyWithoutUserInput
   planPeriods?: Prisma.UserPlanPeriodUncheckedCreateNestedManyWithoutUserInput
   eventSponsorships?: Prisma.EventSponsorshipUncheckedCreateNestedManyWithoutSponsorInput
@@ -11948,6 +14033,7 @@ export type UserUpdateWithoutCreatedInviteLinksInput = {
   role?: Prisma.EnumRoleFieldUpdateOperationsInput | $Enums.Role
   verifiedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   suspendedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  suspendedUntil?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   suspensionReason?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   deletedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   deletedReason?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
@@ -11990,6 +14076,10 @@ export type UserUpdateWithoutCreatedInviteLinksInput = {
   reportsFiled?: Prisma.ReportUpdateManyWithoutReporterNestedInput
   blocksInitiated?: Prisma.UserBlockUpdateManyWithoutBlockerNestedInput
   blocksReceived?: Prisma.UserBlockUpdateManyWithoutBlockedNestedInput
+  suspendedBy?: Prisma.UserUpdateOneWithoutSuspendedUsersNestedInput
+  suspendedUsers?: Prisma.UserUpdateManyWithoutSuspendedByNestedInput
+  deletedBy?: Prisma.UserUpdateOneWithoutDeletedUsersNestedInput
+  deletedUsers?: Prisma.UserUpdateManyWithoutDeletedByNestedInput
   ownershipTransfersFrom?: Prisma.EventOwnershipTransferUpdateManyWithoutFromUserNestedInput
   ownershipTransfersTo?: Prisma.EventOwnershipTransferUpdateManyWithoutToUserNestedInput
   ownershipTransfersActed?: Prisma.EventOwnershipTransferUpdateManyWithoutActorNestedInput
@@ -12000,6 +14090,7 @@ export type UserUpdateWithoutCreatedInviteLinksInput = {
   checkinLogsAsActor?: Prisma.EventCheckinLogUpdateManyWithoutActorNestedInput
   checkinRejections?: Prisma.EventMemberUpdateManyWithoutLastCheckinRejectedByNestedInput
   auditLogsAsActor?: Prisma.EventAuditLogUpdateManyWithoutActorNestedInput
+  userAuditLogsAsActor?: Prisma.UserAuditLogUpdateManyWithoutActorNestedInput
   subscriptions?: Prisma.UserSubscriptionUpdateManyWithoutUserNestedInput
   planPeriods?: Prisma.UserPlanPeriodUpdateManyWithoutUserNestedInput
   eventSponsorships?: Prisma.EventSponsorshipUpdateManyWithoutSponsorNestedInput
@@ -12021,8 +14112,11 @@ export type UserUncheckedUpdateWithoutCreatedInviteLinksInput = {
   role?: Prisma.EnumRoleFieldUpdateOperationsInput | $Enums.Role
   verifiedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   suspendedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  suspendedUntil?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  suspendedById?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   suspensionReason?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   deletedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  deletedById?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   deletedReason?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   restorationToken?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   restorationTokenExpiry?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
@@ -12063,6 +14157,8 @@ export type UserUncheckedUpdateWithoutCreatedInviteLinksInput = {
   reportsFiled?: Prisma.ReportUncheckedUpdateManyWithoutReporterNestedInput
   blocksInitiated?: Prisma.UserBlockUncheckedUpdateManyWithoutBlockerNestedInput
   blocksReceived?: Prisma.UserBlockUncheckedUpdateManyWithoutBlockedNestedInput
+  suspendedUsers?: Prisma.UserUncheckedUpdateManyWithoutSuspendedByNestedInput
+  deletedUsers?: Prisma.UserUncheckedUpdateManyWithoutDeletedByNestedInput
   ownershipTransfersFrom?: Prisma.EventOwnershipTransferUncheckedUpdateManyWithoutFromUserNestedInput
   ownershipTransfersTo?: Prisma.EventOwnershipTransferUncheckedUpdateManyWithoutToUserNestedInput
   ownershipTransfersActed?: Prisma.EventOwnershipTransferUncheckedUpdateManyWithoutActorNestedInput
@@ -12073,6 +14169,7 @@ export type UserUncheckedUpdateWithoutCreatedInviteLinksInput = {
   checkinLogsAsActor?: Prisma.EventCheckinLogUncheckedUpdateManyWithoutActorNestedInput
   checkinRejections?: Prisma.EventMemberUncheckedUpdateManyWithoutLastCheckinRejectedByNestedInput
   auditLogsAsActor?: Prisma.EventAuditLogUncheckedUpdateManyWithoutActorNestedInput
+  userAuditLogsAsActor?: Prisma.UserAuditLogUncheckedUpdateManyWithoutActorNestedInput
   subscriptions?: Prisma.UserSubscriptionUncheckedUpdateManyWithoutUserNestedInput
   planPeriods?: Prisma.UserPlanPeriodUncheckedUpdateManyWithoutUserNestedInput
   eventSponsorships?: Prisma.EventSponsorshipUncheckedUpdateManyWithoutSponsorNestedInput
@@ -12105,6 +14202,7 @@ export type UserUpdateWithoutRevokedInviteLinksInput = {
   role?: Prisma.EnumRoleFieldUpdateOperationsInput | $Enums.Role
   verifiedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   suspendedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  suspendedUntil?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   suspensionReason?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   deletedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   deletedReason?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
@@ -12147,6 +14245,10 @@ export type UserUpdateWithoutRevokedInviteLinksInput = {
   reportsFiled?: Prisma.ReportUpdateManyWithoutReporterNestedInput
   blocksInitiated?: Prisma.UserBlockUpdateManyWithoutBlockerNestedInput
   blocksReceived?: Prisma.UserBlockUpdateManyWithoutBlockedNestedInput
+  suspendedBy?: Prisma.UserUpdateOneWithoutSuspendedUsersNestedInput
+  suspendedUsers?: Prisma.UserUpdateManyWithoutSuspendedByNestedInput
+  deletedBy?: Prisma.UserUpdateOneWithoutDeletedUsersNestedInput
+  deletedUsers?: Prisma.UserUpdateManyWithoutDeletedByNestedInput
   ownershipTransfersFrom?: Prisma.EventOwnershipTransferUpdateManyWithoutFromUserNestedInput
   ownershipTransfersTo?: Prisma.EventOwnershipTransferUpdateManyWithoutToUserNestedInput
   ownershipTransfersActed?: Prisma.EventOwnershipTransferUpdateManyWithoutActorNestedInput
@@ -12157,6 +14259,7 @@ export type UserUpdateWithoutRevokedInviteLinksInput = {
   checkinLogsAsActor?: Prisma.EventCheckinLogUpdateManyWithoutActorNestedInput
   checkinRejections?: Prisma.EventMemberUpdateManyWithoutLastCheckinRejectedByNestedInput
   auditLogsAsActor?: Prisma.EventAuditLogUpdateManyWithoutActorNestedInput
+  userAuditLogsAsActor?: Prisma.UserAuditLogUpdateManyWithoutActorNestedInput
   subscriptions?: Prisma.UserSubscriptionUpdateManyWithoutUserNestedInput
   planPeriods?: Prisma.UserPlanPeriodUpdateManyWithoutUserNestedInput
   eventSponsorships?: Prisma.EventSponsorshipUpdateManyWithoutSponsorNestedInput
@@ -12178,8 +14281,11 @@ export type UserUncheckedUpdateWithoutRevokedInviteLinksInput = {
   role?: Prisma.EnumRoleFieldUpdateOperationsInput | $Enums.Role
   verifiedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   suspendedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  suspendedUntil?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  suspendedById?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   suspensionReason?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   deletedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  deletedById?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   deletedReason?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   restorationToken?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   restorationTokenExpiry?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
@@ -12220,6 +14326,8 @@ export type UserUncheckedUpdateWithoutRevokedInviteLinksInput = {
   reportsFiled?: Prisma.ReportUncheckedUpdateManyWithoutReporterNestedInput
   blocksInitiated?: Prisma.UserBlockUncheckedUpdateManyWithoutBlockerNestedInput
   blocksReceived?: Prisma.UserBlockUncheckedUpdateManyWithoutBlockedNestedInput
+  suspendedUsers?: Prisma.UserUncheckedUpdateManyWithoutSuspendedByNestedInput
+  deletedUsers?: Prisma.UserUncheckedUpdateManyWithoutDeletedByNestedInput
   ownershipTransfersFrom?: Prisma.EventOwnershipTransferUncheckedUpdateManyWithoutFromUserNestedInput
   ownershipTransfersTo?: Prisma.EventOwnershipTransferUncheckedUpdateManyWithoutToUserNestedInput
   ownershipTransfersActed?: Prisma.EventOwnershipTransferUncheckedUpdateManyWithoutActorNestedInput
@@ -12230,6 +14338,7 @@ export type UserUncheckedUpdateWithoutRevokedInviteLinksInput = {
   checkinLogsAsActor?: Prisma.EventCheckinLogUncheckedUpdateManyWithoutActorNestedInput
   checkinRejections?: Prisma.EventMemberUncheckedUpdateManyWithoutLastCheckinRejectedByNestedInput
   auditLogsAsActor?: Prisma.EventAuditLogUncheckedUpdateManyWithoutActorNestedInput
+  userAuditLogsAsActor?: Prisma.UserAuditLogUncheckedUpdateManyWithoutActorNestedInput
   subscriptions?: Prisma.UserSubscriptionUncheckedUpdateManyWithoutUserNestedInput
   planPeriods?: Prisma.UserPlanPeriodUncheckedUpdateManyWithoutUserNestedInput
   eventSponsorships?: Prisma.EventSponsorshipUncheckedUpdateManyWithoutSponsorNestedInput
@@ -12251,6 +14360,7 @@ export type UserCreateWithoutInviteLinkUsagesInput = {
   role?: $Enums.Role
   verifiedAt?: Date | string | null
   suspendedAt?: Date | string | null
+  suspendedUntil?: Date | string | null
   suspensionReason?: string | null
   deletedAt?: Date | string | null
   deletedReason?: string | null
@@ -12293,6 +14403,10 @@ export type UserCreateWithoutInviteLinkUsagesInput = {
   reportsFiled?: Prisma.ReportCreateNestedManyWithoutReporterInput
   blocksInitiated?: Prisma.UserBlockCreateNestedManyWithoutBlockerInput
   blocksReceived?: Prisma.UserBlockCreateNestedManyWithoutBlockedInput
+  suspendedBy?: Prisma.UserCreateNestedOneWithoutSuspendedUsersInput
+  suspendedUsers?: Prisma.UserCreateNestedManyWithoutSuspendedByInput
+  deletedBy?: Prisma.UserCreateNestedOneWithoutDeletedUsersInput
+  deletedUsers?: Prisma.UserCreateNestedManyWithoutDeletedByInput
   ownershipTransfersFrom?: Prisma.EventOwnershipTransferCreateNestedManyWithoutFromUserInput
   ownershipTransfersTo?: Prisma.EventOwnershipTransferCreateNestedManyWithoutToUserInput
   ownershipTransfersActed?: Prisma.EventOwnershipTransferCreateNestedManyWithoutActorInput
@@ -12303,6 +14417,7 @@ export type UserCreateWithoutInviteLinkUsagesInput = {
   checkinLogsAsActor?: Prisma.EventCheckinLogCreateNestedManyWithoutActorInput
   checkinRejections?: Prisma.EventMemberCreateNestedManyWithoutLastCheckinRejectedByInput
   auditLogsAsActor?: Prisma.EventAuditLogCreateNestedManyWithoutActorInput
+  userAuditLogsAsActor?: Prisma.UserAuditLogCreateNestedManyWithoutActorInput
   subscriptions?: Prisma.UserSubscriptionCreateNestedManyWithoutUserInput
   planPeriods?: Prisma.UserPlanPeriodCreateNestedManyWithoutUserInput
   eventSponsorships?: Prisma.EventSponsorshipCreateNestedManyWithoutSponsorInput
@@ -12324,8 +14439,11 @@ export type UserUncheckedCreateWithoutInviteLinkUsagesInput = {
   role?: $Enums.Role
   verifiedAt?: Date | string | null
   suspendedAt?: Date | string | null
+  suspendedUntil?: Date | string | null
+  suspendedById?: string | null
   suspensionReason?: string | null
   deletedAt?: Date | string | null
+  deletedById?: string | null
   deletedReason?: string | null
   restorationToken?: string | null
   restorationTokenExpiry?: Date | string | null
@@ -12366,6 +14484,8 @@ export type UserUncheckedCreateWithoutInviteLinkUsagesInput = {
   reportsFiled?: Prisma.ReportUncheckedCreateNestedManyWithoutReporterInput
   blocksInitiated?: Prisma.UserBlockUncheckedCreateNestedManyWithoutBlockerInput
   blocksReceived?: Prisma.UserBlockUncheckedCreateNestedManyWithoutBlockedInput
+  suspendedUsers?: Prisma.UserUncheckedCreateNestedManyWithoutSuspendedByInput
+  deletedUsers?: Prisma.UserUncheckedCreateNestedManyWithoutDeletedByInput
   ownershipTransfersFrom?: Prisma.EventOwnershipTransferUncheckedCreateNestedManyWithoutFromUserInput
   ownershipTransfersTo?: Prisma.EventOwnershipTransferUncheckedCreateNestedManyWithoutToUserInput
   ownershipTransfersActed?: Prisma.EventOwnershipTransferUncheckedCreateNestedManyWithoutActorInput
@@ -12376,6 +14496,7 @@ export type UserUncheckedCreateWithoutInviteLinkUsagesInput = {
   checkinLogsAsActor?: Prisma.EventCheckinLogUncheckedCreateNestedManyWithoutActorInput
   checkinRejections?: Prisma.EventMemberUncheckedCreateNestedManyWithoutLastCheckinRejectedByInput
   auditLogsAsActor?: Prisma.EventAuditLogUncheckedCreateNestedManyWithoutActorInput
+  userAuditLogsAsActor?: Prisma.UserAuditLogUncheckedCreateNestedManyWithoutActorInput
   subscriptions?: Prisma.UserSubscriptionUncheckedCreateNestedManyWithoutUserInput
   planPeriods?: Prisma.UserPlanPeriodUncheckedCreateNestedManyWithoutUserInput
   eventSponsorships?: Prisma.EventSponsorshipUncheckedCreateNestedManyWithoutSponsorInput
@@ -12413,6 +14534,7 @@ export type UserUpdateWithoutInviteLinkUsagesInput = {
   role?: Prisma.EnumRoleFieldUpdateOperationsInput | $Enums.Role
   verifiedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   suspendedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  suspendedUntil?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   suspensionReason?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   deletedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   deletedReason?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
@@ -12455,6 +14577,10 @@ export type UserUpdateWithoutInviteLinkUsagesInput = {
   reportsFiled?: Prisma.ReportUpdateManyWithoutReporterNestedInput
   blocksInitiated?: Prisma.UserBlockUpdateManyWithoutBlockerNestedInput
   blocksReceived?: Prisma.UserBlockUpdateManyWithoutBlockedNestedInput
+  suspendedBy?: Prisma.UserUpdateOneWithoutSuspendedUsersNestedInput
+  suspendedUsers?: Prisma.UserUpdateManyWithoutSuspendedByNestedInput
+  deletedBy?: Prisma.UserUpdateOneWithoutDeletedUsersNestedInput
+  deletedUsers?: Prisma.UserUpdateManyWithoutDeletedByNestedInput
   ownershipTransfersFrom?: Prisma.EventOwnershipTransferUpdateManyWithoutFromUserNestedInput
   ownershipTransfersTo?: Prisma.EventOwnershipTransferUpdateManyWithoutToUserNestedInput
   ownershipTransfersActed?: Prisma.EventOwnershipTransferUpdateManyWithoutActorNestedInput
@@ -12465,6 +14591,7 @@ export type UserUpdateWithoutInviteLinkUsagesInput = {
   checkinLogsAsActor?: Prisma.EventCheckinLogUpdateManyWithoutActorNestedInput
   checkinRejections?: Prisma.EventMemberUpdateManyWithoutLastCheckinRejectedByNestedInput
   auditLogsAsActor?: Prisma.EventAuditLogUpdateManyWithoutActorNestedInput
+  userAuditLogsAsActor?: Prisma.UserAuditLogUpdateManyWithoutActorNestedInput
   subscriptions?: Prisma.UserSubscriptionUpdateManyWithoutUserNestedInput
   planPeriods?: Prisma.UserPlanPeriodUpdateManyWithoutUserNestedInput
   eventSponsorships?: Prisma.EventSponsorshipUpdateManyWithoutSponsorNestedInput
@@ -12486,8 +14613,11 @@ export type UserUncheckedUpdateWithoutInviteLinkUsagesInput = {
   role?: Prisma.EnumRoleFieldUpdateOperationsInput | $Enums.Role
   verifiedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   suspendedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  suspendedUntil?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  suspendedById?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   suspensionReason?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   deletedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  deletedById?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   deletedReason?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   restorationToken?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   restorationTokenExpiry?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
@@ -12528,6 +14658,8 @@ export type UserUncheckedUpdateWithoutInviteLinkUsagesInput = {
   reportsFiled?: Prisma.ReportUncheckedUpdateManyWithoutReporterNestedInput
   blocksInitiated?: Prisma.UserBlockUncheckedUpdateManyWithoutBlockerNestedInput
   blocksReceived?: Prisma.UserBlockUncheckedUpdateManyWithoutBlockedNestedInput
+  suspendedUsers?: Prisma.UserUncheckedUpdateManyWithoutSuspendedByNestedInput
+  deletedUsers?: Prisma.UserUncheckedUpdateManyWithoutDeletedByNestedInput
   ownershipTransfersFrom?: Prisma.EventOwnershipTransferUncheckedUpdateManyWithoutFromUserNestedInput
   ownershipTransfersTo?: Prisma.EventOwnershipTransferUncheckedUpdateManyWithoutToUserNestedInput
   ownershipTransfersActed?: Prisma.EventOwnershipTransferUncheckedUpdateManyWithoutActorNestedInput
@@ -12538,6 +14670,7 @@ export type UserUncheckedUpdateWithoutInviteLinkUsagesInput = {
   checkinLogsAsActor?: Prisma.EventCheckinLogUncheckedUpdateManyWithoutActorNestedInput
   checkinRejections?: Prisma.EventMemberUncheckedUpdateManyWithoutLastCheckinRejectedByNestedInput
   auditLogsAsActor?: Prisma.EventAuditLogUncheckedUpdateManyWithoutActorNestedInput
+  userAuditLogsAsActor?: Prisma.UserAuditLogUncheckedUpdateManyWithoutActorNestedInput
   subscriptions?: Prisma.UserSubscriptionUncheckedUpdateManyWithoutUserNestedInput
   planPeriods?: Prisma.UserPlanPeriodUncheckedUpdateManyWithoutUserNestedInput
   eventSponsorships?: Prisma.EventSponsorshipUncheckedUpdateManyWithoutSponsorNestedInput
@@ -12559,6 +14692,7 @@ export type UserCreateWithoutEventFavouritesInput = {
   role?: $Enums.Role
   verifiedAt?: Date | string | null
   suspendedAt?: Date | string | null
+  suspendedUntil?: Date | string | null
   suspensionReason?: string | null
   deletedAt?: Date | string | null
   deletedReason?: string | null
@@ -12601,6 +14735,10 @@ export type UserCreateWithoutEventFavouritesInput = {
   reportsFiled?: Prisma.ReportCreateNestedManyWithoutReporterInput
   blocksInitiated?: Prisma.UserBlockCreateNestedManyWithoutBlockerInput
   blocksReceived?: Prisma.UserBlockCreateNestedManyWithoutBlockedInput
+  suspendedBy?: Prisma.UserCreateNestedOneWithoutSuspendedUsersInput
+  suspendedUsers?: Prisma.UserCreateNestedManyWithoutSuspendedByInput
+  deletedBy?: Prisma.UserCreateNestedOneWithoutDeletedUsersInput
+  deletedUsers?: Prisma.UserCreateNestedManyWithoutDeletedByInput
   ownershipTransfersFrom?: Prisma.EventOwnershipTransferCreateNestedManyWithoutFromUserInput
   ownershipTransfersTo?: Prisma.EventOwnershipTransferCreateNestedManyWithoutToUserInput
   ownershipTransfersActed?: Prisma.EventOwnershipTransferCreateNestedManyWithoutActorInput
@@ -12611,6 +14749,7 @@ export type UserCreateWithoutEventFavouritesInput = {
   checkinLogsAsActor?: Prisma.EventCheckinLogCreateNestedManyWithoutActorInput
   checkinRejections?: Prisma.EventMemberCreateNestedManyWithoutLastCheckinRejectedByInput
   auditLogsAsActor?: Prisma.EventAuditLogCreateNestedManyWithoutActorInput
+  userAuditLogsAsActor?: Prisma.UserAuditLogCreateNestedManyWithoutActorInput
   subscriptions?: Prisma.UserSubscriptionCreateNestedManyWithoutUserInput
   planPeriods?: Prisma.UserPlanPeriodCreateNestedManyWithoutUserInput
   eventSponsorships?: Prisma.EventSponsorshipCreateNestedManyWithoutSponsorInput
@@ -12632,8 +14771,11 @@ export type UserUncheckedCreateWithoutEventFavouritesInput = {
   role?: $Enums.Role
   verifiedAt?: Date | string | null
   suspendedAt?: Date | string | null
+  suspendedUntil?: Date | string | null
+  suspendedById?: string | null
   suspensionReason?: string | null
   deletedAt?: Date | string | null
+  deletedById?: string | null
   deletedReason?: string | null
   restorationToken?: string | null
   restorationTokenExpiry?: Date | string | null
@@ -12674,6 +14816,8 @@ export type UserUncheckedCreateWithoutEventFavouritesInput = {
   reportsFiled?: Prisma.ReportUncheckedCreateNestedManyWithoutReporterInput
   blocksInitiated?: Prisma.UserBlockUncheckedCreateNestedManyWithoutBlockerInput
   blocksReceived?: Prisma.UserBlockUncheckedCreateNestedManyWithoutBlockedInput
+  suspendedUsers?: Prisma.UserUncheckedCreateNestedManyWithoutSuspendedByInput
+  deletedUsers?: Prisma.UserUncheckedCreateNestedManyWithoutDeletedByInput
   ownershipTransfersFrom?: Prisma.EventOwnershipTransferUncheckedCreateNestedManyWithoutFromUserInput
   ownershipTransfersTo?: Prisma.EventOwnershipTransferUncheckedCreateNestedManyWithoutToUserInput
   ownershipTransfersActed?: Prisma.EventOwnershipTransferUncheckedCreateNestedManyWithoutActorInput
@@ -12684,6 +14828,7 @@ export type UserUncheckedCreateWithoutEventFavouritesInput = {
   checkinLogsAsActor?: Prisma.EventCheckinLogUncheckedCreateNestedManyWithoutActorInput
   checkinRejections?: Prisma.EventMemberUncheckedCreateNestedManyWithoutLastCheckinRejectedByInput
   auditLogsAsActor?: Prisma.EventAuditLogUncheckedCreateNestedManyWithoutActorInput
+  userAuditLogsAsActor?: Prisma.UserAuditLogUncheckedCreateNestedManyWithoutActorInput
   subscriptions?: Prisma.UserSubscriptionUncheckedCreateNestedManyWithoutUserInput
   planPeriods?: Prisma.UserPlanPeriodUncheckedCreateNestedManyWithoutUserInput
   eventSponsorships?: Prisma.EventSponsorshipUncheckedCreateNestedManyWithoutSponsorInput
@@ -12721,6 +14866,7 @@ export type UserUpdateWithoutEventFavouritesInput = {
   role?: Prisma.EnumRoleFieldUpdateOperationsInput | $Enums.Role
   verifiedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   suspendedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  suspendedUntil?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   suspensionReason?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   deletedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   deletedReason?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
@@ -12763,6 +14909,10 @@ export type UserUpdateWithoutEventFavouritesInput = {
   reportsFiled?: Prisma.ReportUpdateManyWithoutReporterNestedInput
   blocksInitiated?: Prisma.UserBlockUpdateManyWithoutBlockerNestedInput
   blocksReceived?: Prisma.UserBlockUpdateManyWithoutBlockedNestedInput
+  suspendedBy?: Prisma.UserUpdateOneWithoutSuspendedUsersNestedInput
+  suspendedUsers?: Prisma.UserUpdateManyWithoutSuspendedByNestedInput
+  deletedBy?: Prisma.UserUpdateOneWithoutDeletedUsersNestedInput
+  deletedUsers?: Prisma.UserUpdateManyWithoutDeletedByNestedInput
   ownershipTransfersFrom?: Prisma.EventOwnershipTransferUpdateManyWithoutFromUserNestedInput
   ownershipTransfersTo?: Prisma.EventOwnershipTransferUpdateManyWithoutToUserNestedInput
   ownershipTransfersActed?: Prisma.EventOwnershipTransferUpdateManyWithoutActorNestedInput
@@ -12773,6 +14923,7 @@ export type UserUpdateWithoutEventFavouritesInput = {
   checkinLogsAsActor?: Prisma.EventCheckinLogUpdateManyWithoutActorNestedInput
   checkinRejections?: Prisma.EventMemberUpdateManyWithoutLastCheckinRejectedByNestedInput
   auditLogsAsActor?: Prisma.EventAuditLogUpdateManyWithoutActorNestedInput
+  userAuditLogsAsActor?: Prisma.UserAuditLogUpdateManyWithoutActorNestedInput
   subscriptions?: Prisma.UserSubscriptionUpdateManyWithoutUserNestedInput
   planPeriods?: Prisma.UserPlanPeriodUpdateManyWithoutUserNestedInput
   eventSponsorships?: Prisma.EventSponsorshipUpdateManyWithoutSponsorNestedInput
@@ -12794,8 +14945,11 @@ export type UserUncheckedUpdateWithoutEventFavouritesInput = {
   role?: Prisma.EnumRoleFieldUpdateOperationsInput | $Enums.Role
   verifiedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   suspendedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  suspendedUntil?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  suspendedById?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   suspensionReason?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   deletedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  deletedById?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   deletedReason?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   restorationToken?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   restorationTokenExpiry?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
@@ -12836,6 +14990,8 @@ export type UserUncheckedUpdateWithoutEventFavouritesInput = {
   reportsFiled?: Prisma.ReportUncheckedUpdateManyWithoutReporterNestedInput
   blocksInitiated?: Prisma.UserBlockUncheckedUpdateManyWithoutBlockerNestedInput
   blocksReceived?: Prisma.UserBlockUncheckedUpdateManyWithoutBlockedNestedInput
+  suspendedUsers?: Prisma.UserUncheckedUpdateManyWithoutSuspendedByNestedInput
+  deletedUsers?: Prisma.UserUncheckedUpdateManyWithoutDeletedByNestedInput
   ownershipTransfersFrom?: Prisma.EventOwnershipTransferUncheckedUpdateManyWithoutFromUserNestedInput
   ownershipTransfersTo?: Prisma.EventOwnershipTransferUncheckedUpdateManyWithoutToUserNestedInput
   ownershipTransfersActed?: Prisma.EventOwnershipTransferUncheckedUpdateManyWithoutActorNestedInput
@@ -12846,6 +15002,7 @@ export type UserUncheckedUpdateWithoutEventFavouritesInput = {
   checkinLogsAsActor?: Prisma.EventCheckinLogUncheckedUpdateManyWithoutActorNestedInput
   checkinRejections?: Prisma.EventMemberUncheckedUpdateManyWithoutLastCheckinRejectedByNestedInput
   auditLogsAsActor?: Prisma.EventAuditLogUncheckedUpdateManyWithoutActorNestedInput
+  userAuditLogsAsActor?: Prisma.UserAuditLogUncheckedUpdateManyWithoutActorNestedInput
   subscriptions?: Prisma.UserSubscriptionUncheckedUpdateManyWithoutUserNestedInput
   planPeriods?: Prisma.UserPlanPeriodUncheckedUpdateManyWithoutUserNestedInput
   eventSponsorships?: Prisma.EventSponsorshipUncheckedUpdateManyWithoutSponsorNestedInput
@@ -12867,6 +15024,7 @@ export type UserCreateWithoutNotificationPreferenceInput = {
   role?: $Enums.Role
   verifiedAt?: Date | string | null
   suspendedAt?: Date | string | null
+  suspendedUntil?: Date | string | null
   suspensionReason?: string | null
   deletedAt?: Date | string | null
   deletedReason?: string | null
@@ -12908,6 +15066,10 @@ export type UserCreateWithoutNotificationPreferenceInput = {
   reportsFiled?: Prisma.ReportCreateNestedManyWithoutReporterInput
   blocksInitiated?: Prisma.UserBlockCreateNestedManyWithoutBlockerInput
   blocksReceived?: Prisma.UserBlockCreateNestedManyWithoutBlockedInput
+  suspendedBy?: Prisma.UserCreateNestedOneWithoutSuspendedUsersInput
+  suspendedUsers?: Prisma.UserCreateNestedManyWithoutSuspendedByInput
+  deletedBy?: Prisma.UserCreateNestedOneWithoutDeletedUsersInput
+  deletedUsers?: Prisma.UserCreateNestedManyWithoutDeletedByInput
   ownershipTransfersFrom?: Prisma.EventOwnershipTransferCreateNestedManyWithoutFromUserInput
   ownershipTransfersTo?: Prisma.EventOwnershipTransferCreateNestedManyWithoutToUserInput
   ownershipTransfersActed?: Prisma.EventOwnershipTransferCreateNestedManyWithoutActorInput
@@ -12919,6 +15081,7 @@ export type UserCreateWithoutNotificationPreferenceInput = {
   checkinLogsAsActor?: Prisma.EventCheckinLogCreateNestedManyWithoutActorInput
   checkinRejections?: Prisma.EventMemberCreateNestedManyWithoutLastCheckinRejectedByInput
   auditLogsAsActor?: Prisma.EventAuditLogCreateNestedManyWithoutActorInput
+  userAuditLogsAsActor?: Prisma.UserAuditLogCreateNestedManyWithoutActorInput
   subscriptions?: Prisma.UserSubscriptionCreateNestedManyWithoutUserInput
   planPeriods?: Prisma.UserPlanPeriodCreateNestedManyWithoutUserInput
   eventSponsorships?: Prisma.EventSponsorshipCreateNestedManyWithoutSponsorInput
@@ -12940,8 +15103,11 @@ export type UserUncheckedCreateWithoutNotificationPreferenceInput = {
   role?: $Enums.Role
   verifiedAt?: Date | string | null
   suspendedAt?: Date | string | null
+  suspendedUntil?: Date | string | null
+  suspendedById?: string | null
   suspensionReason?: string | null
   deletedAt?: Date | string | null
+  deletedById?: string | null
   deletedReason?: string | null
   restorationToken?: string | null
   restorationTokenExpiry?: Date | string | null
@@ -12981,6 +15147,8 @@ export type UserUncheckedCreateWithoutNotificationPreferenceInput = {
   reportsFiled?: Prisma.ReportUncheckedCreateNestedManyWithoutReporterInput
   blocksInitiated?: Prisma.UserBlockUncheckedCreateNestedManyWithoutBlockerInput
   blocksReceived?: Prisma.UserBlockUncheckedCreateNestedManyWithoutBlockedInput
+  suspendedUsers?: Prisma.UserUncheckedCreateNestedManyWithoutSuspendedByInput
+  deletedUsers?: Prisma.UserUncheckedCreateNestedManyWithoutDeletedByInput
   ownershipTransfersFrom?: Prisma.EventOwnershipTransferUncheckedCreateNestedManyWithoutFromUserInput
   ownershipTransfersTo?: Prisma.EventOwnershipTransferUncheckedCreateNestedManyWithoutToUserInput
   ownershipTransfersActed?: Prisma.EventOwnershipTransferUncheckedCreateNestedManyWithoutActorInput
@@ -12992,6 +15160,7 @@ export type UserUncheckedCreateWithoutNotificationPreferenceInput = {
   checkinLogsAsActor?: Prisma.EventCheckinLogUncheckedCreateNestedManyWithoutActorInput
   checkinRejections?: Prisma.EventMemberUncheckedCreateNestedManyWithoutLastCheckinRejectedByInput
   auditLogsAsActor?: Prisma.EventAuditLogUncheckedCreateNestedManyWithoutActorInput
+  userAuditLogsAsActor?: Prisma.UserAuditLogUncheckedCreateNestedManyWithoutActorInput
   subscriptions?: Prisma.UserSubscriptionUncheckedCreateNestedManyWithoutUserInput
   planPeriods?: Prisma.UserPlanPeriodUncheckedCreateNestedManyWithoutUserInput
   eventSponsorships?: Prisma.EventSponsorshipUncheckedCreateNestedManyWithoutSponsorInput
@@ -13029,6 +15198,7 @@ export type UserUpdateWithoutNotificationPreferenceInput = {
   role?: Prisma.EnumRoleFieldUpdateOperationsInput | $Enums.Role
   verifiedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   suspendedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  suspendedUntil?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   suspensionReason?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   deletedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   deletedReason?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
@@ -13070,6 +15240,10 @@ export type UserUpdateWithoutNotificationPreferenceInput = {
   reportsFiled?: Prisma.ReportUpdateManyWithoutReporterNestedInput
   blocksInitiated?: Prisma.UserBlockUpdateManyWithoutBlockerNestedInput
   blocksReceived?: Prisma.UserBlockUpdateManyWithoutBlockedNestedInput
+  suspendedBy?: Prisma.UserUpdateOneWithoutSuspendedUsersNestedInput
+  suspendedUsers?: Prisma.UserUpdateManyWithoutSuspendedByNestedInput
+  deletedBy?: Prisma.UserUpdateOneWithoutDeletedUsersNestedInput
+  deletedUsers?: Prisma.UserUpdateManyWithoutDeletedByNestedInput
   ownershipTransfersFrom?: Prisma.EventOwnershipTransferUpdateManyWithoutFromUserNestedInput
   ownershipTransfersTo?: Prisma.EventOwnershipTransferUpdateManyWithoutToUserNestedInput
   ownershipTransfersActed?: Prisma.EventOwnershipTransferUpdateManyWithoutActorNestedInput
@@ -13081,6 +15255,7 @@ export type UserUpdateWithoutNotificationPreferenceInput = {
   checkinLogsAsActor?: Prisma.EventCheckinLogUpdateManyWithoutActorNestedInput
   checkinRejections?: Prisma.EventMemberUpdateManyWithoutLastCheckinRejectedByNestedInput
   auditLogsAsActor?: Prisma.EventAuditLogUpdateManyWithoutActorNestedInput
+  userAuditLogsAsActor?: Prisma.UserAuditLogUpdateManyWithoutActorNestedInput
   subscriptions?: Prisma.UserSubscriptionUpdateManyWithoutUserNestedInput
   planPeriods?: Prisma.UserPlanPeriodUpdateManyWithoutUserNestedInput
   eventSponsorships?: Prisma.EventSponsorshipUpdateManyWithoutSponsorNestedInput
@@ -13102,8 +15277,11 @@ export type UserUncheckedUpdateWithoutNotificationPreferenceInput = {
   role?: Prisma.EnumRoleFieldUpdateOperationsInput | $Enums.Role
   verifiedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   suspendedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  suspendedUntil?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  suspendedById?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   suspensionReason?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   deletedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  deletedById?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   deletedReason?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   restorationToken?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   restorationTokenExpiry?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
@@ -13143,6 +15321,8 @@ export type UserUncheckedUpdateWithoutNotificationPreferenceInput = {
   reportsFiled?: Prisma.ReportUncheckedUpdateManyWithoutReporterNestedInput
   blocksInitiated?: Prisma.UserBlockUncheckedUpdateManyWithoutBlockerNestedInput
   blocksReceived?: Prisma.UserBlockUncheckedUpdateManyWithoutBlockedNestedInput
+  suspendedUsers?: Prisma.UserUncheckedUpdateManyWithoutSuspendedByNestedInput
+  deletedUsers?: Prisma.UserUncheckedUpdateManyWithoutDeletedByNestedInput
   ownershipTransfersFrom?: Prisma.EventOwnershipTransferUncheckedUpdateManyWithoutFromUserNestedInput
   ownershipTransfersTo?: Prisma.EventOwnershipTransferUncheckedUpdateManyWithoutToUserNestedInput
   ownershipTransfersActed?: Prisma.EventOwnershipTransferUncheckedUpdateManyWithoutActorNestedInput
@@ -13154,6 +15334,7 @@ export type UserUncheckedUpdateWithoutNotificationPreferenceInput = {
   checkinLogsAsActor?: Prisma.EventCheckinLogUncheckedUpdateManyWithoutActorNestedInput
   checkinRejections?: Prisma.EventMemberUncheckedUpdateManyWithoutLastCheckinRejectedByNestedInput
   auditLogsAsActor?: Prisma.EventAuditLogUncheckedUpdateManyWithoutActorNestedInput
+  userAuditLogsAsActor?: Prisma.UserAuditLogUncheckedUpdateManyWithoutActorNestedInput
   subscriptions?: Prisma.UserSubscriptionUncheckedUpdateManyWithoutUserNestedInput
   planPeriods?: Prisma.UserPlanPeriodUncheckedUpdateManyWithoutUserNestedInput
   eventSponsorships?: Prisma.EventSponsorshipUncheckedUpdateManyWithoutSponsorNestedInput
@@ -13175,6 +15356,7 @@ export type UserCreateWithoutEventMutesInput = {
   role?: $Enums.Role
   verifiedAt?: Date | string | null
   suspendedAt?: Date | string | null
+  suspendedUntil?: Date | string | null
   suspensionReason?: string | null
   deletedAt?: Date | string | null
   deletedReason?: string | null
@@ -13216,6 +15398,10 @@ export type UserCreateWithoutEventMutesInput = {
   reportsFiled?: Prisma.ReportCreateNestedManyWithoutReporterInput
   blocksInitiated?: Prisma.UserBlockCreateNestedManyWithoutBlockerInput
   blocksReceived?: Prisma.UserBlockCreateNestedManyWithoutBlockedInput
+  suspendedBy?: Prisma.UserCreateNestedOneWithoutSuspendedUsersInput
+  suspendedUsers?: Prisma.UserCreateNestedManyWithoutSuspendedByInput
+  deletedBy?: Prisma.UserCreateNestedOneWithoutDeletedUsersInput
+  deletedUsers?: Prisma.UserCreateNestedManyWithoutDeletedByInput
   ownershipTransfersFrom?: Prisma.EventOwnershipTransferCreateNestedManyWithoutFromUserInput
   ownershipTransfersTo?: Prisma.EventOwnershipTransferCreateNestedManyWithoutToUserInput
   ownershipTransfersActed?: Prisma.EventOwnershipTransferCreateNestedManyWithoutActorInput
@@ -13227,6 +15413,7 @@ export type UserCreateWithoutEventMutesInput = {
   checkinLogsAsActor?: Prisma.EventCheckinLogCreateNestedManyWithoutActorInput
   checkinRejections?: Prisma.EventMemberCreateNestedManyWithoutLastCheckinRejectedByInput
   auditLogsAsActor?: Prisma.EventAuditLogCreateNestedManyWithoutActorInput
+  userAuditLogsAsActor?: Prisma.UserAuditLogCreateNestedManyWithoutActorInput
   subscriptions?: Prisma.UserSubscriptionCreateNestedManyWithoutUserInput
   planPeriods?: Prisma.UserPlanPeriodCreateNestedManyWithoutUserInput
   eventSponsorships?: Prisma.EventSponsorshipCreateNestedManyWithoutSponsorInput
@@ -13248,8 +15435,11 @@ export type UserUncheckedCreateWithoutEventMutesInput = {
   role?: $Enums.Role
   verifiedAt?: Date | string | null
   suspendedAt?: Date | string | null
+  suspendedUntil?: Date | string | null
+  suspendedById?: string | null
   suspensionReason?: string | null
   deletedAt?: Date | string | null
+  deletedById?: string | null
   deletedReason?: string | null
   restorationToken?: string | null
   restorationTokenExpiry?: Date | string | null
@@ -13289,6 +15479,8 @@ export type UserUncheckedCreateWithoutEventMutesInput = {
   reportsFiled?: Prisma.ReportUncheckedCreateNestedManyWithoutReporterInput
   blocksInitiated?: Prisma.UserBlockUncheckedCreateNestedManyWithoutBlockerInput
   blocksReceived?: Prisma.UserBlockUncheckedCreateNestedManyWithoutBlockedInput
+  suspendedUsers?: Prisma.UserUncheckedCreateNestedManyWithoutSuspendedByInput
+  deletedUsers?: Prisma.UserUncheckedCreateNestedManyWithoutDeletedByInput
   ownershipTransfersFrom?: Prisma.EventOwnershipTransferUncheckedCreateNestedManyWithoutFromUserInput
   ownershipTransfersTo?: Prisma.EventOwnershipTransferUncheckedCreateNestedManyWithoutToUserInput
   ownershipTransfersActed?: Prisma.EventOwnershipTransferUncheckedCreateNestedManyWithoutActorInput
@@ -13300,6 +15492,7 @@ export type UserUncheckedCreateWithoutEventMutesInput = {
   checkinLogsAsActor?: Prisma.EventCheckinLogUncheckedCreateNestedManyWithoutActorInput
   checkinRejections?: Prisma.EventMemberUncheckedCreateNestedManyWithoutLastCheckinRejectedByInput
   auditLogsAsActor?: Prisma.EventAuditLogUncheckedCreateNestedManyWithoutActorInput
+  userAuditLogsAsActor?: Prisma.UserAuditLogUncheckedCreateNestedManyWithoutActorInput
   subscriptions?: Prisma.UserSubscriptionUncheckedCreateNestedManyWithoutUserInput
   planPeriods?: Prisma.UserPlanPeriodUncheckedCreateNestedManyWithoutUserInput
   eventSponsorships?: Prisma.EventSponsorshipUncheckedCreateNestedManyWithoutSponsorInput
@@ -13337,6 +15530,7 @@ export type UserUpdateWithoutEventMutesInput = {
   role?: Prisma.EnumRoleFieldUpdateOperationsInput | $Enums.Role
   verifiedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   suspendedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  suspendedUntil?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   suspensionReason?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   deletedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   deletedReason?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
@@ -13378,6 +15572,10 @@ export type UserUpdateWithoutEventMutesInput = {
   reportsFiled?: Prisma.ReportUpdateManyWithoutReporterNestedInput
   blocksInitiated?: Prisma.UserBlockUpdateManyWithoutBlockerNestedInput
   blocksReceived?: Prisma.UserBlockUpdateManyWithoutBlockedNestedInput
+  suspendedBy?: Prisma.UserUpdateOneWithoutSuspendedUsersNestedInput
+  suspendedUsers?: Prisma.UserUpdateManyWithoutSuspendedByNestedInput
+  deletedBy?: Prisma.UserUpdateOneWithoutDeletedUsersNestedInput
+  deletedUsers?: Prisma.UserUpdateManyWithoutDeletedByNestedInput
   ownershipTransfersFrom?: Prisma.EventOwnershipTransferUpdateManyWithoutFromUserNestedInput
   ownershipTransfersTo?: Prisma.EventOwnershipTransferUpdateManyWithoutToUserNestedInput
   ownershipTransfersActed?: Prisma.EventOwnershipTransferUpdateManyWithoutActorNestedInput
@@ -13389,6 +15587,7 @@ export type UserUpdateWithoutEventMutesInput = {
   checkinLogsAsActor?: Prisma.EventCheckinLogUpdateManyWithoutActorNestedInput
   checkinRejections?: Prisma.EventMemberUpdateManyWithoutLastCheckinRejectedByNestedInput
   auditLogsAsActor?: Prisma.EventAuditLogUpdateManyWithoutActorNestedInput
+  userAuditLogsAsActor?: Prisma.UserAuditLogUpdateManyWithoutActorNestedInput
   subscriptions?: Prisma.UserSubscriptionUpdateManyWithoutUserNestedInput
   planPeriods?: Prisma.UserPlanPeriodUpdateManyWithoutUserNestedInput
   eventSponsorships?: Prisma.EventSponsorshipUpdateManyWithoutSponsorNestedInput
@@ -13410,8 +15609,11 @@ export type UserUncheckedUpdateWithoutEventMutesInput = {
   role?: Prisma.EnumRoleFieldUpdateOperationsInput | $Enums.Role
   verifiedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   suspendedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  suspendedUntil?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  suspendedById?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   suspensionReason?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   deletedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  deletedById?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   deletedReason?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   restorationToken?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   restorationTokenExpiry?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
@@ -13451,6 +15653,8 @@ export type UserUncheckedUpdateWithoutEventMutesInput = {
   reportsFiled?: Prisma.ReportUncheckedUpdateManyWithoutReporterNestedInput
   blocksInitiated?: Prisma.UserBlockUncheckedUpdateManyWithoutBlockerNestedInput
   blocksReceived?: Prisma.UserBlockUncheckedUpdateManyWithoutBlockedNestedInput
+  suspendedUsers?: Prisma.UserUncheckedUpdateManyWithoutSuspendedByNestedInput
+  deletedUsers?: Prisma.UserUncheckedUpdateManyWithoutDeletedByNestedInput
   ownershipTransfersFrom?: Prisma.EventOwnershipTransferUncheckedUpdateManyWithoutFromUserNestedInput
   ownershipTransfersTo?: Prisma.EventOwnershipTransferUncheckedUpdateManyWithoutToUserNestedInput
   ownershipTransfersActed?: Prisma.EventOwnershipTransferUncheckedUpdateManyWithoutActorNestedInput
@@ -13462,6 +15666,7 @@ export type UserUncheckedUpdateWithoutEventMutesInput = {
   checkinLogsAsActor?: Prisma.EventCheckinLogUncheckedUpdateManyWithoutActorNestedInput
   checkinRejections?: Prisma.EventMemberUncheckedUpdateManyWithoutLastCheckinRejectedByNestedInput
   auditLogsAsActor?: Prisma.EventAuditLogUncheckedUpdateManyWithoutActorNestedInput
+  userAuditLogsAsActor?: Prisma.UserAuditLogUncheckedUpdateManyWithoutActorNestedInput
   subscriptions?: Prisma.UserSubscriptionUncheckedUpdateManyWithoutUserNestedInput
   planPeriods?: Prisma.UserPlanPeriodUncheckedUpdateManyWithoutUserNestedInput
   eventSponsorships?: Prisma.EventSponsorshipUncheckedUpdateManyWithoutSponsorNestedInput
@@ -13483,6 +15688,7 @@ export type UserCreateWithoutDmMutesInput = {
   role?: $Enums.Role
   verifiedAt?: Date | string | null
   suspendedAt?: Date | string | null
+  suspendedUntil?: Date | string | null
   suspensionReason?: string | null
   deletedAt?: Date | string | null
   deletedReason?: string | null
@@ -13524,6 +15730,10 @@ export type UserCreateWithoutDmMutesInput = {
   reportsFiled?: Prisma.ReportCreateNestedManyWithoutReporterInput
   blocksInitiated?: Prisma.UserBlockCreateNestedManyWithoutBlockerInput
   blocksReceived?: Prisma.UserBlockCreateNestedManyWithoutBlockedInput
+  suspendedBy?: Prisma.UserCreateNestedOneWithoutSuspendedUsersInput
+  suspendedUsers?: Prisma.UserCreateNestedManyWithoutSuspendedByInput
+  deletedBy?: Prisma.UserCreateNestedOneWithoutDeletedUsersInput
+  deletedUsers?: Prisma.UserCreateNestedManyWithoutDeletedByInput
   ownershipTransfersFrom?: Prisma.EventOwnershipTransferCreateNestedManyWithoutFromUserInput
   ownershipTransfersTo?: Prisma.EventOwnershipTransferCreateNestedManyWithoutToUserInput
   ownershipTransfersActed?: Prisma.EventOwnershipTransferCreateNestedManyWithoutActorInput
@@ -13535,6 +15745,7 @@ export type UserCreateWithoutDmMutesInput = {
   checkinLogsAsActor?: Prisma.EventCheckinLogCreateNestedManyWithoutActorInput
   checkinRejections?: Prisma.EventMemberCreateNestedManyWithoutLastCheckinRejectedByInput
   auditLogsAsActor?: Prisma.EventAuditLogCreateNestedManyWithoutActorInput
+  userAuditLogsAsActor?: Prisma.UserAuditLogCreateNestedManyWithoutActorInput
   subscriptions?: Prisma.UserSubscriptionCreateNestedManyWithoutUserInput
   planPeriods?: Prisma.UserPlanPeriodCreateNestedManyWithoutUserInput
   eventSponsorships?: Prisma.EventSponsorshipCreateNestedManyWithoutSponsorInput
@@ -13556,8 +15767,11 @@ export type UserUncheckedCreateWithoutDmMutesInput = {
   role?: $Enums.Role
   verifiedAt?: Date | string | null
   suspendedAt?: Date | string | null
+  suspendedUntil?: Date | string | null
+  suspendedById?: string | null
   suspensionReason?: string | null
   deletedAt?: Date | string | null
+  deletedById?: string | null
   deletedReason?: string | null
   restorationToken?: string | null
   restorationTokenExpiry?: Date | string | null
@@ -13597,6 +15811,8 @@ export type UserUncheckedCreateWithoutDmMutesInput = {
   reportsFiled?: Prisma.ReportUncheckedCreateNestedManyWithoutReporterInput
   blocksInitiated?: Prisma.UserBlockUncheckedCreateNestedManyWithoutBlockerInput
   blocksReceived?: Prisma.UserBlockUncheckedCreateNestedManyWithoutBlockedInput
+  suspendedUsers?: Prisma.UserUncheckedCreateNestedManyWithoutSuspendedByInput
+  deletedUsers?: Prisma.UserUncheckedCreateNestedManyWithoutDeletedByInput
   ownershipTransfersFrom?: Prisma.EventOwnershipTransferUncheckedCreateNestedManyWithoutFromUserInput
   ownershipTransfersTo?: Prisma.EventOwnershipTransferUncheckedCreateNestedManyWithoutToUserInput
   ownershipTransfersActed?: Prisma.EventOwnershipTransferUncheckedCreateNestedManyWithoutActorInput
@@ -13608,6 +15824,7 @@ export type UserUncheckedCreateWithoutDmMutesInput = {
   checkinLogsAsActor?: Prisma.EventCheckinLogUncheckedCreateNestedManyWithoutActorInput
   checkinRejections?: Prisma.EventMemberUncheckedCreateNestedManyWithoutLastCheckinRejectedByInput
   auditLogsAsActor?: Prisma.EventAuditLogUncheckedCreateNestedManyWithoutActorInput
+  userAuditLogsAsActor?: Prisma.UserAuditLogUncheckedCreateNestedManyWithoutActorInput
   subscriptions?: Prisma.UserSubscriptionUncheckedCreateNestedManyWithoutUserInput
   planPeriods?: Prisma.UserPlanPeriodUncheckedCreateNestedManyWithoutUserInput
   eventSponsorships?: Prisma.EventSponsorshipUncheckedCreateNestedManyWithoutSponsorInput
@@ -13645,6 +15862,7 @@ export type UserUpdateWithoutDmMutesInput = {
   role?: Prisma.EnumRoleFieldUpdateOperationsInput | $Enums.Role
   verifiedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   suspendedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  suspendedUntil?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   suspensionReason?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   deletedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   deletedReason?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
@@ -13686,6 +15904,10 @@ export type UserUpdateWithoutDmMutesInput = {
   reportsFiled?: Prisma.ReportUpdateManyWithoutReporterNestedInput
   blocksInitiated?: Prisma.UserBlockUpdateManyWithoutBlockerNestedInput
   blocksReceived?: Prisma.UserBlockUpdateManyWithoutBlockedNestedInput
+  suspendedBy?: Prisma.UserUpdateOneWithoutSuspendedUsersNestedInput
+  suspendedUsers?: Prisma.UserUpdateManyWithoutSuspendedByNestedInput
+  deletedBy?: Prisma.UserUpdateOneWithoutDeletedUsersNestedInput
+  deletedUsers?: Prisma.UserUpdateManyWithoutDeletedByNestedInput
   ownershipTransfersFrom?: Prisma.EventOwnershipTransferUpdateManyWithoutFromUserNestedInput
   ownershipTransfersTo?: Prisma.EventOwnershipTransferUpdateManyWithoutToUserNestedInput
   ownershipTransfersActed?: Prisma.EventOwnershipTransferUpdateManyWithoutActorNestedInput
@@ -13697,6 +15919,7 @@ export type UserUpdateWithoutDmMutesInput = {
   checkinLogsAsActor?: Prisma.EventCheckinLogUpdateManyWithoutActorNestedInput
   checkinRejections?: Prisma.EventMemberUpdateManyWithoutLastCheckinRejectedByNestedInput
   auditLogsAsActor?: Prisma.EventAuditLogUpdateManyWithoutActorNestedInput
+  userAuditLogsAsActor?: Prisma.UserAuditLogUpdateManyWithoutActorNestedInput
   subscriptions?: Prisma.UserSubscriptionUpdateManyWithoutUserNestedInput
   planPeriods?: Prisma.UserPlanPeriodUpdateManyWithoutUserNestedInput
   eventSponsorships?: Prisma.EventSponsorshipUpdateManyWithoutSponsorNestedInput
@@ -13718,8 +15941,11 @@ export type UserUncheckedUpdateWithoutDmMutesInput = {
   role?: Prisma.EnumRoleFieldUpdateOperationsInput | $Enums.Role
   verifiedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   suspendedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  suspendedUntil?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  suspendedById?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   suspensionReason?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   deletedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  deletedById?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   deletedReason?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   restorationToken?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   restorationTokenExpiry?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
@@ -13759,6 +15985,8 @@ export type UserUncheckedUpdateWithoutDmMutesInput = {
   reportsFiled?: Prisma.ReportUncheckedUpdateManyWithoutReporterNestedInput
   blocksInitiated?: Prisma.UserBlockUncheckedUpdateManyWithoutBlockerNestedInput
   blocksReceived?: Prisma.UserBlockUncheckedUpdateManyWithoutBlockedNestedInput
+  suspendedUsers?: Prisma.UserUncheckedUpdateManyWithoutSuspendedByNestedInput
+  deletedUsers?: Prisma.UserUncheckedUpdateManyWithoutDeletedByNestedInput
   ownershipTransfersFrom?: Prisma.EventOwnershipTransferUncheckedUpdateManyWithoutFromUserNestedInput
   ownershipTransfersTo?: Prisma.EventOwnershipTransferUncheckedUpdateManyWithoutToUserNestedInput
   ownershipTransfersActed?: Prisma.EventOwnershipTransferUncheckedUpdateManyWithoutActorNestedInput
@@ -13770,6 +15998,7 @@ export type UserUncheckedUpdateWithoutDmMutesInput = {
   checkinLogsAsActor?: Prisma.EventCheckinLogUncheckedUpdateManyWithoutActorNestedInput
   checkinRejections?: Prisma.EventMemberUncheckedUpdateManyWithoutLastCheckinRejectedByNestedInput
   auditLogsAsActor?: Prisma.EventAuditLogUncheckedUpdateManyWithoutActorNestedInput
+  userAuditLogsAsActor?: Prisma.UserAuditLogUncheckedUpdateManyWithoutActorNestedInput
   subscriptions?: Prisma.UserSubscriptionUncheckedUpdateManyWithoutUserNestedInput
   planPeriods?: Prisma.UserPlanPeriodUncheckedUpdateManyWithoutUserNestedInput
   eventSponsorships?: Prisma.EventSponsorshipUncheckedUpdateManyWithoutSponsorNestedInput
@@ -13791,6 +16020,7 @@ export type UserCreateWithoutOwnershipTransfersFromInput = {
   role?: $Enums.Role
   verifiedAt?: Date | string | null
   suspendedAt?: Date | string | null
+  suspendedUntil?: Date | string | null
   suspensionReason?: string | null
   deletedAt?: Date | string | null
   deletedReason?: string | null
@@ -13833,6 +16063,10 @@ export type UserCreateWithoutOwnershipTransfersFromInput = {
   reportsFiled?: Prisma.ReportCreateNestedManyWithoutReporterInput
   blocksInitiated?: Prisma.UserBlockCreateNestedManyWithoutBlockerInput
   blocksReceived?: Prisma.UserBlockCreateNestedManyWithoutBlockedInput
+  suspendedBy?: Prisma.UserCreateNestedOneWithoutSuspendedUsersInput
+  suspendedUsers?: Prisma.UserCreateNestedManyWithoutSuspendedByInput
+  deletedBy?: Prisma.UserCreateNestedOneWithoutDeletedUsersInput
+  deletedUsers?: Prisma.UserCreateNestedManyWithoutDeletedByInput
   ownershipTransfersTo?: Prisma.EventOwnershipTransferCreateNestedManyWithoutToUserInput
   ownershipTransfersActed?: Prisma.EventOwnershipTransferCreateNestedManyWithoutActorInput
   createdInviteLinks?: Prisma.EventInviteLinkCreateNestedManyWithoutCreatedByInput
@@ -13843,6 +16077,7 @@ export type UserCreateWithoutOwnershipTransfersFromInput = {
   checkinLogsAsActor?: Prisma.EventCheckinLogCreateNestedManyWithoutActorInput
   checkinRejections?: Prisma.EventMemberCreateNestedManyWithoutLastCheckinRejectedByInput
   auditLogsAsActor?: Prisma.EventAuditLogCreateNestedManyWithoutActorInput
+  userAuditLogsAsActor?: Prisma.UserAuditLogCreateNestedManyWithoutActorInput
   subscriptions?: Prisma.UserSubscriptionCreateNestedManyWithoutUserInput
   planPeriods?: Prisma.UserPlanPeriodCreateNestedManyWithoutUserInput
   eventSponsorships?: Prisma.EventSponsorshipCreateNestedManyWithoutSponsorInput
@@ -13864,8 +16099,11 @@ export type UserUncheckedCreateWithoutOwnershipTransfersFromInput = {
   role?: $Enums.Role
   verifiedAt?: Date | string | null
   suspendedAt?: Date | string | null
+  suspendedUntil?: Date | string | null
+  suspendedById?: string | null
   suspensionReason?: string | null
   deletedAt?: Date | string | null
+  deletedById?: string | null
   deletedReason?: string | null
   restorationToken?: string | null
   restorationTokenExpiry?: Date | string | null
@@ -13906,6 +16144,8 @@ export type UserUncheckedCreateWithoutOwnershipTransfersFromInput = {
   reportsFiled?: Prisma.ReportUncheckedCreateNestedManyWithoutReporterInput
   blocksInitiated?: Prisma.UserBlockUncheckedCreateNestedManyWithoutBlockerInput
   blocksReceived?: Prisma.UserBlockUncheckedCreateNestedManyWithoutBlockedInput
+  suspendedUsers?: Prisma.UserUncheckedCreateNestedManyWithoutSuspendedByInput
+  deletedUsers?: Prisma.UserUncheckedCreateNestedManyWithoutDeletedByInput
   ownershipTransfersTo?: Prisma.EventOwnershipTransferUncheckedCreateNestedManyWithoutToUserInput
   ownershipTransfersActed?: Prisma.EventOwnershipTransferUncheckedCreateNestedManyWithoutActorInput
   createdInviteLinks?: Prisma.EventInviteLinkUncheckedCreateNestedManyWithoutCreatedByInput
@@ -13916,6 +16156,7 @@ export type UserUncheckedCreateWithoutOwnershipTransfersFromInput = {
   checkinLogsAsActor?: Prisma.EventCheckinLogUncheckedCreateNestedManyWithoutActorInput
   checkinRejections?: Prisma.EventMemberUncheckedCreateNestedManyWithoutLastCheckinRejectedByInput
   auditLogsAsActor?: Prisma.EventAuditLogUncheckedCreateNestedManyWithoutActorInput
+  userAuditLogsAsActor?: Prisma.UserAuditLogUncheckedCreateNestedManyWithoutActorInput
   subscriptions?: Prisma.UserSubscriptionUncheckedCreateNestedManyWithoutUserInput
   planPeriods?: Prisma.UserPlanPeriodUncheckedCreateNestedManyWithoutUserInput
   eventSponsorships?: Prisma.EventSponsorshipUncheckedCreateNestedManyWithoutSponsorInput
@@ -13942,6 +16183,7 @@ export type UserCreateWithoutOwnershipTransfersToInput = {
   role?: $Enums.Role
   verifiedAt?: Date | string | null
   suspendedAt?: Date | string | null
+  suspendedUntil?: Date | string | null
   suspensionReason?: string | null
   deletedAt?: Date | string | null
   deletedReason?: string | null
@@ -13984,6 +16226,10 @@ export type UserCreateWithoutOwnershipTransfersToInput = {
   reportsFiled?: Prisma.ReportCreateNestedManyWithoutReporterInput
   blocksInitiated?: Prisma.UserBlockCreateNestedManyWithoutBlockerInput
   blocksReceived?: Prisma.UserBlockCreateNestedManyWithoutBlockedInput
+  suspendedBy?: Prisma.UserCreateNestedOneWithoutSuspendedUsersInput
+  suspendedUsers?: Prisma.UserCreateNestedManyWithoutSuspendedByInput
+  deletedBy?: Prisma.UserCreateNestedOneWithoutDeletedUsersInput
+  deletedUsers?: Prisma.UserCreateNestedManyWithoutDeletedByInput
   ownershipTransfersFrom?: Prisma.EventOwnershipTransferCreateNestedManyWithoutFromUserInput
   ownershipTransfersActed?: Prisma.EventOwnershipTransferCreateNestedManyWithoutActorInput
   createdInviteLinks?: Prisma.EventInviteLinkCreateNestedManyWithoutCreatedByInput
@@ -13994,6 +16240,7 @@ export type UserCreateWithoutOwnershipTransfersToInput = {
   checkinLogsAsActor?: Prisma.EventCheckinLogCreateNestedManyWithoutActorInput
   checkinRejections?: Prisma.EventMemberCreateNestedManyWithoutLastCheckinRejectedByInput
   auditLogsAsActor?: Prisma.EventAuditLogCreateNestedManyWithoutActorInput
+  userAuditLogsAsActor?: Prisma.UserAuditLogCreateNestedManyWithoutActorInput
   subscriptions?: Prisma.UserSubscriptionCreateNestedManyWithoutUserInput
   planPeriods?: Prisma.UserPlanPeriodCreateNestedManyWithoutUserInput
   eventSponsorships?: Prisma.EventSponsorshipCreateNestedManyWithoutSponsorInput
@@ -14015,8 +16262,11 @@ export type UserUncheckedCreateWithoutOwnershipTransfersToInput = {
   role?: $Enums.Role
   verifiedAt?: Date | string | null
   suspendedAt?: Date | string | null
+  suspendedUntil?: Date | string | null
+  suspendedById?: string | null
   suspensionReason?: string | null
   deletedAt?: Date | string | null
+  deletedById?: string | null
   deletedReason?: string | null
   restorationToken?: string | null
   restorationTokenExpiry?: Date | string | null
@@ -14057,6 +16307,8 @@ export type UserUncheckedCreateWithoutOwnershipTransfersToInput = {
   reportsFiled?: Prisma.ReportUncheckedCreateNestedManyWithoutReporterInput
   blocksInitiated?: Prisma.UserBlockUncheckedCreateNestedManyWithoutBlockerInput
   blocksReceived?: Prisma.UserBlockUncheckedCreateNestedManyWithoutBlockedInput
+  suspendedUsers?: Prisma.UserUncheckedCreateNestedManyWithoutSuspendedByInput
+  deletedUsers?: Prisma.UserUncheckedCreateNestedManyWithoutDeletedByInput
   ownershipTransfersFrom?: Prisma.EventOwnershipTransferUncheckedCreateNestedManyWithoutFromUserInput
   ownershipTransfersActed?: Prisma.EventOwnershipTransferUncheckedCreateNestedManyWithoutActorInput
   createdInviteLinks?: Prisma.EventInviteLinkUncheckedCreateNestedManyWithoutCreatedByInput
@@ -14067,6 +16319,7 @@ export type UserUncheckedCreateWithoutOwnershipTransfersToInput = {
   checkinLogsAsActor?: Prisma.EventCheckinLogUncheckedCreateNestedManyWithoutActorInput
   checkinRejections?: Prisma.EventMemberUncheckedCreateNestedManyWithoutLastCheckinRejectedByInput
   auditLogsAsActor?: Prisma.EventAuditLogUncheckedCreateNestedManyWithoutActorInput
+  userAuditLogsAsActor?: Prisma.UserAuditLogUncheckedCreateNestedManyWithoutActorInput
   subscriptions?: Prisma.UserSubscriptionUncheckedCreateNestedManyWithoutUserInput
   planPeriods?: Prisma.UserPlanPeriodUncheckedCreateNestedManyWithoutUserInput
   eventSponsorships?: Prisma.EventSponsorshipUncheckedCreateNestedManyWithoutSponsorInput
@@ -14093,6 +16346,7 @@ export type UserCreateWithoutOwnershipTransfersActedInput = {
   role?: $Enums.Role
   verifiedAt?: Date | string | null
   suspendedAt?: Date | string | null
+  suspendedUntil?: Date | string | null
   suspensionReason?: string | null
   deletedAt?: Date | string | null
   deletedReason?: string | null
@@ -14135,6 +16389,10 @@ export type UserCreateWithoutOwnershipTransfersActedInput = {
   reportsFiled?: Prisma.ReportCreateNestedManyWithoutReporterInput
   blocksInitiated?: Prisma.UserBlockCreateNestedManyWithoutBlockerInput
   blocksReceived?: Prisma.UserBlockCreateNestedManyWithoutBlockedInput
+  suspendedBy?: Prisma.UserCreateNestedOneWithoutSuspendedUsersInput
+  suspendedUsers?: Prisma.UserCreateNestedManyWithoutSuspendedByInput
+  deletedBy?: Prisma.UserCreateNestedOneWithoutDeletedUsersInput
+  deletedUsers?: Prisma.UserCreateNestedManyWithoutDeletedByInput
   ownershipTransfersFrom?: Prisma.EventOwnershipTransferCreateNestedManyWithoutFromUserInput
   ownershipTransfersTo?: Prisma.EventOwnershipTransferCreateNestedManyWithoutToUserInput
   createdInviteLinks?: Prisma.EventInviteLinkCreateNestedManyWithoutCreatedByInput
@@ -14145,6 +16403,7 @@ export type UserCreateWithoutOwnershipTransfersActedInput = {
   checkinLogsAsActor?: Prisma.EventCheckinLogCreateNestedManyWithoutActorInput
   checkinRejections?: Prisma.EventMemberCreateNestedManyWithoutLastCheckinRejectedByInput
   auditLogsAsActor?: Prisma.EventAuditLogCreateNestedManyWithoutActorInput
+  userAuditLogsAsActor?: Prisma.UserAuditLogCreateNestedManyWithoutActorInput
   subscriptions?: Prisma.UserSubscriptionCreateNestedManyWithoutUserInput
   planPeriods?: Prisma.UserPlanPeriodCreateNestedManyWithoutUserInput
   eventSponsorships?: Prisma.EventSponsorshipCreateNestedManyWithoutSponsorInput
@@ -14166,8 +16425,11 @@ export type UserUncheckedCreateWithoutOwnershipTransfersActedInput = {
   role?: $Enums.Role
   verifiedAt?: Date | string | null
   suspendedAt?: Date | string | null
+  suspendedUntil?: Date | string | null
+  suspendedById?: string | null
   suspensionReason?: string | null
   deletedAt?: Date | string | null
+  deletedById?: string | null
   deletedReason?: string | null
   restorationToken?: string | null
   restorationTokenExpiry?: Date | string | null
@@ -14208,6 +16470,8 @@ export type UserUncheckedCreateWithoutOwnershipTransfersActedInput = {
   reportsFiled?: Prisma.ReportUncheckedCreateNestedManyWithoutReporterInput
   blocksInitiated?: Prisma.UserBlockUncheckedCreateNestedManyWithoutBlockerInput
   blocksReceived?: Prisma.UserBlockUncheckedCreateNestedManyWithoutBlockedInput
+  suspendedUsers?: Prisma.UserUncheckedCreateNestedManyWithoutSuspendedByInput
+  deletedUsers?: Prisma.UserUncheckedCreateNestedManyWithoutDeletedByInput
   ownershipTransfersFrom?: Prisma.EventOwnershipTransferUncheckedCreateNestedManyWithoutFromUserInput
   ownershipTransfersTo?: Prisma.EventOwnershipTransferUncheckedCreateNestedManyWithoutToUserInput
   createdInviteLinks?: Prisma.EventInviteLinkUncheckedCreateNestedManyWithoutCreatedByInput
@@ -14218,6 +16482,7 @@ export type UserUncheckedCreateWithoutOwnershipTransfersActedInput = {
   checkinLogsAsActor?: Prisma.EventCheckinLogUncheckedCreateNestedManyWithoutActorInput
   checkinRejections?: Prisma.EventMemberUncheckedCreateNestedManyWithoutLastCheckinRejectedByInput
   auditLogsAsActor?: Prisma.EventAuditLogUncheckedCreateNestedManyWithoutActorInput
+  userAuditLogsAsActor?: Prisma.UserAuditLogUncheckedCreateNestedManyWithoutActorInput
   subscriptions?: Prisma.UserSubscriptionUncheckedCreateNestedManyWithoutUserInput
   planPeriods?: Prisma.UserPlanPeriodUncheckedCreateNestedManyWithoutUserInput
   eventSponsorships?: Prisma.EventSponsorshipUncheckedCreateNestedManyWithoutSponsorInput
@@ -14255,6 +16520,7 @@ export type UserUpdateWithoutOwnershipTransfersFromInput = {
   role?: Prisma.EnumRoleFieldUpdateOperationsInput | $Enums.Role
   verifiedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   suspendedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  suspendedUntil?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   suspensionReason?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   deletedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   deletedReason?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
@@ -14297,6 +16563,10 @@ export type UserUpdateWithoutOwnershipTransfersFromInput = {
   reportsFiled?: Prisma.ReportUpdateManyWithoutReporterNestedInput
   blocksInitiated?: Prisma.UserBlockUpdateManyWithoutBlockerNestedInput
   blocksReceived?: Prisma.UserBlockUpdateManyWithoutBlockedNestedInput
+  suspendedBy?: Prisma.UserUpdateOneWithoutSuspendedUsersNestedInput
+  suspendedUsers?: Prisma.UserUpdateManyWithoutSuspendedByNestedInput
+  deletedBy?: Prisma.UserUpdateOneWithoutDeletedUsersNestedInput
+  deletedUsers?: Prisma.UserUpdateManyWithoutDeletedByNestedInput
   ownershipTransfersTo?: Prisma.EventOwnershipTransferUpdateManyWithoutToUserNestedInput
   ownershipTransfersActed?: Prisma.EventOwnershipTransferUpdateManyWithoutActorNestedInput
   createdInviteLinks?: Prisma.EventInviteLinkUpdateManyWithoutCreatedByNestedInput
@@ -14307,6 +16577,7 @@ export type UserUpdateWithoutOwnershipTransfersFromInput = {
   checkinLogsAsActor?: Prisma.EventCheckinLogUpdateManyWithoutActorNestedInput
   checkinRejections?: Prisma.EventMemberUpdateManyWithoutLastCheckinRejectedByNestedInput
   auditLogsAsActor?: Prisma.EventAuditLogUpdateManyWithoutActorNestedInput
+  userAuditLogsAsActor?: Prisma.UserAuditLogUpdateManyWithoutActorNestedInput
   subscriptions?: Prisma.UserSubscriptionUpdateManyWithoutUserNestedInput
   planPeriods?: Prisma.UserPlanPeriodUpdateManyWithoutUserNestedInput
   eventSponsorships?: Prisma.EventSponsorshipUpdateManyWithoutSponsorNestedInput
@@ -14328,8 +16599,11 @@ export type UserUncheckedUpdateWithoutOwnershipTransfersFromInput = {
   role?: Prisma.EnumRoleFieldUpdateOperationsInput | $Enums.Role
   verifiedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   suspendedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  suspendedUntil?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  suspendedById?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   suspensionReason?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   deletedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  deletedById?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   deletedReason?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   restorationToken?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   restorationTokenExpiry?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
@@ -14370,6 +16644,8 @@ export type UserUncheckedUpdateWithoutOwnershipTransfersFromInput = {
   reportsFiled?: Prisma.ReportUncheckedUpdateManyWithoutReporterNestedInput
   blocksInitiated?: Prisma.UserBlockUncheckedUpdateManyWithoutBlockerNestedInput
   blocksReceived?: Prisma.UserBlockUncheckedUpdateManyWithoutBlockedNestedInput
+  suspendedUsers?: Prisma.UserUncheckedUpdateManyWithoutSuspendedByNestedInput
+  deletedUsers?: Prisma.UserUncheckedUpdateManyWithoutDeletedByNestedInput
   ownershipTransfersTo?: Prisma.EventOwnershipTransferUncheckedUpdateManyWithoutToUserNestedInput
   ownershipTransfersActed?: Prisma.EventOwnershipTransferUncheckedUpdateManyWithoutActorNestedInput
   createdInviteLinks?: Prisma.EventInviteLinkUncheckedUpdateManyWithoutCreatedByNestedInput
@@ -14380,6 +16656,7 @@ export type UserUncheckedUpdateWithoutOwnershipTransfersFromInput = {
   checkinLogsAsActor?: Prisma.EventCheckinLogUncheckedUpdateManyWithoutActorNestedInput
   checkinRejections?: Prisma.EventMemberUncheckedUpdateManyWithoutLastCheckinRejectedByNestedInput
   auditLogsAsActor?: Prisma.EventAuditLogUncheckedUpdateManyWithoutActorNestedInput
+  userAuditLogsAsActor?: Prisma.UserAuditLogUncheckedUpdateManyWithoutActorNestedInput
   subscriptions?: Prisma.UserSubscriptionUncheckedUpdateManyWithoutUserNestedInput
   planPeriods?: Prisma.UserPlanPeriodUncheckedUpdateManyWithoutUserNestedInput
   eventSponsorships?: Prisma.EventSponsorshipUncheckedUpdateManyWithoutSponsorNestedInput
@@ -14412,6 +16689,7 @@ export type UserUpdateWithoutOwnershipTransfersToInput = {
   role?: Prisma.EnumRoleFieldUpdateOperationsInput | $Enums.Role
   verifiedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   suspendedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  suspendedUntil?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   suspensionReason?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   deletedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   deletedReason?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
@@ -14454,6 +16732,10 @@ export type UserUpdateWithoutOwnershipTransfersToInput = {
   reportsFiled?: Prisma.ReportUpdateManyWithoutReporterNestedInput
   blocksInitiated?: Prisma.UserBlockUpdateManyWithoutBlockerNestedInput
   blocksReceived?: Prisma.UserBlockUpdateManyWithoutBlockedNestedInput
+  suspendedBy?: Prisma.UserUpdateOneWithoutSuspendedUsersNestedInput
+  suspendedUsers?: Prisma.UserUpdateManyWithoutSuspendedByNestedInput
+  deletedBy?: Prisma.UserUpdateOneWithoutDeletedUsersNestedInput
+  deletedUsers?: Prisma.UserUpdateManyWithoutDeletedByNestedInput
   ownershipTransfersFrom?: Prisma.EventOwnershipTransferUpdateManyWithoutFromUserNestedInput
   ownershipTransfersActed?: Prisma.EventOwnershipTransferUpdateManyWithoutActorNestedInput
   createdInviteLinks?: Prisma.EventInviteLinkUpdateManyWithoutCreatedByNestedInput
@@ -14464,6 +16746,7 @@ export type UserUpdateWithoutOwnershipTransfersToInput = {
   checkinLogsAsActor?: Prisma.EventCheckinLogUpdateManyWithoutActorNestedInput
   checkinRejections?: Prisma.EventMemberUpdateManyWithoutLastCheckinRejectedByNestedInput
   auditLogsAsActor?: Prisma.EventAuditLogUpdateManyWithoutActorNestedInput
+  userAuditLogsAsActor?: Prisma.UserAuditLogUpdateManyWithoutActorNestedInput
   subscriptions?: Prisma.UserSubscriptionUpdateManyWithoutUserNestedInput
   planPeriods?: Prisma.UserPlanPeriodUpdateManyWithoutUserNestedInput
   eventSponsorships?: Prisma.EventSponsorshipUpdateManyWithoutSponsorNestedInput
@@ -14485,8 +16768,11 @@ export type UserUncheckedUpdateWithoutOwnershipTransfersToInput = {
   role?: Prisma.EnumRoleFieldUpdateOperationsInput | $Enums.Role
   verifiedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   suspendedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  suspendedUntil?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  suspendedById?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   suspensionReason?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   deletedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  deletedById?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   deletedReason?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   restorationToken?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   restorationTokenExpiry?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
@@ -14527,6 +16813,8 @@ export type UserUncheckedUpdateWithoutOwnershipTransfersToInput = {
   reportsFiled?: Prisma.ReportUncheckedUpdateManyWithoutReporterNestedInput
   blocksInitiated?: Prisma.UserBlockUncheckedUpdateManyWithoutBlockerNestedInput
   blocksReceived?: Prisma.UserBlockUncheckedUpdateManyWithoutBlockedNestedInput
+  suspendedUsers?: Prisma.UserUncheckedUpdateManyWithoutSuspendedByNestedInput
+  deletedUsers?: Prisma.UserUncheckedUpdateManyWithoutDeletedByNestedInput
   ownershipTransfersFrom?: Prisma.EventOwnershipTransferUncheckedUpdateManyWithoutFromUserNestedInput
   ownershipTransfersActed?: Prisma.EventOwnershipTransferUncheckedUpdateManyWithoutActorNestedInput
   createdInviteLinks?: Prisma.EventInviteLinkUncheckedUpdateManyWithoutCreatedByNestedInput
@@ -14537,6 +16825,7 @@ export type UserUncheckedUpdateWithoutOwnershipTransfersToInput = {
   checkinLogsAsActor?: Prisma.EventCheckinLogUncheckedUpdateManyWithoutActorNestedInput
   checkinRejections?: Prisma.EventMemberUncheckedUpdateManyWithoutLastCheckinRejectedByNestedInput
   auditLogsAsActor?: Prisma.EventAuditLogUncheckedUpdateManyWithoutActorNestedInput
+  userAuditLogsAsActor?: Prisma.UserAuditLogUncheckedUpdateManyWithoutActorNestedInput
   subscriptions?: Prisma.UserSubscriptionUncheckedUpdateManyWithoutUserNestedInput
   planPeriods?: Prisma.UserPlanPeriodUncheckedUpdateManyWithoutUserNestedInput
   eventSponsorships?: Prisma.EventSponsorshipUncheckedUpdateManyWithoutSponsorNestedInput
@@ -14569,6 +16858,7 @@ export type UserUpdateWithoutOwnershipTransfersActedInput = {
   role?: Prisma.EnumRoleFieldUpdateOperationsInput | $Enums.Role
   verifiedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   suspendedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  suspendedUntil?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   suspensionReason?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   deletedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   deletedReason?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
@@ -14611,6 +16901,10 @@ export type UserUpdateWithoutOwnershipTransfersActedInput = {
   reportsFiled?: Prisma.ReportUpdateManyWithoutReporterNestedInput
   blocksInitiated?: Prisma.UserBlockUpdateManyWithoutBlockerNestedInput
   blocksReceived?: Prisma.UserBlockUpdateManyWithoutBlockedNestedInput
+  suspendedBy?: Prisma.UserUpdateOneWithoutSuspendedUsersNestedInput
+  suspendedUsers?: Prisma.UserUpdateManyWithoutSuspendedByNestedInput
+  deletedBy?: Prisma.UserUpdateOneWithoutDeletedUsersNestedInput
+  deletedUsers?: Prisma.UserUpdateManyWithoutDeletedByNestedInput
   ownershipTransfersFrom?: Prisma.EventOwnershipTransferUpdateManyWithoutFromUserNestedInput
   ownershipTransfersTo?: Prisma.EventOwnershipTransferUpdateManyWithoutToUserNestedInput
   createdInviteLinks?: Prisma.EventInviteLinkUpdateManyWithoutCreatedByNestedInput
@@ -14621,6 +16915,7 @@ export type UserUpdateWithoutOwnershipTransfersActedInput = {
   checkinLogsAsActor?: Prisma.EventCheckinLogUpdateManyWithoutActorNestedInput
   checkinRejections?: Prisma.EventMemberUpdateManyWithoutLastCheckinRejectedByNestedInput
   auditLogsAsActor?: Prisma.EventAuditLogUpdateManyWithoutActorNestedInput
+  userAuditLogsAsActor?: Prisma.UserAuditLogUpdateManyWithoutActorNestedInput
   subscriptions?: Prisma.UserSubscriptionUpdateManyWithoutUserNestedInput
   planPeriods?: Prisma.UserPlanPeriodUpdateManyWithoutUserNestedInput
   eventSponsorships?: Prisma.EventSponsorshipUpdateManyWithoutSponsorNestedInput
@@ -14642,8 +16937,11 @@ export type UserUncheckedUpdateWithoutOwnershipTransfersActedInput = {
   role?: Prisma.EnumRoleFieldUpdateOperationsInput | $Enums.Role
   verifiedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   suspendedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  suspendedUntil?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  suspendedById?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   suspensionReason?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   deletedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  deletedById?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   deletedReason?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   restorationToken?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   restorationTokenExpiry?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
@@ -14684,6 +16982,8 @@ export type UserUncheckedUpdateWithoutOwnershipTransfersActedInput = {
   reportsFiled?: Prisma.ReportUncheckedUpdateManyWithoutReporterNestedInput
   blocksInitiated?: Prisma.UserBlockUncheckedUpdateManyWithoutBlockerNestedInput
   blocksReceived?: Prisma.UserBlockUncheckedUpdateManyWithoutBlockedNestedInput
+  suspendedUsers?: Prisma.UserUncheckedUpdateManyWithoutSuspendedByNestedInput
+  deletedUsers?: Prisma.UserUncheckedUpdateManyWithoutDeletedByNestedInput
   ownershipTransfersFrom?: Prisma.EventOwnershipTransferUncheckedUpdateManyWithoutFromUserNestedInput
   ownershipTransfersTo?: Prisma.EventOwnershipTransferUncheckedUpdateManyWithoutToUserNestedInput
   createdInviteLinks?: Prisma.EventInviteLinkUncheckedUpdateManyWithoutCreatedByNestedInput
@@ -14694,6 +16994,7 @@ export type UserUncheckedUpdateWithoutOwnershipTransfersActedInput = {
   checkinLogsAsActor?: Prisma.EventCheckinLogUncheckedUpdateManyWithoutActorNestedInput
   checkinRejections?: Prisma.EventMemberUncheckedUpdateManyWithoutLastCheckinRejectedByNestedInput
   auditLogsAsActor?: Prisma.EventAuditLogUncheckedUpdateManyWithoutActorNestedInput
+  userAuditLogsAsActor?: Prisma.UserAuditLogUncheckedUpdateManyWithoutActorNestedInput
   subscriptions?: Prisma.UserSubscriptionUncheckedUpdateManyWithoutUserNestedInput
   planPeriods?: Prisma.UserPlanPeriodUncheckedUpdateManyWithoutUserNestedInput
   eventSponsorships?: Prisma.EventSponsorshipUncheckedUpdateManyWithoutSponsorNestedInput
@@ -14715,6 +17016,7 @@ export type UserCreateWithoutProfileInput = {
   role?: $Enums.Role
   verifiedAt?: Date | string | null
   suspendedAt?: Date | string | null
+  suspendedUntil?: Date | string | null
   suspensionReason?: string | null
   deletedAt?: Date | string | null
   deletedReason?: string | null
@@ -14757,6 +17059,10 @@ export type UserCreateWithoutProfileInput = {
   reportsFiled?: Prisma.ReportCreateNestedManyWithoutReporterInput
   blocksInitiated?: Prisma.UserBlockCreateNestedManyWithoutBlockerInput
   blocksReceived?: Prisma.UserBlockCreateNestedManyWithoutBlockedInput
+  suspendedBy?: Prisma.UserCreateNestedOneWithoutSuspendedUsersInput
+  suspendedUsers?: Prisma.UserCreateNestedManyWithoutSuspendedByInput
+  deletedBy?: Prisma.UserCreateNestedOneWithoutDeletedUsersInput
+  deletedUsers?: Prisma.UserCreateNestedManyWithoutDeletedByInput
   ownershipTransfersFrom?: Prisma.EventOwnershipTransferCreateNestedManyWithoutFromUserInput
   ownershipTransfersTo?: Prisma.EventOwnershipTransferCreateNestedManyWithoutToUserInput
   ownershipTransfersActed?: Prisma.EventOwnershipTransferCreateNestedManyWithoutActorInput
@@ -14768,6 +17074,7 @@ export type UserCreateWithoutProfileInput = {
   checkinLogsAsActor?: Prisma.EventCheckinLogCreateNestedManyWithoutActorInput
   checkinRejections?: Prisma.EventMemberCreateNestedManyWithoutLastCheckinRejectedByInput
   auditLogsAsActor?: Prisma.EventAuditLogCreateNestedManyWithoutActorInput
+  userAuditLogsAsActor?: Prisma.UserAuditLogCreateNestedManyWithoutActorInput
   subscriptions?: Prisma.UserSubscriptionCreateNestedManyWithoutUserInput
   planPeriods?: Prisma.UserPlanPeriodCreateNestedManyWithoutUserInput
   eventSponsorships?: Prisma.EventSponsorshipCreateNestedManyWithoutSponsorInput
@@ -14788,8 +17095,11 @@ export type UserUncheckedCreateWithoutProfileInput = {
   role?: $Enums.Role
   verifiedAt?: Date | string | null
   suspendedAt?: Date | string | null
+  suspendedUntil?: Date | string | null
+  suspendedById?: string | null
   suspensionReason?: string | null
   deletedAt?: Date | string | null
+  deletedById?: string | null
   deletedReason?: string | null
   restorationToken?: string | null
   restorationTokenExpiry?: Date | string | null
@@ -14830,6 +17140,8 @@ export type UserUncheckedCreateWithoutProfileInput = {
   reportsFiled?: Prisma.ReportUncheckedCreateNestedManyWithoutReporterInput
   blocksInitiated?: Prisma.UserBlockUncheckedCreateNestedManyWithoutBlockerInput
   blocksReceived?: Prisma.UserBlockUncheckedCreateNestedManyWithoutBlockedInput
+  suspendedUsers?: Prisma.UserUncheckedCreateNestedManyWithoutSuspendedByInput
+  deletedUsers?: Prisma.UserUncheckedCreateNestedManyWithoutDeletedByInput
   ownershipTransfersFrom?: Prisma.EventOwnershipTransferUncheckedCreateNestedManyWithoutFromUserInput
   ownershipTransfersTo?: Prisma.EventOwnershipTransferUncheckedCreateNestedManyWithoutToUserInput
   ownershipTransfersActed?: Prisma.EventOwnershipTransferUncheckedCreateNestedManyWithoutActorInput
@@ -14841,6 +17153,7 @@ export type UserUncheckedCreateWithoutProfileInput = {
   checkinLogsAsActor?: Prisma.EventCheckinLogUncheckedCreateNestedManyWithoutActorInput
   checkinRejections?: Prisma.EventMemberUncheckedCreateNestedManyWithoutLastCheckinRejectedByInput
   auditLogsAsActor?: Prisma.EventAuditLogUncheckedCreateNestedManyWithoutActorInput
+  userAuditLogsAsActor?: Prisma.UserAuditLogUncheckedCreateNestedManyWithoutActorInput
   subscriptions?: Prisma.UserSubscriptionUncheckedCreateNestedManyWithoutUserInput
   planPeriods?: Prisma.UserPlanPeriodUncheckedCreateNestedManyWithoutUserInput
   eventSponsorships?: Prisma.EventSponsorshipUncheckedCreateNestedManyWithoutSponsorInput
@@ -14877,6 +17190,7 @@ export type UserUpdateWithoutProfileInput = {
   role?: Prisma.EnumRoleFieldUpdateOperationsInput | $Enums.Role
   verifiedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   suspendedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  suspendedUntil?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   suspensionReason?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   deletedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   deletedReason?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
@@ -14919,6 +17233,10 @@ export type UserUpdateWithoutProfileInput = {
   reportsFiled?: Prisma.ReportUpdateManyWithoutReporterNestedInput
   blocksInitiated?: Prisma.UserBlockUpdateManyWithoutBlockerNestedInput
   blocksReceived?: Prisma.UserBlockUpdateManyWithoutBlockedNestedInput
+  suspendedBy?: Prisma.UserUpdateOneWithoutSuspendedUsersNestedInput
+  suspendedUsers?: Prisma.UserUpdateManyWithoutSuspendedByNestedInput
+  deletedBy?: Prisma.UserUpdateOneWithoutDeletedUsersNestedInput
+  deletedUsers?: Prisma.UserUpdateManyWithoutDeletedByNestedInput
   ownershipTransfersFrom?: Prisma.EventOwnershipTransferUpdateManyWithoutFromUserNestedInput
   ownershipTransfersTo?: Prisma.EventOwnershipTransferUpdateManyWithoutToUserNestedInput
   ownershipTransfersActed?: Prisma.EventOwnershipTransferUpdateManyWithoutActorNestedInput
@@ -14930,6 +17248,7 @@ export type UserUpdateWithoutProfileInput = {
   checkinLogsAsActor?: Prisma.EventCheckinLogUpdateManyWithoutActorNestedInput
   checkinRejections?: Prisma.EventMemberUpdateManyWithoutLastCheckinRejectedByNestedInput
   auditLogsAsActor?: Prisma.EventAuditLogUpdateManyWithoutActorNestedInput
+  userAuditLogsAsActor?: Prisma.UserAuditLogUpdateManyWithoutActorNestedInput
   subscriptions?: Prisma.UserSubscriptionUpdateManyWithoutUserNestedInput
   planPeriods?: Prisma.UserPlanPeriodUpdateManyWithoutUserNestedInput
   eventSponsorships?: Prisma.EventSponsorshipUpdateManyWithoutSponsorNestedInput
@@ -14950,8 +17269,11 @@ export type UserUncheckedUpdateWithoutProfileInput = {
   role?: Prisma.EnumRoleFieldUpdateOperationsInput | $Enums.Role
   verifiedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   suspendedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  suspendedUntil?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  suspendedById?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   suspensionReason?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   deletedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  deletedById?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   deletedReason?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   restorationToken?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   restorationTokenExpiry?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
@@ -14992,6 +17314,8 @@ export type UserUncheckedUpdateWithoutProfileInput = {
   reportsFiled?: Prisma.ReportUncheckedUpdateManyWithoutReporterNestedInput
   blocksInitiated?: Prisma.UserBlockUncheckedUpdateManyWithoutBlockerNestedInput
   blocksReceived?: Prisma.UserBlockUncheckedUpdateManyWithoutBlockedNestedInput
+  suspendedUsers?: Prisma.UserUncheckedUpdateManyWithoutSuspendedByNestedInput
+  deletedUsers?: Prisma.UserUncheckedUpdateManyWithoutDeletedByNestedInput
   ownershipTransfersFrom?: Prisma.EventOwnershipTransferUncheckedUpdateManyWithoutFromUserNestedInput
   ownershipTransfersTo?: Prisma.EventOwnershipTransferUncheckedUpdateManyWithoutToUserNestedInput
   ownershipTransfersActed?: Prisma.EventOwnershipTransferUncheckedUpdateManyWithoutActorNestedInput
@@ -15003,6 +17327,7 @@ export type UserUncheckedUpdateWithoutProfileInput = {
   checkinLogsAsActor?: Prisma.EventCheckinLogUncheckedUpdateManyWithoutActorNestedInput
   checkinRejections?: Prisma.EventMemberUncheckedUpdateManyWithoutLastCheckinRejectedByNestedInput
   auditLogsAsActor?: Prisma.EventAuditLogUncheckedUpdateManyWithoutActorNestedInput
+  userAuditLogsAsActor?: Prisma.UserAuditLogUncheckedUpdateManyWithoutActorNestedInput
   subscriptions?: Prisma.UserSubscriptionUncheckedUpdateManyWithoutUserNestedInput
   planPeriods?: Prisma.UserPlanPeriodUncheckedUpdateManyWithoutUserNestedInput
   eventSponsorships?: Prisma.EventSponsorshipUncheckedUpdateManyWithoutSponsorNestedInput
@@ -15023,6 +17348,7 @@ export type UserCreateWithoutPrivacyInput = {
   role?: $Enums.Role
   verifiedAt?: Date | string | null
   suspendedAt?: Date | string | null
+  suspendedUntil?: Date | string | null
   suspensionReason?: string | null
   deletedAt?: Date | string | null
   deletedReason?: string | null
@@ -15065,6 +17391,10 @@ export type UserCreateWithoutPrivacyInput = {
   reportsFiled?: Prisma.ReportCreateNestedManyWithoutReporterInput
   blocksInitiated?: Prisma.UserBlockCreateNestedManyWithoutBlockerInput
   blocksReceived?: Prisma.UserBlockCreateNestedManyWithoutBlockedInput
+  suspendedBy?: Prisma.UserCreateNestedOneWithoutSuspendedUsersInput
+  suspendedUsers?: Prisma.UserCreateNestedManyWithoutSuspendedByInput
+  deletedBy?: Prisma.UserCreateNestedOneWithoutDeletedUsersInput
+  deletedUsers?: Prisma.UserCreateNestedManyWithoutDeletedByInput
   ownershipTransfersFrom?: Prisma.EventOwnershipTransferCreateNestedManyWithoutFromUserInput
   ownershipTransfersTo?: Prisma.EventOwnershipTransferCreateNestedManyWithoutToUserInput
   ownershipTransfersActed?: Prisma.EventOwnershipTransferCreateNestedManyWithoutActorInput
@@ -15076,6 +17406,7 @@ export type UserCreateWithoutPrivacyInput = {
   checkinLogsAsActor?: Prisma.EventCheckinLogCreateNestedManyWithoutActorInput
   checkinRejections?: Prisma.EventMemberCreateNestedManyWithoutLastCheckinRejectedByInput
   auditLogsAsActor?: Prisma.EventAuditLogCreateNestedManyWithoutActorInput
+  userAuditLogsAsActor?: Prisma.UserAuditLogCreateNestedManyWithoutActorInput
   subscriptions?: Prisma.UserSubscriptionCreateNestedManyWithoutUserInput
   planPeriods?: Prisma.UserPlanPeriodCreateNestedManyWithoutUserInput
   eventSponsorships?: Prisma.EventSponsorshipCreateNestedManyWithoutSponsorInput
@@ -15096,8 +17427,11 @@ export type UserUncheckedCreateWithoutPrivacyInput = {
   role?: $Enums.Role
   verifiedAt?: Date | string | null
   suspendedAt?: Date | string | null
+  suspendedUntil?: Date | string | null
+  suspendedById?: string | null
   suspensionReason?: string | null
   deletedAt?: Date | string | null
+  deletedById?: string | null
   deletedReason?: string | null
   restorationToken?: string | null
   restorationTokenExpiry?: Date | string | null
@@ -15138,6 +17472,8 @@ export type UserUncheckedCreateWithoutPrivacyInput = {
   reportsFiled?: Prisma.ReportUncheckedCreateNestedManyWithoutReporterInput
   blocksInitiated?: Prisma.UserBlockUncheckedCreateNestedManyWithoutBlockerInput
   blocksReceived?: Prisma.UserBlockUncheckedCreateNestedManyWithoutBlockedInput
+  suspendedUsers?: Prisma.UserUncheckedCreateNestedManyWithoutSuspendedByInput
+  deletedUsers?: Prisma.UserUncheckedCreateNestedManyWithoutDeletedByInput
   ownershipTransfersFrom?: Prisma.EventOwnershipTransferUncheckedCreateNestedManyWithoutFromUserInput
   ownershipTransfersTo?: Prisma.EventOwnershipTransferUncheckedCreateNestedManyWithoutToUserInput
   ownershipTransfersActed?: Prisma.EventOwnershipTransferUncheckedCreateNestedManyWithoutActorInput
@@ -15149,6 +17485,7 @@ export type UserUncheckedCreateWithoutPrivacyInput = {
   checkinLogsAsActor?: Prisma.EventCheckinLogUncheckedCreateNestedManyWithoutActorInput
   checkinRejections?: Prisma.EventMemberUncheckedCreateNestedManyWithoutLastCheckinRejectedByInput
   auditLogsAsActor?: Prisma.EventAuditLogUncheckedCreateNestedManyWithoutActorInput
+  userAuditLogsAsActor?: Prisma.UserAuditLogUncheckedCreateNestedManyWithoutActorInput
   subscriptions?: Prisma.UserSubscriptionUncheckedCreateNestedManyWithoutUserInput
   planPeriods?: Prisma.UserPlanPeriodUncheckedCreateNestedManyWithoutUserInput
   eventSponsorships?: Prisma.EventSponsorshipUncheckedCreateNestedManyWithoutSponsorInput
@@ -15185,6 +17522,7 @@ export type UserUpdateWithoutPrivacyInput = {
   role?: Prisma.EnumRoleFieldUpdateOperationsInput | $Enums.Role
   verifiedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   suspendedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  suspendedUntil?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   suspensionReason?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   deletedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   deletedReason?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
@@ -15227,6 +17565,10 @@ export type UserUpdateWithoutPrivacyInput = {
   reportsFiled?: Prisma.ReportUpdateManyWithoutReporterNestedInput
   blocksInitiated?: Prisma.UserBlockUpdateManyWithoutBlockerNestedInput
   blocksReceived?: Prisma.UserBlockUpdateManyWithoutBlockedNestedInput
+  suspendedBy?: Prisma.UserUpdateOneWithoutSuspendedUsersNestedInput
+  suspendedUsers?: Prisma.UserUpdateManyWithoutSuspendedByNestedInput
+  deletedBy?: Prisma.UserUpdateOneWithoutDeletedUsersNestedInput
+  deletedUsers?: Prisma.UserUpdateManyWithoutDeletedByNestedInput
   ownershipTransfersFrom?: Prisma.EventOwnershipTransferUpdateManyWithoutFromUserNestedInput
   ownershipTransfersTo?: Prisma.EventOwnershipTransferUpdateManyWithoutToUserNestedInput
   ownershipTransfersActed?: Prisma.EventOwnershipTransferUpdateManyWithoutActorNestedInput
@@ -15238,6 +17580,7 @@ export type UserUpdateWithoutPrivacyInput = {
   checkinLogsAsActor?: Prisma.EventCheckinLogUpdateManyWithoutActorNestedInput
   checkinRejections?: Prisma.EventMemberUpdateManyWithoutLastCheckinRejectedByNestedInput
   auditLogsAsActor?: Prisma.EventAuditLogUpdateManyWithoutActorNestedInput
+  userAuditLogsAsActor?: Prisma.UserAuditLogUpdateManyWithoutActorNestedInput
   subscriptions?: Prisma.UserSubscriptionUpdateManyWithoutUserNestedInput
   planPeriods?: Prisma.UserPlanPeriodUpdateManyWithoutUserNestedInput
   eventSponsorships?: Prisma.EventSponsorshipUpdateManyWithoutSponsorNestedInput
@@ -15258,8 +17601,11 @@ export type UserUncheckedUpdateWithoutPrivacyInput = {
   role?: Prisma.EnumRoleFieldUpdateOperationsInput | $Enums.Role
   verifiedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   suspendedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  suspendedUntil?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  suspendedById?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   suspensionReason?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   deletedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  deletedById?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   deletedReason?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   restorationToken?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   restorationTokenExpiry?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
@@ -15300,6 +17646,8 @@ export type UserUncheckedUpdateWithoutPrivacyInput = {
   reportsFiled?: Prisma.ReportUncheckedUpdateManyWithoutReporterNestedInput
   blocksInitiated?: Prisma.UserBlockUncheckedUpdateManyWithoutBlockerNestedInput
   blocksReceived?: Prisma.UserBlockUncheckedUpdateManyWithoutBlockedNestedInput
+  suspendedUsers?: Prisma.UserUncheckedUpdateManyWithoutSuspendedByNestedInput
+  deletedUsers?: Prisma.UserUncheckedUpdateManyWithoutDeletedByNestedInput
   ownershipTransfersFrom?: Prisma.EventOwnershipTransferUncheckedUpdateManyWithoutFromUserNestedInput
   ownershipTransfersTo?: Prisma.EventOwnershipTransferUncheckedUpdateManyWithoutToUserNestedInput
   ownershipTransfersActed?: Prisma.EventOwnershipTransferUncheckedUpdateManyWithoutActorNestedInput
@@ -15311,6 +17659,7 @@ export type UserUncheckedUpdateWithoutPrivacyInput = {
   checkinLogsAsActor?: Prisma.EventCheckinLogUncheckedUpdateManyWithoutActorNestedInput
   checkinRejections?: Prisma.EventMemberUncheckedUpdateManyWithoutLastCheckinRejectedByNestedInput
   auditLogsAsActor?: Prisma.EventAuditLogUncheckedUpdateManyWithoutActorNestedInput
+  userAuditLogsAsActor?: Prisma.UserAuditLogUncheckedUpdateManyWithoutActorNestedInput
   subscriptions?: Prisma.UserSubscriptionUncheckedUpdateManyWithoutUserNestedInput
   planPeriods?: Prisma.UserPlanPeriodUncheckedUpdateManyWithoutUserNestedInput
   eventSponsorships?: Prisma.EventSponsorshipUncheckedUpdateManyWithoutSponsorNestedInput
@@ -15331,6 +17680,7 @@ export type UserCreateWithoutStatsInput = {
   role?: $Enums.Role
   verifiedAt?: Date | string | null
   suspendedAt?: Date | string | null
+  suspendedUntil?: Date | string | null
   suspensionReason?: string | null
   deletedAt?: Date | string | null
   deletedReason?: string | null
@@ -15373,6 +17723,10 @@ export type UserCreateWithoutStatsInput = {
   reportsFiled?: Prisma.ReportCreateNestedManyWithoutReporterInput
   blocksInitiated?: Prisma.UserBlockCreateNestedManyWithoutBlockerInput
   blocksReceived?: Prisma.UserBlockCreateNestedManyWithoutBlockedInput
+  suspendedBy?: Prisma.UserCreateNestedOneWithoutSuspendedUsersInput
+  suspendedUsers?: Prisma.UserCreateNestedManyWithoutSuspendedByInput
+  deletedBy?: Prisma.UserCreateNestedOneWithoutDeletedUsersInput
+  deletedUsers?: Prisma.UserCreateNestedManyWithoutDeletedByInput
   ownershipTransfersFrom?: Prisma.EventOwnershipTransferCreateNestedManyWithoutFromUserInput
   ownershipTransfersTo?: Prisma.EventOwnershipTransferCreateNestedManyWithoutToUserInput
   ownershipTransfersActed?: Prisma.EventOwnershipTransferCreateNestedManyWithoutActorInput
@@ -15384,6 +17738,7 @@ export type UserCreateWithoutStatsInput = {
   checkinLogsAsActor?: Prisma.EventCheckinLogCreateNestedManyWithoutActorInput
   checkinRejections?: Prisma.EventMemberCreateNestedManyWithoutLastCheckinRejectedByInput
   auditLogsAsActor?: Prisma.EventAuditLogCreateNestedManyWithoutActorInput
+  userAuditLogsAsActor?: Prisma.UserAuditLogCreateNestedManyWithoutActorInput
   subscriptions?: Prisma.UserSubscriptionCreateNestedManyWithoutUserInput
   planPeriods?: Prisma.UserPlanPeriodCreateNestedManyWithoutUserInput
   eventSponsorships?: Prisma.EventSponsorshipCreateNestedManyWithoutSponsorInput
@@ -15404,8 +17759,11 @@ export type UserUncheckedCreateWithoutStatsInput = {
   role?: $Enums.Role
   verifiedAt?: Date | string | null
   suspendedAt?: Date | string | null
+  suspendedUntil?: Date | string | null
+  suspendedById?: string | null
   suspensionReason?: string | null
   deletedAt?: Date | string | null
+  deletedById?: string | null
   deletedReason?: string | null
   restorationToken?: string | null
   restorationTokenExpiry?: Date | string | null
@@ -15446,6 +17804,8 @@ export type UserUncheckedCreateWithoutStatsInput = {
   reportsFiled?: Prisma.ReportUncheckedCreateNestedManyWithoutReporterInput
   blocksInitiated?: Prisma.UserBlockUncheckedCreateNestedManyWithoutBlockerInput
   blocksReceived?: Prisma.UserBlockUncheckedCreateNestedManyWithoutBlockedInput
+  suspendedUsers?: Prisma.UserUncheckedCreateNestedManyWithoutSuspendedByInput
+  deletedUsers?: Prisma.UserUncheckedCreateNestedManyWithoutDeletedByInput
   ownershipTransfersFrom?: Prisma.EventOwnershipTransferUncheckedCreateNestedManyWithoutFromUserInput
   ownershipTransfersTo?: Prisma.EventOwnershipTransferUncheckedCreateNestedManyWithoutToUserInput
   ownershipTransfersActed?: Prisma.EventOwnershipTransferUncheckedCreateNestedManyWithoutActorInput
@@ -15457,6 +17817,7 @@ export type UserUncheckedCreateWithoutStatsInput = {
   checkinLogsAsActor?: Prisma.EventCheckinLogUncheckedCreateNestedManyWithoutActorInput
   checkinRejections?: Prisma.EventMemberUncheckedCreateNestedManyWithoutLastCheckinRejectedByInput
   auditLogsAsActor?: Prisma.EventAuditLogUncheckedCreateNestedManyWithoutActorInput
+  userAuditLogsAsActor?: Prisma.UserAuditLogUncheckedCreateNestedManyWithoutActorInput
   subscriptions?: Prisma.UserSubscriptionUncheckedCreateNestedManyWithoutUserInput
   planPeriods?: Prisma.UserPlanPeriodUncheckedCreateNestedManyWithoutUserInput
   eventSponsorships?: Prisma.EventSponsorshipUncheckedCreateNestedManyWithoutSponsorInput
@@ -15493,6 +17854,7 @@ export type UserUpdateWithoutStatsInput = {
   role?: Prisma.EnumRoleFieldUpdateOperationsInput | $Enums.Role
   verifiedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   suspendedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  suspendedUntil?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   suspensionReason?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   deletedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   deletedReason?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
@@ -15535,6 +17897,10 @@ export type UserUpdateWithoutStatsInput = {
   reportsFiled?: Prisma.ReportUpdateManyWithoutReporterNestedInput
   blocksInitiated?: Prisma.UserBlockUpdateManyWithoutBlockerNestedInput
   blocksReceived?: Prisma.UserBlockUpdateManyWithoutBlockedNestedInput
+  suspendedBy?: Prisma.UserUpdateOneWithoutSuspendedUsersNestedInput
+  suspendedUsers?: Prisma.UserUpdateManyWithoutSuspendedByNestedInput
+  deletedBy?: Prisma.UserUpdateOneWithoutDeletedUsersNestedInput
+  deletedUsers?: Prisma.UserUpdateManyWithoutDeletedByNestedInput
   ownershipTransfersFrom?: Prisma.EventOwnershipTransferUpdateManyWithoutFromUserNestedInput
   ownershipTransfersTo?: Prisma.EventOwnershipTransferUpdateManyWithoutToUserNestedInput
   ownershipTransfersActed?: Prisma.EventOwnershipTransferUpdateManyWithoutActorNestedInput
@@ -15546,6 +17912,7 @@ export type UserUpdateWithoutStatsInput = {
   checkinLogsAsActor?: Prisma.EventCheckinLogUpdateManyWithoutActorNestedInput
   checkinRejections?: Prisma.EventMemberUpdateManyWithoutLastCheckinRejectedByNestedInput
   auditLogsAsActor?: Prisma.EventAuditLogUpdateManyWithoutActorNestedInput
+  userAuditLogsAsActor?: Prisma.UserAuditLogUpdateManyWithoutActorNestedInput
   subscriptions?: Prisma.UserSubscriptionUpdateManyWithoutUserNestedInput
   planPeriods?: Prisma.UserPlanPeriodUpdateManyWithoutUserNestedInput
   eventSponsorships?: Prisma.EventSponsorshipUpdateManyWithoutSponsorNestedInput
@@ -15566,8 +17933,11 @@ export type UserUncheckedUpdateWithoutStatsInput = {
   role?: Prisma.EnumRoleFieldUpdateOperationsInput | $Enums.Role
   verifiedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   suspendedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  suspendedUntil?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  suspendedById?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   suspensionReason?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   deletedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  deletedById?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   deletedReason?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   restorationToken?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   restorationTokenExpiry?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
@@ -15608,6 +17978,8 @@ export type UserUncheckedUpdateWithoutStatsInput = {
   reportsFiled?: Prisma.ReportUncheckedUpdateManyWithoutReporterNestedInput
   blocksInitiated?: Prisma.UserBlockUncheckedUpdateManyWithoutBlockerNestedInput
   blocksReceived?: Prisma.UserBlockUncheckedUpdateManyWithoutBlockedNestedInput
+  suspendedUsers?: Prisma.UserUncheckedUpdateManyWithoutSuspendedByNestedInput
+  deletedUsers?: Prisma.UserUncheckedUpdateManyWithoutDeletedByNestedInput
   ownershipTransfersFrom?: Prisma.EventOwnershipTransferUncheckedUpdateManyWithoutFromUserNestedInput
   ownershipTransfersTo?: Prisma.EventOwnershipTransferUncheckedUpdateManyWithoutToUserNestedInput
   ownershipTransfersActed?: Prisma.EventOwnershipTransferUncheckedUpdateManyWithoutActorNestedInput
@@ -15619,6 +17991,7 @@ export type UserUncheckedUpdateWithoutStatsInput = {
   checkinLogsAsActor?: Prisma.EventCheckinLogUncheckedUpdateManyWithoutActorNestedInput
   checkinRejections?: Prisma.EventMemberUncheckedUpdateManyWithoutLastCheckinRejectedByNestedInput
   auditLogsAsActor?: Prisma.EventAuditLogUncheckedUpdateManyWithoutActorNestedInput
+  userAuditLogsAsActor?: Prisma.UserAuditLogUncheckedUpdateManyWithoutActorNestedInput
   subscriptions?: Prisma.UserSubscriptionUncheckedUpdateManyWithoutUserNestedInput
   planPeriods?: Prisma.UserPlanPeriodUncheckedUpdateManyWithoutUserNestedInput
   eventSponsorships?: Prisma.EventSponsorshipUncheckedUpdateManyWithoutSponsorNestedInput
@@ -15639,6 +18012,7 @@ export type UserCreateWithoutSocialLinksInput = {
   role?: $Enums.Role
   verifiedAt?: Date | string | null
   suspendedAt?: Date | string | null
+  suspendedUntil?: Date | string | null
   suspensionReason?: string | null
   deletedAt?: Date | string | null
   deletedReason?: string | null
@@ -15681,6 +18055,10 @@ export type UserCreateWithoutSocialLinksInput = {
   reportsFiled?: Prisma.ReportCreateNestedManyWithoutReporterInput
   blocksInitiated?: Prisma.UserBlockCreateNestedManyWithoutBlockerInput
   blocksReceived?: Prisma.UserBlockCreateNestedManyWithoutBlockedInput
+  suspendedBy?: Prisma.UserCreateNestedOneWithoutSuspendedUsersInput
+  suspendedUsers?: Prisma.UserCreateNestedManyWithoutSuspendedByInput
+  deletedBy?: Prisma.UserCreateNestedOneWithoutDeletedUsersInput
+  deletedUsers?: Prisma.UserCreateNestedManyWithoutDeletedByInput
   ownershipTransfersFrom?: Prisma.EventOwnershipTransferCreateNestedManyWithoutFromUserInput
   ownershipTransfersTo?: Prisma.EventOwnershipTransferCreateNestedManyWithoutToUserInput
   ownershipTransfersActed?: Prisma.EventOwnershipTransferCreateNestedManyWithoutActorInput
@@ -15692,6 +18070,7 @@ export type UserCreateWithoutSocialLinksInput = {
   checkinLogsAsActor?: Prisma.EventCheckinLogCreateNestedManyWithoutActorInput
   checkinRejections?: Prisma.EventMemberCreateNestedManyWithoutLastCheckinRejectedByInput
   auditLogsAsActor?: Prisma.EventAuditLogCreateNestedManyWithoutActorInput
+  userAuditLogsAsActor?: Prisma.UserAuditLogCreateNestedManyWithoutActorInput
   subscriptions?: Prisma.UserSubscriptionCreateNestedManyWithoutUserInput
   planPeriods?: Prisma.UserPlanPeriodCreateNestedManyWithoutUserInput
   eventSponsorships?: Prisma.EventSponsorshipCreateNestedManyWithoutSponsorInput
@@ -15712,8 +18091,11 @@ export type UserUncheckedCreateWithoutSocialLinksInput = {
   role?: $Enums.Role
   verifiedAt?: Date | string | null
   suspendedAt?: Date | string | null
+  suspendedUntil?: Date | string | null
+  suspendedById?: string | null
   suspensionReason?: string | null
   deletedAt?: Date | string | null
+  deletedById?: string | null
   deletedReason?: string | null
   restorationToken?: string | null
   restorationTokenExpiry?: Date | string | null
@@ -15754,6 +18136,8 @@ export type UserUncheckedCreateWithoutSocialLinksInput = {
   reportsFiled?: Prisma.ReportUncheckedCreateNestedManyWithoutReporterInput
   blocksInitiated?: Prisma.UserBlockUncheckedCreateNestedManyWithoutBlockerInput
   blocksReceived?: Prisma.UserBlockUncheckedCreateNestedManyWithoutBlockedInput
+  suspendedUsers?: Prisma.UserUncheckedCreateNestedManyWithoutSuspendedByInput
+  deletedUsers?: Prisma.UserUncheckedCreateNestedManyWithoutDeletedByInput
   ownershipTransfersFrom?: Prisma.EventOwnershipTransferUncheckedCreateNestedManyWithoutFromUserInput
   ownershipTransfersTo?: Prisma.EventOwnershipTransferUncheckedCreateNestedManyWithoutToUserInput
   ownershipTransfersActed?: Prisma.EventOwnershipTransferUncheckedCreateNestedManyWithoutActorInput
@@ -15765,6 +18149,7 @@ export type UserUncheckedCreateWithoutSocialLinksInput = {
   checkinLogsAsActor?: Prisma.EventCheckinLogUncheckedCreateNestedManyWithoutActorInput
   checkinRejections?: Prisma.EventMemberUncheckedCreateNestedManyWithoutLastCheckinRejectedByInput
   auditLogsAsActor?: Prisma.EventAuditLogUncheckedCreateNestedManyWithoutActorInput
+  userAuditLogsAsActor?: Prisma.UserAuditLogUncheckedCreateNestedManyWithoutActorInput
   subscriptions?: Prisma.UserSubscriptionUncheckedCreateNestedManyWithoutUserInput
   planPeriods?: Prisma.UserPlanPeriodUncheckedCreateNestedManyWithoutUserInput
   eventSponsorships?: Prisma.EventSponsorshipUncheckedCreateNestedManyWithoutSponsorInput
@@ -15801,6 +18186,7 @@ export type UserUpdateWithoutSocialLinksInput = {
   role?: Prisma.EnumRoleFieldUpdateOperationsInput | $Enums.Role
   verifiedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   suspendedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  suspendedUntil?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   suspensionReason?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   deletedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   deletedReason?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
@@ -15843,6 +18229,10 @@ export type UserUpdateWithoutSocialLinksInput = {
   reportsFiled?: Prisma.ReportUpdateManyWithoutReporterNestedInput
   blocksInitiated?: Prisma.UserBlockUpdateManyWithoutBlockerNestedInput
   blocksReceived?: Prisma.UserBlockUpdateManyWithoutBlockedNestedInput
+  suspendedBy?: Prisma.UserUpdateOneWithoutSuspendedUsersNestedInput
+  suspendedUsers?: Prisma.UserUpdateManyWithoutSuspendedByNestedInput
+  deletedBy?: Prisma.UserUpdateOneWithoutDeletedUsersNestedInput
+  deletedUsers?: Prisma.UserUpdateManyWithoutDeletedByNestedInput
   ownershipTransfersFrom?: Prisma.EventOwnershipTransferUpdateManyWithoutFromUserNestedInput
   ownershipTransfersTo?: Prisma.EventOwnershipTransferUpdateManyWithoutToUserNestedInput
   ownershipTransfersActed?: Prisma.EventOwnershipTransferUpdateManyWithoutActorNestedInput
@@ -15854,6 +18244,7 @@ export type UserUpdateWithoutSocialLinksInput = {
   checkinLogsAsActor?: Prisma.EventCheckinLogUpdateManyWithoutActorNestedInput
   checkinRejections?: Prisma.EventMemberUpdateManyWithoutLastCheckinRejectedByNestedInput
   auditLogsAsActor?: Prisma.EventAuditLogUpdateManyWithoutActorNestedInput
+  userAuditLogsAsActor?: Prisma.UserAuditLogUpdateManyWithoutActorNestedInput
   subscriptions?: Prisma.UserSubscriptionUpdateManyWithoutUserNestedInput
   planPeriods?: Prisma.UserPlanPeriodUpdateManyWithoutUserNestedInput
   eventSponsorships?: Prisma.EventSponsorshipUpdateManyWithoutSponsorNestedInput
@@ -15874,8 +18265,11 @@ export type UserUncheckedUpdateWithoutSocialLinksInput = {
   role?: Prisma.EnumRoleFieldUpdateOperationsInput | $Enums.Role
   verifiedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   suspendedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  suspendedUntil?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  suspendedById?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   suspensionReason?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   deletedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  deletedById?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   deletedReason?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   restorationToken?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   restorationTokenExpiry?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
@@ -15916,6 +18310,8 @@ export type UserUncheckedUpdateWithoutSocialLinksInput = {
   reportsFiled?: Prisma.ReportUncheckedUpdateManyWithoutReporterNestedInput
   blocksInitiated?: Prisma.UserBlockUncheckedUpdateManyWithoutBlockerNestedInput
   blocksReceived?: Prisma.UserBlockUncheckedUpdateManyWithoutBlockedNestedInput
+  suspendedUsers?: Prisma.UserUncheckedUpdateManyWithoutSuspendedByNestedInput
+  deletedUsers?: Prisma.UserUncheckedUpdateManyWithoutDeletedByNestedInput
   ownershipTransfersFrom?: Prisma.EventOwnershipTransferUncheckedUpdateManyWithoutFromUserNestedInput
   ownershipTransfersTo?: Prisma.EventOwnershipTransferUncheckedUpdateManyWithoutToUserNestedInput
   ownershipTransfersActed?: Prisma.EventOwnershipTransferUncheckedUpdateManyWithoutActorNestedInput
@@ -15927,6 +18323,7 @@ export type UserUncheckedUpdateWithoutSocialLinksInput = {
   checkinLogsAsActor?: Prisma.EventCheckinLogUncheckedUpdateManyWithoutActorNestedInput
   checkinRejections?: Prisma.EventMemberUncheckedUpdateManyWithoutLastCheckinRejectedByNestedInput
   auditLogsAsActor?: Prisma.EventAuditLogUncheckedUpdateManyWithoutActorNestedInput
+  userAuditLogsAsActor?: Prisma.UserAuditLogUncheckedUpdateManyWithoutActorNestedInput
   subscriptions?: Prisma.UserSubscriptionUncheckedUpdateManyWithoutUserNestedInput
   planPeriods?: Prisma.UserPlanPeriodUncheckedUpdateManyWithoutUserNestedInput
   eventSponsorships?: Prisma.EventSponsorshipUncheckedUpdateManyWithoutSponsorNestedInput
@@ -15947,6 +18344,7 @@ export type UserCreateWithoutCategoryLevelsInput = {
   role?: $Enums.Role
   verifiedAt?: Date | string | null
   suspendedAt?: Date | string | null
+  suspendedUntil?: Date | string | null
   suspensionReason?: string | null
   deletedAt?: Date | string | null
   deletedReason?: string | null
@@ -15989,6 +18387,10 @@ export type UserCreateWithoutCategoryLevelsInput = {
   reportsFiled?: Prisma.ReportCreateNestedManyWithoutReporterInput
   blocksInitiated?: Prisma.UserBlockCreateNestedManyWithoutBlockerInput
   blocksReceived?: Prisma.UserBlockCreateNestedManyWithoutBlockedInput
+  suspendedBy?: Prisma.UserCreateNestedOneWithoutSuspendedUsersInput
+  suspendedUsers?: Prisma.UserCreateNestedManyWithoutSuspendedByInput
+  deletedBy?: Prisma.UserCreateNestedOneWithoutDeletedUsersInput
+  deletedUsers?: Prisma.UserCreateNestedManyWithoutDeletedByInput
   ownershipTransfersFrom?: Prisma.EventOwnershipTransferCreateNestedManyWithoutFromUserInput
   ownershipTransfersTo?: Prisma.EventOwnershipTransferCreateNestedManyWithoutToUserInput
   ownershipTransfersActed?: Prisma.EventOwnershipTransferCreateNestedManyWithoutActorInput
@@ -16000,6 +18402,7 @@ export type UserCreateWithoutCategoryLevelsInput = {
   checkinLogsAsActor?: Prisma.EventCheckinLogCreateNestedManyWithoutActorInput
   checkinRejections?: Prisma.EventMemberCreateNestedManyWithoutLastCheckinRejectedByInput
   auditLogsAsActor?: Prisma.EventAuditLogCreateNestedManyWithoutActorInput
+  userAuditLogsAsActor?: Prisma.UserAuditLogCreateNestedManyWithoutActorInput
   subscriptions?: Prisma.UserSubscriptionCreateNestedManyWithoutUserInput
   planPeriods?: Prisma.UserPlanPeriodCreateNestedManyWithoutUserInput
   eventSponsorships?: Prisma.EventSponsorshipCreateNestedManyWithoutSponsorInput
@@ -16020,8 +18423,11 @@ export type UserUncheckedCreateWithoutCategoryLevelsInput = {
   role?: $Enums.Role
   verifiedAt?: Date | string | null
   suspendedAt?: Date | string | null
+  suspendedUntil?: Date | string | null
+  suspendedById?: string | null
   suspensionReason?: string | null
   deletedAt?: Date | string | null
+  deletedById?: string | null
   deletedReason?: string | null
   restorationToken?: string | null
   restorationTokenExpiry?: Date | string | null
@@ -16062,6 +18468,8 @@ export type UserUncheckedCreateWithoutCategoryLevelsInput = {
   reportsFiled?: Prisma.ReportUncheckedCreateNestedManyWithoutReporterInput
   blocksInitiated?: Prisma.UserBlockUncheckedCreateNestedManyWithoutBlockerInput
   blocksReceived?: Prisma.UserBlockUncheckedCreateNestedManyWithoutBlockedInput
+  suspendedUsers?: Prisma.UserUncheckedCreateNestedManyWithoutSuspendedByInput
+  deletedUsers?: Prisma.UserUncheckedCreateNestedManyWithoutDeletedByInput
   ownershipTransfersFrom?: Prisma.EventOwnershipTransferUncheckedCreateNestedManyWithoutFromUserInput
   ownershipTransfersTo?: Prisma.EventOwnershipTransferUncheckedCreateNestedManyWithoutToUserInput
   ownershipTransfersActed?: Prisma.EventOwnershipTransferUncheckedCreateNestedManyWithoutActorInput
@@ -16073,6 +18481,7 @@ export type UserUncheckedCreateWithoutCategoryLevelsInput = {
   checkinLogsAsActor?: Prisma.EventCheckinLogUncheckedCreateNestedManyWithoutActorInput
   checkinRejections?: Prisma.EventMemberUncheckedCreateNestedManyWithoutLastCheckinRejectedByInput
   auditLogsAsActor?: Prisma.EventAuditLogUncheckedCreateNestedManyWithoutActorInput
+  userAuditLogsAsActor?: Prisma.UserAuditLogUncheckedCreateNestedManyWithoutActorInput
   subscriptions?: Prisma.UserSubscriptionUncheckedCreateNestedManyWithoutUserInput
   planPeriods?: Prisma.UserPlanPeriodUncheckedCreateNestedManyWithoutUserInput
   eventSponsorships?: Prisma.EventSponsorshipUncheckedCreateNestedManyWithoutSponsorInput
@@ -16109,6 +18518,7 @@ export type UserUpdateWithoutCategoryLevelsInput = {
   role?: Prisma.EnumRoleFieldUpdateOperationsInput | $Enums.Role
   verifiedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   suspendedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  suspendedUntil?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   suspensionReason?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   deletedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   deletedReason?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
@@ -16151,6 +18561,10 @@ export type UserUpdateWithoutCategoryLevelsInput = {
   reportsFiled?: Prisma.ReportUpdateManyWithoutReporterNestedInput
   blocksInitiated?: Prisma.UserBlockUpdateManyWithoutBlockerNestedInput
   blocksReceived?: Prisma.UserBlockUpdateManyWithoutBlockedNestedInput
+  suspendedBy?: Prisma.UserUpdateOneWithoutSuspendedUsersNestedInput
+  suspendedUsers?: Prisma.UserUpdateManyWithoutSuspendedByNestedInput
+  deletedBy?: Prisma.UserUpdateOneWithoutDeletedUsersNestedInput
+  deletedUsers?: Prisma.UserUpdateManyWithoutDeletedByNestedInput
   ownershipTransfersFrom?: Prisma.EventOwnershipTransferUpdateManyWithoutFromUserNestedInput
   ownershipTransfersTo?: Prisma.EventOwnershipTransferUpdateManyWithoutToUserNestedInput
   ownershipTransfersActed?: Prisma.EventOwnershipTransferUpdateManyWithoutActorNestedInput
@@ -16162,6 +18576,7 @@ export type UserUpdateWithoutCategoryLevelsInput = {
   checkinLogsAsActor?: Prisma.EventCheckinLogUpdateManyWithoutActorNestedInput
   checkinRejections?: Prisma.EventMemberUpdateManyWithoutLastCheckinRejectedByNestedInput
   auditLogsAsActor?: Prisma.EventAuditLogUpdateManyWithoutActorNestedInput
+  userAuditLogsAsActor?: Prisma.UserAuditLogUpdateManyWithoutActorNestedInput
   subscriptions?: Prisma.UserSubscriptionUpdateManyWithoutUserNestedInput
   planPeriods?: Prisma.UserPlanPeriodUpdateManyWithoutUserNestedInput
   eventSponsorships?: Prisma.EventSponsorshipUpdateManyWithoutSponsorNestedInput
@@ -16182,8 +18597,11 @@ export type UserUncheckedUpdateWithoutCategoryLevelsInput = {
   role?: Prisma.EnumRoleFieldUpdateOperationsInput | $Enums.Role
   verifiedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   suspendedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  suspendedUntil?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  suspendedById?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   suspensionReason?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   deletedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  deletedById?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   deletedReason?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   restorationToken?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   restorationTokenExpiry?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
@@ -16224,6 +18642,8 @@ export type UserUncheckedUpdateWithoutCategoryLevelsInput = {
   reportsFiled?: Prisma.ReportUncheckedUpdateManyWithoutReporterNestedInput
   blocksInitiated?: Prisma.UserBlockUncheckedUpdateManyWithoutBlockerNestedInput
   blocksReceived?: Prisma.UserBlockUncheckedUpdateManyWithoutBlockedNestedInput
+  suspendedUsers?: Prisma.UserUncheckedUpdateManyWithoutSuspendedByNestedInput
+  deletedUsers?: Prisma.UserUncheckedUpdateManyWithoutDeletedByNestedInput
   ownershipTransfersFrom?: Prisma.EventOwnershipTransferUncheckedUpdateManyWithoutFromUserNestedInput
   ownershipTransfersTo?: Prisma.EventOwnershipTransferUncheckedUpdateManyWithoutToUserNestedInput
   ownershipTransfersActed?: Prisma.EventOwnershipTransferUncheckedUpdateManyWithoutActorNestedInput
@@ -16235,6 +18655,7 @@ export type UserUncheckedUpdateWithoutCategoryLevelsInput = {
   checkinLogsAsActor?: Prisma.EventCheckinLogUncheckedUpdateManyWithoutActorNestedInput
   checkinRejections?: Prisma.EventMemberUncheckedUpdateManyWithoutLastCheckinRejectedByNestedInput
   auditLogsAsActor?: Prisma.EventAuditLogUncheckedUpdateManyWithoutActorNestedInput
+  userAuditLogsAsActor?: Prisma.UserAuditLogUncheckedUpdateManyWithoutActorNestedInput
   subscriptions?: Prisma.UserSubscriptionUncheckedUpdateManyWithoutUserNestedInput
   planPeriods?: Prisma.UserPlanPeriodUncheckedUpdateManyWithoutUserNestedInput
   eventSponsorships?: Prisma.EventSponsorshipUncheckedUpdateManyWithoutSponsorNestedInput
@@ -16255,6 +18676,7 @@ export type UserCreateWithoutAvailabilityInput = {
   role?: $Enums.Role
   verifiedAt?: Date | string | null
   suspendedAt?: Date | string | null
+  suspendedUntil?: Date | string | null
   suspensionReason?: string | null
   deletedAt?: Date | string | null
   deletedReason?: string | null
@@ -16297,6 +18719,10 @@ export type UserCreateWithoutAvailabilityInput = {
   reportsFiled?: Prisma.ReportCreateNestedManyWithoutReporterInput
   blocksInitiated?: Prisma.UserBlockCreateNestedManyWithoutBlockerInput
   blocksReceived?: Prisma.UserBlockCreateNestedManyWithoutBlockedInput
+  suspendedBy?: Prisma.UserCreateNestedOneWithoutSuspendedUsersInput
+  suspendedUsers?: Prisma.UserCreateNestedManyWithoutSuspendedByInput
+  deletedBy?: Prisma.UserCreateNestedOneWithoutDeletedUsersInput
+  deletedUsers?: Prisma.UserCreateNestedManyWithoutDeletedByInput
   ownershipTransfersFrom?: Prisma.EventOwnershipTransferCreateNestedManyWithoutFromUserInput
   ownershipTransfersTo?: Prisma.EventOwnershipTransferCreateNestedManyWithoutToUserInput
   ownershipTransfersActed?: Prisma.EventOwnershipTransferCreateNestedManyWithoutActorInput
@@ -16308,6 +18734,7 @@ export type UserCreateWithoutAvailabilityInput = {
   checkinLogsAsActor?: Prisma.EventCheckinLogCreateNestedManyWithoutActorInput
   checkinRejections?: Prisma.EventMemberCreateNestedManyWithoutLastCheckinRejectedByInput
   auditLogsAsActor?: Prisma.EventAuditLogCreateNestedManyWithoutActorInput
+  userAuditLogsAsActor?: Prisma.UserAuditLogCreateNestedManyWithoutActorInput
   subscriptions?: Prisma.UserSubscriptionCreateNestedManyWithoutUserInput
   planPeriods?: Prisma.UserPlanPeriodCreateNestedManyWithoutUserInput
   eventSponsorships?: Prisma.EventSponsorshipCreateNestedManyWithoutSponsorInput
@@ -16328,8 +18755,11 @@ export type UserUncheckedCreateWithoutAvailabilityInput = {
   role?: $Enums.Role
   verifiedAt?: Date | string | null
   suspendedAt?: Date | string | null
+  suspendedUntil?: Date | string | null
+  suspendedById?: string | null
   suspensionReason?: string | null
   deletedAt?: Date | string | null
+  deletedById?: string | null
   deletedReason?: string | null
   restorationToken?: string | null
   restorationTokenExpiry?: Date | string | null
@@ -16370,6 +18800,8 @@ export type UserUncheckedCreateWithoutAvailabilityInput = {
   reportsFiled?: Prisma.ReportUncheckedCreateNestedManyWithoutReporterInput
   blocksInitiated?: Prisma.UserBlockUncheckedCreateNestedManyWithoutBlockerInput
   blocksReceived?: Prisma.UserBlockUncheckedCreateNestedManyWithoutBlockedInput
+  suspendedUsers?: Prisma.UserUncheckedCreateNestedManyWithoutSuspendedByInput
+  deletedUsers?: Prisma.UserUncheckedCreateNestedManyWithoutDeletedByInput
   ownershipTransfersFrom?: Prisma.EventOwnershipTransferUncheckedCreateNestedManyWithoutFromUserInput
   ownershipTransfersTo?: Prisma.EventOwnershipTransferUncheckedCreateNestedManyWithoutToUserInput
   ownershipTransfersActed?: Prisma.EventOwnershipTransferUncheckedCreateNestedManyWithoutActorInput
@@ -16381,6 +18813,7 @@ export type UserUncheckedCreateWithoutAvailabilityInput = {
   checkinLogsAsActor?: Prisma.EventCheckinLogUncheckedCreateNestedManyWithoutActorInput
   checkinRejections?: Prisma.EventMemberUncheckedCreateNestedManyWithoutLastCheckinRejectedByInput
   auditLogsAsActor?: Prisma.EventAuditLogUncheckedCreateNestedManyWithoutActorInput
+  userAuditLogsAsActor?: Prisma.UserAuditLogUncheckedCreateNestedManyWithoutActorInput
   subscriptions?: Prisma.UserSubscriptionUncheckedCreateNestedManyWithoutUserInput
   planPeriods?: Prisma.UserPlanPeriodUncheckedCreateNestedManyWithoutUserInput
   eventSponsorships?: Prisma.EventSponsorshipUncheckedCreateNestedManyWithoutSponsorInput
@@ -16417,6 +18850,7 @@ export type UserUpdateWithoutAvailabilityInput = {
   role?: Prisma.EnumRoleFieldUpdateOperationsInput | $Enums.Role
   verifiedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   suspendedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  suspendedUntil?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   suspensionReason?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   deletedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   deletedReason?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
@@ -16459,6 +18893,10 @@ export type UserUpdateWithoutAvailabilityInput = {
   reportsFiled?: Prisma.ReportUpdateManyWithoutReporterNestedInput
   blocksInitiated?: Prisma.UserBlockUpdateManyWithoutBlockerNestedInput
   blocksReceived?: Prisma.UserBlockUpdateManyWithoutBlockedNestedInput
+  suspendedBy?: Prisma.UserUpdateOneWithoutSuspendedUsersNestedInput
+  suspendedUsers?: Prisma.UserUpdateManyWithoutSuspendedByNestedInput
+  deletedBy?: Prisma.UserUpdateOneWithoutDeletedUsersNestedInput
+  deletedUsers?: Prisma.UserUpdateManyWithoutDeletedByNestedInput
   ownershipTransfersFrom?: Prisma.EventOwnershipTransferUpdateManyWithoutFromUserNestedInput
   ownershipTransfersTo?: Prisma.EventOwnershipTransferUpdateManyWithoutToUserNestedInput
   ownershipTransfersActed?: Prisma.EventOwnershipTransferUpdateManyWithoutActorNestedInput
@@ -16470,6 +18908,7 @@ export type UserUpdateWithoutAvailabilityInput = {
   checkinLogsAsActor?: Prisma.EventCheckinLogUpdateManyWithoutActorNestedInput
   checkinRejections?: Prisma.EventMemberUpdateManyWithoutLastCheckinRejectedByNestedInput
   auditLogsAsActor?: Prisma.EventAuditLogUpdateManyWithoutActorNestedInput
+  userAuditLogsAsActor?: Prisma.UserAuditLogUpdateManyWithoutActorNestedInput
   subscriptions?: Prisma.UserSubscriptionUpdateManyWithoutUserNestedInput
   planPeriods?: Prisma.UserPlanPeriodUpdateManyWithoutUserNestedInput
   eventSponsorships?: Prisma.EventSponsorshipUpdateManyWithoutSponsorNestedInput
@@ -16490,8 +18929,11 @@ export type UserUncheckedUpdateWithoutAvailabilityInput = {
   role?: Prisma.EnumRoleFieldUpdateOperationsInput | $Enums.Role
   verifiedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   suspendedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  suspendedUntil?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  suspendedById?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   suspensionReason?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   deletedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  deletedById?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   deletedReason?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   restorationToken?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   restorationTokenExpiry?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
@@ -16532,6 +18974,8 @@ export type UserUncheckedUpdateWithoutAvailabilityInput = {
   reportsFiled?: Prisma.ReportUncheckedUpdateManyWithoutReporterNestedInput
   blocksInitiated?: Prisma.UserBlockUncheckedUpdateManyWithoutBlockerNestedInput
   blocksReceived?: Prisma.UserBlockUncheckedUpdateManyWithoutBlockedNestedInput
+  suspendedUsers?: Prisma.UserUncheckedUpdateManyWithoutSuspendedByNestedInput
+  deletedUsers?: Prisma.UserUncheckedUpdateManyWithoutDeletedByNestedInput
   ownershipTransfersFrom?: Prisma.EventOwnershipTransferUncheckedUpdateManyWithoutFromUserNestedInput
   ownershipTransfersTo?: Prisma.EventOwnershipTransferUncheckedUpdateManyWithoutToUserNestedInput
   ownershipTransfersActed?: Prisma.EventOwnershipTransferUncheckedUpdateManyWithoutActorNestedInput
@@ -16543,6 +18987,7 @@ export type UserUncheckedUpdateWithoutAvailabilityInput = {
   checkinLogsAsActor?: Prisma.EventCheckinLogUncheckedUpdateManyWithoutActorNestedInput
   checkinRejections?: Prisma.EventMemberUncheckedUpdateManyWithoutLastCheckinRejectedByNestedInput
   auditLogsAsActor?: Prisma.EventAuditLogUncheckedUpdateManyWithoutActorNestedInput
+  userAuditLogsAsActor?: Prisma.UserAuditLogUncheckedUpdateManyWithoutActorNestedInput
   subscriptions?: Prisma.UserSubscriptionUncheckedUpdateManyWithoutUserNestedInput
   planPeriods?: Prisma.UserPlanPeriodUncheckedUpdateManyWithoutUserNestedInput
   eventSponsorships?: Prisma.EventSponsorshipUncheckedUpdateManyWithoutSponsorNestedInput
@@ -16563,6 +19008,7 @@ export type UserCreateWithoutBadgesInput = {
   role?: $Enums.Role
   verifiedAt?: Date | string | null
   suspendedAt?: Date | string | null
+  suspendedUntil?: Date | string | null
   suspensionReason?: string | null
   deletedAt?: Date | string | null
   deletedReason?: string | null
@@ -16605,6 +19051,10 @@ export type UserCreateWithoutBadgesInput = {
   reportsFiled?: Prisma.ReportCreateNestedManyWithoutReporterInput
   blocksInitiated?: Prisma.UserBlockCreateNestedManyWithoutBlockerInput
   blocksReceived?: Prisma.UserBlockCreateNestedManyWithoutBlockedInput
+  suspendedBy?: Prisma.UserCreateNestedOneWithoutSuspendedUsersInput
+  suspendedUsers?: Prisma.UserCreateNestedManyWithoutSuspendedByInput
+  deletedBy?: Prisma.UserCreateNestedOneWithoutDeletedUsersInput
+  deletedUsers?: Prisma.UserCreateNestedManyWithoutDeletedByInput
   ownershipTransfersFrom?: Prisma.EventOwnershipTransferCreateNestedManyWithoutFromUserInput
   ownershipTransfersTo?: Prisma.EventOwnershipTransferCreateNestedManyWithoutToUserInput
   ownershipTransfersActed?: Prisma.EventOwnershipTransferCreateNestedManyWithoutActorInput
@@ -16616,6 +19066,7 @@ export type UserCreateWithoutBadgesInput = {
   checkinLogsAsActor?: Prisma.EventCheckinLogCreateNestedManyWithoutActorInput
   checkinRejections?: Prisma.EventMemberCreateNestedManyWithoutLastCheckinRejectedByInput
   auditLogsAsActor?: Prisma.EventAuditLogCreateNestedManyWithoutActorInput
+  userAuditLogsAsActor?: Prisma.UserAuditLogCreateNestedManyWithoutActorInput
   subscriptions?: Prisma.UserSubscriptionCreateNestedManyWithoutUserInput
   planPeriods?: Prisma.UserPlanPeriodCreateNestedManyWithoutUserInput
   eventSponsorships?: Prisma.EventSponsorshipCreateNestedManyWithoutSponsorInput
@@ -16636,8 +19087,11 @@ export type UserUncheckedCreateWithoutBadgesInput = {
   role?: $Enums.Role
   verifiedAt?: Date | string | null
   suspendedAt?: Date | string | null
+  suspendedUntil?: Date | string | null
+  suspendedById?: string | null
   suspensionReason?: string | null
   deletedAt?: Date | string | null
+  deletedById?: string | null
   deletedReason?: string | null
   restorationToken?: string | null
   restorationTokenExpiry?: Date | string | null
@@ -16678,6 +19132,8 @@ export type UserUncheckedCreateWithoutBadgesInput = {
   reportsFiled?: Prisma.ReportUncheckedCreateNestedManyWithoutReporterInput
   blocksInitiated?: Prisma.UserBlockUncheckedCreateNestedManyWithoutBlockerInput
   blocksReceived?: Prisma.UserBlockUncheckedCreateNestedManyWithoutBlockedInput
+  suspendedUsers?: Prisma.UserUncheckedCreateNestedManyWithoutSuspendedByInput
+  deletedUsers?: Prisma.UserUncheckedCreateNestedManyWithoutDeletedByInput
   ownershipTransfersFrom?: Prisma.EventOwnershipTransferUncheckedCreateNestedManyWithoutFromUserInput
   ownershipTransfersTo?: Prisma.EventOwnershipTransferUncheckedCreateNestedManyWithoutToUserInput
   ownershipTransfersActed?: Prisma.EventOwnershipTransferUncheckedCreateNestedManyWithoutActorInput
@@ -16689,6 +19145,7 @@ export type UserUncheckedCreateWithoutBadgesInput = {
   checkinLogsAsActor?: Prisma.EventCheckinLogUncheckedCreateNestedManyWithoutActorInput
   checkinRejections?: Prisma.EventMemberUncheckedCreateNestedManyWithoutLastCheckinRejectedByInput
   auditLogsAsActor?: Prisma.EventAuditLogUncheckedCreateNestedManyWithoutActorInput
+  userAuditLogsAsActor?: Prisma.UserAuditLogUncheckedCreateNestedManyWithoutActorInput
   subscriptions?: Prisma.UserSubscriptionUncheckedCreateNestedManyWithoutUserInput
   planPeriods?: Prisma.UserPlanPeriodUncheckedCreateNestedManyWithoutUserInput
   eventSponsorships?: Prisma.EventSponsorshipUncheckedCreateNestedManyWithoutSponsorInput
@@ -16725,6 +19182,7 @@ export type UserUpdateWithoutBadgesInput = {
   role?: Prisma.EnumRoleFieldUpdateOperationsInput | $Enums.Role
   verifiedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   suspendedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  suspendedUntil?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   suspensionReason?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   deletedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   deletedReason?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
@@ -16767,6 +19225,10 @@ export type UserUpdateWithoutBadgesInput = {
   reportsFiled?: Prisma.ReportUpdateManyWithoutReporterNestedInput
   blocksInitiated?: Prisma.UserBlockUpdateManyWithoutBlockerNestedInput
   blocksReceived?: Prisma.UserBlockUpdateManyWithoutBlockedNestedInput
+  suspendedBy?: Prisma.UserUpdateOneWithoutSuspendedUsersNestedInput
+  suspendedUsers?: Prisma.UserUpdateManyWithoutSuspendedByNestedInput
+  deletedBy?: Prisma.UserUpdateOneWithoutDeletedUsersNestedInput
+  deletedUsers?: Prisma.UserUpdateManyWithoutDeletedByNestedInput
   ownershipTransfersFrom?: Prisma.EventOwnershipTransferUpdateManyWithoutFromUserNestedInput
   ownershipTransfersTo?: Prisma.EventOwnershipTransferUpdateManyWithoutToUserNestedInput
   ownershipTransfersActed?: Prisma.EventOwnershipTransferUpdateManyWithoutActorNestedInput
@@ -16778,6 +19240,7 @@ export type UserUpdateWithoutBadgesInput = {
   checkinLogsAsActor?: Prisma.EventCheckinLogUpdateManyWithoutActorNestedInput
   checkinRejections?: Prisma.EventMemberUpdateManyWithoutLastCheckinRejectedByNestedInput
   auditLogsAsActor?: Prisma.EventAuditLogUpdateManyWithoutActorNestedInput
+  userAuditLogsAsActor?: Prisma.UserAuditLogUpdateManyWithoutActorNestedInput
   subscriptions?: Prisma.UserSubscriptionUpdateManyWithoutUserNestedInput
   planPeriods?: Prisma.UserPlanPeriodUpdateManyWithoutUserNestedInput
   eventSponsorships?: Prisma.EventSponsorshipUpdateManyWithoutSponsorNestedInput
@@ -16798,8 +19261,11 @@ export type UserUncheckedUpdateWithoutBadgesInput = {
   role?: Prisma.EnumRoleFieldUpdateOperationsInput | $Enums.Role
   verifiedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   suspendedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  suspendedUntil?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  suspendedById?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   suspensionReason?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   deletedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  deletedById?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   deletedReason?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   restorationToken?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   restorationTokenExpiry?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
@@ -16840,6 +19306,8 @@ export type UserUncheckedUpdateWithoutBadgesInput = {
   reportsFiled?: Prisma.ReportUncheckedUpdateManyWithoutReporterNestedInput
   blocksInitiated?: Prisma.UserBlockUncheckedUpdateManyWithoutBlockerNestedInput
   blocksReceived?: Prisma.UserBlockUncheckedUpdateManyWithoutBlockedNestedInput
+  suspendedUsers?: Prisma.UserUncheckedUpdateManyWithoutSuspendedByNestedInput
+  deletedUsers?: Prisma.UserUncheckedUpdateManyWithoutDeletedByNestedInput
   ownershipTransfersFrom?: Prisma.EventOwnershipTransferUncheckedUpdateManyWithoutFromUserNestedInput
   ownershipTransfersTo?: Prisma.EventOwnershipTransferUncheckedUpdateManyWithoutToUserNestedInput
   ownershipTransfersActed?: Prisma.EventOwnershipTransferUncheckedUpdateManyWithoutActorNestedInput
@@ -16851,6 +19319,7 @@ export type UserUncheckedUpdateWithoutBadgesInput = {
   checkinLogsAsActor?: Prisma.EventCheckinLogUncheckedUpdateManyWithoutActorNestedInput
   checkinRejections?: Prisma.EventMemberUncheckedUpdateManyWithoutLastCheckinRejectedByNestedInput
   auditLogsAsActor?: Prisma.EventAuditLogUncheckedUpdateManyWithoutActorNestedInput
+  userAuditLogsAsActor?: Prisma.UserAuditLogUncheckedUpdateManyWithoutActorNestedInput
   subscriptions?: Prisma.UserSubscriptionUncheckedUpdateManyWithoutUserNestedInput
   planPeriods?: Prisma.UserPlanPeriodUncheckedUpdateManyWithoutUserNestedInput
   eventSponsorships?: Prisma.EventSponsorshipUncheckedUpdateManyWithoutSponsorNestedInput
@@ -16871,6 +19340,7 @@ export type UserCreateWithoutAgendaHostingsInput = {
   role?: $Enums.Role
   verifiedAt?: Date | string | null
   suspendedAt?: Date | string | null
+  suspendedUntil?: Date | string | null
   suspensionReason?: string | null
   deletedAt?: Date | string | null
   deletedReason?: string | null
@@ -16913,6 +19383,10 @@ export type UserCreateWithoutAgendaHostingsInput = {
   reportsFiled?: Prisma.ReportCreateNestedManyWithoutReporterInput
   blocksInitiated?: Prisma.UserBlockCreateNestedManyWithoutBlockerInput
   blocksReceived?: Prisma.UserBlockCreateNestedManyWithoutBlockedInput
+  suspendedBy?: Prisma.UserCreateNestedOneWithoutSuspendedUsersInput
+  suspendedUsers?: Prisma.UserCreateNestedManyWithoutSuspendedByInput
+  deletedBy?: Prisma.UserCreateNestedOneWithoutDeletedUsersInput
+  deletedUsers?: Prisma.UserCreateNestedManyWithoutDeletedByInput
   ownershipTransfersFrom?: Prisma.EventOwnershipTransferCreateNestedManyWithoutFromUserInput
   ownershipTransfersTo?: Prisma.EventOwnershipTransferCreateNestedManyWithoutToUserInput
   ownershipTransfersActed?: Prisma.EventOwnershipTransferCreateNestedManyWithoutActorInput
@@ -16923,6 +19397,7 @@ export type UserCreateWithoutAgendaHostingsInput = {
   checkinLogsAsActor?: Prisma.EventCheckinLogCreateNestedManyWithoutActorInput
   checkinRejections?: Prisma.EventMemberCreateNestedManyWithoutLastCheckinRejectedByInput
   auditLogsAsActor?: Prisma.EventAuditLogCreateNestedManyWithoutActorInput
+  userAuditLogsAsActor?: Prisma.UserAuditLogCreateNestedManyWithoutActorInput
   subscriptions?: Prisma.UserSubscriptionCreateNestedManyWithoutUserInput
   planPeriods?: Prisma.UserPlanPeriodCreateNestedManyWithoutUserInput
   eventSponsorships?: Prisma.EventSponsorshipCreateNestedManyWithoutSponsorInput
@@ -16944,8 +19419,11 @@ export type UserUncheckedCreateWithoutAgendaHostingsInput = {
   role?: $Enums.Role
   verifiedAt?: Date | string | null
   suspendedAt?: Date | string | null
+  suspendedUntil?: Date | string | null
+  suspendedById?: string | null
   suspensionReason?: string | null
   deletedAt?: Date | string | null
+  deletedById?: string | null
   deletedReason?: string | null
   restorationToken?: string | null
   restorationTokenExpiry?: Date | string | null
@@ -16986,6 +19464,8 @@ export type UserUncheckedCreateWithoutAgendaHostingsInput = {
   reportsFiled?: Prisma.ReportUncheckedCreateNestedManyWithoutReporterInput
   blocksInitiated?: Prisma.UserBlockUncheckedCreateNestedManyWithoutBlockerInput
   blocksReceived?: Prisma.UserBlockUncheckedCreateNestedManyWithoutBlockedInput
+  suspendedUsers?: Prisma.UserUncheckedCreateNestedManyWithoutSuspendedByInput
+  deletedUsers?: Prisma.UserUncheckedCreateNestedManyWithoutDeletedByInput
   ownershipTransfersFrom?: Prisma.EventOwnershipTransferUncheckedCreateNestedManyWithoutFromUserInput
   ownershipTransfersTo?: Prisma.EventOwnershipTransferUncheckedCreateNestedManyWithoutToUserInput
   ownershipTransfersActed?: Prisma.EventOwnershipTransferUncheckedCreateNestedManyWithoutActorInput
@@ -16996,6 +19476,7 @@ export type UserUncheckedCreateWithoutAgendaHostingsInput = {
   checkinLogsAsActor?: Prisma.EventCheckinLogUncheckedCreateNestedManyWithoutActorInput
   checkinRejections?: Prisma.EventMemberUncheckedCreateNestedManyWithoutLastCheckinRejectedByInput
   auditLogsAsActor?: Prisma.EventAuditLogUncheckedCreateNestedManyWithoutActorInput
+  userAuditLogsAsActor?: Prisma.UserAuditLogUncheckedCreateNestedManyWithoutActorInput
   subscriptions?: Prisma.UserSubscriptionUncheckedCreateNestedManyWithoutUserInput
   planPeriods?: Prisma.UserPlanPeriodUncheckedCreateNestedManyWithoutUserInput
   eventSponsorships?: Prisma.EventSponsorshipUncheckedCreateNestedManyWithoutSponsorInput
@@ -17033,6 +19514,7 @@ export type UserUpdateWithoutAgendaHostingsInput = {
   role?: Prisma.EnumRoleFieldUpdateOperationsInput | $Enums.Role
   verifiedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   suspendedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  suspendedUntil?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   suspensionReason?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   deletedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   deletedReason?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
@@ -17075,6 +19557,10 @@ export type UserUpdateWithoutAgendaHostingsInput = {
   reportsFiled?: Prisma.ReportUpdateManyWithoutReporterNestedInput
   blocksInitiated?: Prisma.UserBlockUpdateManyWithoutBlockerNestedInput
   blocksReceived?: Prisma.UserBlockUpdateManyWithoutBlockedNestedInput
+  suspendedBy?: Prisma.UserUpdateOneWithoutSuspendedUsersNestedInput
+  suspendedUsers?: Prisma.UserUpdateManyWithoutSuspendedByNestedInput
+  deletedBy?: Prisma.UserUpdateOneWithoutDeletedUsersNestedInput
+  deletedUsers?: Prisma.UserUpdateManyWithoutDeletedByNestedInput
   ownershipTransfersFrom?: Prisma.EventOwnershipTransferUpdateManyWithoutFromUserNestedInput
   ownershipTransfersTo?: Prisma.EventOwnershipTransferUpdateManyWithoutToUserNestedInput
   ownershipTransfersActed?: Prisma.EventOwnershipTransferUpdateManyWithoutActorNestedInput
@@ -17085,6 +19571,7 @@ export type UserUpdateWithoutAgendaHostingsInput = {
   checkinLogsAsActor?: Prisma.EventCheckinLogUpdateManyWithoutActorNestedInput
   checkinRejections?: Prisma.EventMemberUpdateManyWithoutLastCheckinRejectedByNestedInput
   auditLogsAsActor?: Prisma.EventAuditLogUpdateManyWithoutActorNestedInput
+  userAuditLogsAsActor?: Prisma.UserAuditLogUpdateManyWithoutActorNestedInput
   subscriptions?: Prisma.UserSubscriptionUpdateManyWithoutUserNestedInput
   planPeriods?: Prisma.UserPlanPeriodUpdateManyWithoutUserNestedInput
   eventSponsorships?: Prisma.EventSponsorshipUpdateManyWithoutSponsorNestedInput
@@ -17106,8 +19593,11 @@ export type UserUncheckedUpdateWithoutAgendaHostingsInput = {
   role?: Prisma.EnumRoleFieldUpdateOperationsInput | $Enums.Role
   verifiedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   suspendedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  suspendedUntil?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  suspendedById?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   suspensionReason?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   deletedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  deletedById?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   deletedReason?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   restorationToken?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   restorationTokenExpiry?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
@@ -17148,6 +19638,8 @@ export type UserUncheckedUpdateWithoutAgendaHostingsInput = {
   reportsFiled?: Prisma.ReportUncheckedUpdateManyWithoutReporterNestedInput
   blocksInitiated?: Prisma.UserBlockUncheckedUpdateManyWithoutBlockerNestedInput
   blocksReceived?: Prisma.UserBlockUncheckedUpdateManyWithoutBlockedNestedInput
+  suspendedUsers?: Prisma.UserUncheckedUpdateManyWithoutSuspendedByNestedInput
+  deletedUsers?: Prisma.UserUncheckedUpdateManyWithoutDeletedByNestedInput
   ownershipTransfersFrom?: Prisma.EventOwnershipTransferUncheckedUpdateManyWithoutFromUserNestedInput
   ownershipTransfersTo?: Prisma.EventOwnershipTransferUncheckedUpdateManyWithoutToUserNestedInput
   ownershipTransfersActed?: Prisma.EventOwnershipTransferUncheckedUpdateManyWithoutActorNestedInput
@@ -17158,6 +19650,7 @@ export type UserUncheckedUpdateWithoutAgendaHostingsInput = {
   checkinLogsAsActor?: Prisma.EventCheckinLogUncheckedUpdateManyWithoutActorNestedInput
   checkinRejections?: Prisma.EventMemberUncheckedUpdateManyWithoutLastCheckinRejectedByNestedInput
   auditLogsAsActor?: Prisma.EventAuditLogUncheckedUpdateManyWithoutActorNestedInput
+  userAuditLogsAsActor?: Prisma.UserAuditLogUncheckedUpdateManyWithoutActorNestedInput
   subscriptions?: Prisma.UserSubscriptionUncheckedUpdateManyWithoutUserNestedInput
   planPeriods?: Prisma.UserPlanPeriodUncheckedUpdateManyWithoutUserNestedInput
   eventSponsorships?: Prisma.EventSponsorshipUncheckedUpdateManyWithoutSponsorNestedInput
@@ -17179,6 +19672,7 @@ export type UserCreateWithoutCheckinLogsAsActorInput = {
   role?: $Enums.Role
   verifiedAt?: Date | string | null
   suspendedAt?: Date | string | null
+  suspendedUntil?: Date | string | null
   suspensionReason?: string | null
   deletedAt?: Date | string | null
   deletedReason?: string | null
@@ -17221,6 +19715,10 @@ export type UserCreateWithoutCheckinLogsAsActorInput = {
   reportsFiled?: Prisma.ReportCreateNestedManyWithoutReporterInput
   blocksInitiated?: Prisma.UserBlockCreateNestedManyWithoutBlockerInput
   blocksReceived?: Prisma.UserBlockCreateNestedManyWithoutBlockedInput
+  suspendedBy?: Prisma.UserCreateNestedOneWithoutSuspendedUsersInput
+  suspendedUsers?: Prisma.UserCreateNestedManyWithoutSuspendedByInput
+  deletedBy?: Prisma.UserCreateNestedOneWithoutDeletedUsersInput
+  deletedUsers?: Prisma.UserCreateNestedManyWithoutDeletedByInput
   ownershipTransfersFrom?: Prisma.EventOwnershipTransferCreateNestedManyWithoutFromUserInput
   ownershipTransfersTo?: Prisma.EventOwnershipTransferCreateNestedManyWithoutToUserInput
   ownershipTransfersActed?: Prisma.EventOwnershipTransferCreateNestedManyWithoutActorInput
@@ -17231,6 +19729,7 @@ export type UserCreateWithoutCheckinLogsAsActorInput = {
   agendaHostings?: Prisma.EventAgendaItemHostCreateNestedManyWithoutUserInput
   checkinRejections?: Prisma.EventMemberCreateNestedManyWithoutLastCheckinRejectedByInput
   auditLogsAsActor?: Prisma.EventAuditLogCreateNestedManyWithoutActorInput
+  userAuditLogsAsActor?: Prisma.UserAuditLogCreateNestedManyWithoutActorInput
   subscriptions?: Prisma.UserSubscriptionCreateNestedManyWithoutUserInput
   planPeriods?: Prisma.UserPlanPeriodCreateNestedManyWithoutUserInput
   eventSponsorships?: Prisma.EventSponsorshipCreateNestedManyWithoutSponsorInput
@@ -17252,8 +19751,11 @@ export type UserUncheckedCreateWithoutCheckinLogsAsActorInput = {
   role?: $Enums.Role
   verifiedAt?: Date | string | null
   suspendedAt?: Date | string | null
+  suspendedUntil?: Date | string | null
+  suspendedById?: string | null
   suspensionReason?: string | null
   deletedAt?: Date | string | null
+  deletedById?: string | null
   deletedReason?: string | null
   restorationToken?: string | null
   restorationTokenExpiry?: Date | string | null
@@ -17294,6 +19796,8 @@ export type UserUncheckedCreateWithoutCheckinLogsAsActorInput = {
   reportsFiled?: Prisma.ReportUncheckedCreateNestedManyWithoutReporterInput
   blocksInitiated?: Prisma.UserBlockUncheckedCreateNestedManyWithoutBlockerInput
   blocksReceived?: Prisma.UserBlockUncheckedCreateNestedManyWithoutBlockedInput
+  suspendedUsers?: Prisma.UserUncheckedCreateNestedManyWithoutSuspendedByInput
+  deletedUsers?: Prisma.UserUncheckedCreateNestedManyWithoutDeletedByInput
   ownershipTransfersFrom?: Prisma.EventOwnershipTransferUncheckedCreateNestedManyWithoutFromUserInput
   ownershipTransfersTo?: Prisma.EventOwnershipTransferUncheckedCreateNestedManyWithoutToUserInput
   ownershipTransfersActed?: Prisma.EventOwnershipTransferUncheckedCreateNestedManyWithoutActorInput
@@ -17304,6 +19808,7 @@ export type UserUncheckedCreateWithoutCheckinLogsAsActorInput = {
   agendaHostings?: Prisma.EventAgendaItemHostUncheckedCreateNestedManyWithoutUserInput
   checkinRejections?: Prisma.EventMemberUncheckedCreateNestedManyWithoutLastCheckinRejectedByInput
   auditLogsAsActor?: Prisma.EventAuditLogUncheckedCreateNestedManyWithoutActorInput
+  userAuditLogsAsActor?: Prisma.UserAuditLogUncheckedCreateNestedManyWithoutActorInput
   subscriptions?: Prisma.UserSubscriptionUncheckedCreateNestedManyWithoutUserInput
   planPeriods?: Prisma.UserPlanPeriodUncheckedCreateNestedManyWithoutUserInput
   eventSponsorships?: Prisma.EventSponsorshipUncheckedCreateNestedManyWithoutSponsorInput
@@ -17341,6 +19846,7 @@ export type UserUpdateWithoutCheckinLogsAsActorInput = {
   role?: Prisma.EnumRoleFieldUpdateOperationsInput | $Enums.Role
   verifiedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   suspendedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  suspendedUntil?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   suspensionReason?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   deletedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   deletedReason?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
@@ -17383,6 +19889,10 @@ export type UserUpdateWithoutCheckinLogsAsActorInput = {
   reportsFiled?: Prisma.ReportUpdateManyWithoutReporterNestedInput
   blocksInitiated?: Prisma.UserBlockUpdateManyWithoutBlockerNestedInput
   blocksReceived?: Prisma.UserBlockUpdateManyWithoutBlockedNestedInput
+  suspendedBy?: Prisma.UserUpdateOneWithoutSuspendedUsersNestedInput
+  suspendedUsers?: Prisma.UserUpdateManyWithoutSuspendedByNestedInput
+  deletedBy?: Prisma.UserUpdateOneWithoutDeletedUsersNestedInput
+  deletedUsers?: Prisma.UserUpdateManyWithoutDeletedByNestedInput
   ownershipTransfersFrom?: Prisma.EventOwnershipTransferUpdateManyWithoutFromUserNestedInput
   ownershipTransfersTo?: Prisma.EventOwnershipTransferUpdateManyWithoutToUserNestedInput
   ownershipTransfersActed?: Prisma.EventOwnershipTransferUpdateManyWithoutActorNestedInput
@@ -17393,6 +19903,7 @@ export type UserUpdateWithoutCheckinLogsAsActorInput = {
   agendaHostings?: Prisma.EventAgendaItemHostUpdateManyWithoutUserNestedInput
   checkinRejections?: Prisma.EventMemberUpdateManyWithoutLastCheckinRejectedByNestedInput
   auditLogsAsActor?: Prisma.EventAuditLogUpdateManyWithoutActorNestedInput
+  userAuditLogsAsActor?: Prisma.UserAuditLogUpdateManyWithoutActorNestedInput
   subscriptions?: Prisma.UserSubscriptionUpdateManyWithoutUserNestedInput
   planPeriods?: Prisma.UserPlanPeriodUpdateManyWithoutUserNestedInput
   eventSponsorships?: Prisma.EventSponsorshipUpdateManyWithoutSponsorNestedInput
@@ -17414,8 +19925,11 @@ export type UserUncheckedUpdateWithoutCheckinLogsAsActorInput = {
   role?: Prisma.EnumRoleFieldUpdateOperationsInput | $Enums.Role
   verifiedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   suspendedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  suspendedUntil?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  suspendedById?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   suspensionReason?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   deletedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  deletedById?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   deletedReason?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   restorationToken?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   restorationTokenExpiry?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
@@ -17456,6 +19970,8 @@ export type UserUncheckedUpdateWithoutCheckinLogsAsActorInput = {
   reportsFiled?: Prisma.ReportUncheckedUpdateManyWithoutReporterNestedInput
   blocksInitiated?: Prisma.UserBlockUncheckedUpdateManyWithoutBlockerNestedInput
   blocksReceived?: Prisma.UserBlockUncheckedUpdateManyWithoutBlockedNestedInput
+  suspendedUsers?: Prisma.UserUncheckedUpdateManyWithoutSuspendedByNestedInput
+  deletedUsers?: Prisma.UserUncheckedUpdateManyWithoutDeletedByNestedInput
   ownershipTransfersFrom?: Prisma.EventOwnershipTransferUncheckedUpdateManyWithoutFromUserNestedInput
   ownershipTransfersTo?: Prisma.EventOwnershipTransferUncheckedUpdateManyWithoutToUserNestedInput
   ownershipTransfersActed?: Prisma.EventOwnershipTransferUncheckedUpdateManyWithoutActorNestedInput
@@ -17466,6 +19982,7 @@ export type UserUncheckedUpdateWithoutCheckinLogsAsActorInput = {
   agendaHostings?: Prisma.EventAgendaItemHostUncheckedUpdateManyWithoutUserNestedInput
   checkinRejections?: Prisma.EventMemberUncheckedUpdateManyWithoutLastCheckinRejectedByNestedInput
   auditLogsAsActor?: Prisma.EventAuditLogUncheckedUpdateManyWithoutActorNestedInput
+  userAuditLogsAsActor?: Prisma.UserAuditLogUncheckedUpdateManyWithoutActorNestedInput
   subscriptions?: Prisma.UserSubscriptionUncheckedUpdateManyWithoutUserNestedInput
   planPeriods?: Prisma.UserPlanPeriodUncheckedUpdateManyWithoutUserNestedInput
   eventSponsorships?: Prisma.EventSponsorshipUncheckedUpdateManyWithoutSponsorNestedInput
@@ -17487,6 +20004,7 @@ export type UserCreateWithoutAuditLogsAsActorInput = {
   role?: $Enums.Role
   verifiedAt?: Date | string | null
   suspendedAt?: Date | string | null
+  suspendedUntil?: Date | string | null
   suspensionReason?: string | null
   deletedAt?: Date | string | null
   deletedReason?: string | null
@@ -17529,6 +20047,10 @@ export type UserCreateWithoutAuditLogsAsActorInput = {
   reportsFiled?: Prisma.ReportCreateNestedManyWithoutReporterInput
   blocksInitiated?: Prisma.UserBlockCreateNestedManyWithoutBlockerInput
   blocksReceived?: Prisma.UserBlockCreateNestedManyWithoutBlockedInput
+  suspendedBy?: Prisma.UserCreateNestedOneWithoutSuspendedUsersInput
+  suspendedUsers?: Prisma.UserCreateNestedManyWithoutSuspendedByInput
+  deletedBy?: Prisma.UserCreateNestedOneWithoutDeletedUsersInput
+  deletedUsers?: Prisma.UserCreateNestedManyWithoutDeletedByInput
   ownershipTransfersFrom?: Prisma.EventOwnershipTransferCreateNestedManyWithoutFromUserInput
   ownershipTransfersTo?: Prisma.EventOwnershipTransferCreateNestedManyWithoutToUserInput
   ownershipTransfersActed?: Prisma.EventOwnershipTransferCreateNestedManyWithoutActorInput
@@ -17539,6 +20061,7 @@ export type UserCreateWithoutAuditLogsAsActorInput = {
   agendaHostings?: Prisma.EventAgendaItemHostCreateNestedManyWithoutUserInput
   checkinLogsAsActor?: Prisma.EventCheckinLogCreateNestedManyWithoutActorInput
   checkinRejections?: Prisma.EventMemberCreateNestedManyWithoutLastCheckinRejectedByInput
+  userAuditLogsAsActor?: Prisma.UserAuditLogCreateNestedManyWithoutActorInput
   subscriptions?: Prisma.UserSubscriptionCreateNestedManyWithoutUserInput
   planPeriods?: Prisma.UserPlanPeriodCreateNestedManyWithoutUserInput
   eventSponsorships?: Prisma.EventSponsorshipCreateNestedManyWithoutSponsorInput
@@ -17560,8 +20083,11 @@ export type UserUncheckedCreateWithoutAuditLogsAsActorInput = {
   role?: $Enums.Role
   verifiedAt?: Date | string | null
   suspendedAt?: Date | string | null
+  suspendedUntil?: Date | string | null
+  suspendedById?: string | null
   suspensionReason?: string | null
   deletedAt?: Date | string | null
+  deletedById?: string | null
   deletedReason?: string | null
   restorationToken?: string | null
   restorationTokenExpiry?: Date | string | null
@@ -17602,6 +20128,8 @@ export type UserUncheckedCreateWithoutAuditLogsAsActorInput = {
   reportsFiled?: Prisma.ReportUncheckedCreateNestedManyWithoutReporterInput
   blocksInitiated?: Prisma.UserBlockUncheckedCreateNestedManyWithoutBlockerInput
   blocksReceived?: Prisma.UserBlockUncheckedCreateNestedManyWithoutBlockedInput
+  suspendedUsers?: Prisma.UserUncheckedCreateNestedManyWithoutSuspendedByInput
+  deletedUsers?: Prisma.UserUncheckedCreateNestedManyWithoutDeletedByInput
   ownershipTransfersFrom?: Prisma.EventOwnershipTransferUncheckedCreateNestedManyWithoutFromUserInput
   ownershipTransfersTo?: Prisma.EventOwnershipTransferUncheckedCreateNestedManyWithoutToUserInput
   ownershipTransfersActed?: Prisma.EventOwnershipTransferUncheckedCreateNestedManyWithoutActorInput
@@ -17612,6 +20140,7 @@ export type UserUncheckedCreateWithoutAuditLogsAsActorInput = {
   agendaHostings?: Prisma.EventAgendaItemHostUncheckedCreateNestedManyWithoutUserInput
   checkinLogsAsActor?: Prisma.EventCheckinLogUncheckedCreateNestedManyWithoutActorInput
   checkinRejections?: Prisma.EventMemberUncheckedCreateNestedManyWithoutLastCheckinRejectedByInput
+  userAuditLogsAsActor?: Prisma.UserAuditLogUncheckedCreateNestedManyWithoutActorInput
   subscriptions?: Prisma.UserSubscriptionUncheckedCreateNestedManyWithoutUserInput
   planPeriods?: Prisma.UserPlanPeriodUncheckedCreateNestedManyWithoutUserInput
   eventSponsorships?: Prisma.EventSponsorshipUncheckedCreateNestedManyWithoutSponsorInput
@@ -17649,6 +20178,7 @@ export type UserUpdateWithoutAuditLogsAsActorInput = {
   role?: Prisma.EnumRoleFieldUpdateOperationsInput | $Enums.Role
   verifiedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   suspendedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  suspendedUntil?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   suspensionReason?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   deletedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   deletedReason?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
@@ -17691,6 +20221,10 @@ export type UserUpdateWithoutAuditLogsAsActorInput = {
   reportsFiled?: Prisma.ReportUpdateManyWithoutReporterNestedInput
   blocksInitiated?: Prisma.UserBlockUpdateManyWithoutBlockerNestedInput
   blocksReceived?: Prisma.UserBlockUpdateManyWithoutBlockedNestedInput
+  suspendedBy?: Prisma.UserUpdateOneWithoutSuspendedUsersNestedInput
+  suspendedUsers?: Prisma.UserUpdateManyWithoutSuspendedByNestedInput
+  deletedBy?: Prisma.UserUpdateOneWithoutDeletedUsersNestedInput
+  deletedUsers?: Prisma.UserUpdateManyWithoutDeletedByNestedInput
   ownershipTransfersFrom?: Prisma.EventOwnershipTransferUpdateManyWithoutFromUserNestedInput
   ownershipTransfersTo?: Prisma.EventOwnershipTransferUpdateManyWithoutToUserNestedInput
   ownershipTransfersActed?: Prisma.EventOwnershipTransferUpdateManyWithoutActorNestedInput
@@ -17701,6 +20235,7 @@ export type UserUpdateWithoutAuditLogsAsActorInput = {
   agendaHostings?: Prisma.EventAgendaItemHostUpdateManyWithoutUserNestedInput
   checkinLogsAsActor?: Prisma.EventCheckinLogUpdateManyWithoutActorNestedInput
   checkinRejections?: Prisma.EventMemberUpdateManyWithoutLastCheckinRejectedByNestedInput
+  userAuditLogsAsActor?: Prisma.UserAuditLogUpdateManyWithoutActorNestedInput
   subscriptions?: Prisma.UserSubscriptionUpdateManyWithoutUserNestedInput
   planPeriods?: Prisma.UserPlanPeriodUpdateManyWithoutUserNestedInput
   eventSponsorships?: Prisma.EventSponsorshipUpdateManyWithoutSponsorNestedInput
@@ -17722,6 +20257,728 @@ export type UserUncheckedUpdateWithoutAuditLogsAsActorInput = {
   role?: Prisma.EnumRoleFieldUpdateOperationsInput | $Enums.Role
   verifiedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   suspendedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  suspendedUntil?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  suspendedById?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  suspensionReason?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  deletedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  deletedById?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  deletedReason?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  restorationToken?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  restorationTokenExpiry?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  lastSeenAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  locale?: Prisma.StringFieldUpdateOperationsInput | string
+  timezone?: Prisma.StringFieldUpdateOperationsInput | string
+  acceptedTermsAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  acceptedMarketingAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  notifications?: Prisma.NotificationUncheckedUpdateManyWithoutRecipientNestedInput
+  actedNotifications?: Prisma.NotificationUncheckedUpdateManyWithoutActorNestedInput
+  eventMembers?: Prisma.EventMemberUncheckedUpdateManyWithoutUserNestedInput
+  addedMemberships?: Prisma.EventMemberUncheckedUpdateManyWithoutAddedByNestedInput
+  canceledEvents?: Prisma.EventUncheckedUpdateManyWithoutCanceledByNestedInput
+  deletedEvents?: Prisma.EventUncheckedUpdateManyWithoutDeletedByNestedInput
+  ownedEvents?: Prisma.EventUncheckedUpdateManyWithoutOwnerNestedInput
+  memberEventsAsSubject?: Prisma.EventMemberEventUncheckedUpdateManyWithoutUserNestedInput
+  memberEventsAsActor?: Prisma.EventMemberEventUncheckedUpdateManyWithoutActorNestedInput
+  joinClosedEvents?: Prisma.EventUncheckedUpdateManyWithoutJoinManuallyClosedByNestedInput
+  commentsWritten?: Prisma.CommentUncheckedUpdateManyWithoutAuthorNestedInput
+  commentsDeleted?: Prisma.CommentUncheckedUpdateManyWithoutDeletedByNestedInput
+  commentsHidden?: Prisma.CommentUncheckedUpdateManyWithoutHiddenByNestedInput
+  reviewsWritten?: Prisma.ReviewUncheckedUpdateManyWithoutAuthorNestedInput
+  reviewsDeleted?: Prisma.ReviewUncheckedUpdateManyWithoutDeletedByNestedInput
+  reviewsHidden?: Prisma.ReviewUncheckedUpdateManyWithoutHiddenByNestedInput
+  dmThreadsA?: Prisma.DmThreadUncheckedUpdateManyWithoutAUserNestedInput
+  dmThreadsB?: Prisma.DmThreadUncheckedUpdateManyWithoutBUserNestedInput
+  dmMessages?: Prisma.DmMessageUncheckedUpdateManyWithoutSenderNestedInput
+  dmMutes?: Prisma.DmMuteUncheckedUpdateManyWithoutUserNestedInput
+  dmReads?: Prisma.DmReadUncheckedUpdateManyWithoutUserNestedInput
+  dmMessageReactions?: Prisma.DmMessageReactionUncheckedUpdateManyWithoutUserNestedInput
+  eventChatMessages?: Prisma.EventChatMessageUncheckedUpdateManyWithoutAuthorNestedInput
+  eventChatReads?: Prisma.EventChatReadUncheckedUpdateManyWithoutUserNestedInput
+  eventChatMessageReactions?: Prisma.EventChatMessageReactionUncheckedUpdateManyWithoutUserNestedInput
+  notificationPreference?: Prisma.NotificationPreferenceUncheckedUpdateOneWithoutUserNestedInput
+  eventMutes?: Prisma.EventMuteUncheckedUpdateManyWithoutUserNestedInput
+  reportsFiled?: Prisma.ReportUncheckedUpdateManyWithoutReporterNestedInput
+  blocksInitiated?: Prisma.UserBlockUncheckedUpdateManyWithoutBlockerNestedInput
+  blocksReceived?: Prisma.UserBlockUncheckedUpdateManyWithoutBlockedNestedInput
+  suspendedUsers?: Prisma.UserUncheckedUpdateManyWithoutSuspendedByNestedInput
+  deletedUsers?: Prisma.UserUncheckedUpdateManyWithoutDeletedByNestedInput
+  ownershipTransfersFrom?: Prisma.EventOwnershipTransferUncheckedUpdateManyWithoutFromUserNestedInput
+  ownershipTransfersTo?: Prisma.EventOwnershipTransferUncheckedUpdateManyWithoutToUserNestedInput
+  ownershipTransfersActed?: Prisma.EventOwnershipTransferUncheckedUpdateManyWithoutActorNestedInput
+  createdInviteLinks?: Prisma.EventInviteLinkUncheckedUpdateManyWithoutCreatedByNestedInput
+  revokedInviteLinks?: Prisma.EventInviteLinkUncheckedUpdateManyWithoutRevokedByNestedInput
+  inviteLinkUsages?: Prisma.EventInviteLinkUsageUncheckedUpdateManyWithoutUserNestedInput
+  eventFavourites?: Prisma.EventFavouriteUncheckedUpdateManyWithoutUserNestedInput
+  agendaHostings?: Prisma.EventAgendaItemHostUncheckedUpdateManyWithoutUserNestedInput
+  checkinLogsAsActor?: Prisma.EventCheckinLogUncheckedUpdateManyWithoutActorNestedInput
+  checkinRejections?: Prisma.EventMemberUncheckedUpdateManyWithoutLastCheckinRejectedByNestedInput
+  userAuditLogsAsActor?: Prisma.UserAuditLogUncheckedUpdateManyWithoutActorNestedInput
+  subscriptions?: Prisma.UserSubscriptionUncheckedUpdateManyWithoutUserNestedInput
+  planPeriods?: Prisma.UserPlanPeriodUncheckedUpdateManyWithoutUserNestedInput
+  eventSponsorships?: Prisma.EventSponsorshipUncheckedUpdateManyWithoutSponsorNestedInput
+  eventSponsorshipPeriods?: Prisma.EventSponsorshipPeriodUncheckedUpdateManyWithoutSponsorNestedInput
+  profile?: Prisma.UserProfileUncheckedUpdateOneWithoutUserNestedInput
+  privacy?: Prisma.UserPrivacyUncheckedUpdateOneWithoutUserNestedInput
+  stats?: Prisma.UserStatsUncheckedUpdateOneWithoutUserNestedInput
+  socialLinks?: Prisma.UserSocialLinkUncheckedUpdateManyWithoutUserNestedInput
+  categoryLevels?: Prisma.UserCategoryLevelUncheckedUpdateManyWithoutUserNestedInput
+  availability?: Prisma.UserAvailabilityUncheckedUpdateManyWithoutUserNestedInput
+  badges?: Prisma.UserBadgeUncheckedUpdateManyWithoutUserNestedInput
+}
+
+export type UserCreateWithoutUserAuditLogsAsActorInput = {
+  id?: string
+  email: string
+  name: string
+  avatarKey?: string | null
+  role?: $Enums.Role
+  verifiedAt?: Date | string | null
+  suspendedAt?: Date | string | null
+  suspendedUntil?: Date | string | null
+  suspensionReason?: string | null
+  deletedAt?: Date | string | null
+  deletedReason?: string | null
+  restorationToken?: string | null
+  restorationTokenExpiry?: Date | string | null
+  createdAt?: Date | string
+  updatedAt?: Date | string
+  lastSeenAt?: Date | string | null
+  locale?: string
+  timezone?: string
+  acceptedTermsAt?: Date | string | null
+  acceptedMarketingAt?: Date | string | null
+  notifications?: Prisma.NotificationCreateNestedManyWithoutRecipientInput
+  actedNotifications?: Prisma.NotificationCreateNestedManyWithoutActorInput
+  eventMembers?: Prisma.EventMemberCreateNestedManyWithoutUserInput
+  addedMemberships?: Prisma.EventMemberCreateNestedManyWithoutAddedByInput
+  canceledEvents?: Prisma.EventCreateNestedManyWithoutCanceledByInput
+  deletedEvents?: Prisma.EventCreateNestedManyWithoutDeletedByInput
+  ownedEvents?: Prisma.EventCreateNestedManyWithoutOwnerInput
+  memberEventsAsSubject?: Prisma.EventMemberEventCreateNestedManyWithoutUserInput
+  memberEventsAsActor?: Prisma.EventMemberEventCreateNestedManyWithoutActorInput
+  joinClosedEvents?: Prisma.EventCreateNestedManyWithoutJoinManuallyClosedByInput
+  commentsWritten?: Prisma.CommentCreateNestedManyWithoutAuthorInput
+  commentsDeleted?: Prisma.CommentCreateNestedManyWithoutDeletedByInput
+  commentsHidden?: Prisma.CommentCreateNestedManyWithoutHiddenByInput
+  reviewsWritten?: Prisma.ReviewCreateNestedManyWithoutAuthorInput
+  reviewsDeleted?: Prisma.ReviewCreateNestedManyWithoutDeletedByInput
+  reviewsHidden?: Prisma.ReviewCreateNestedManyWithoutHiddenByInput
+  dmThreadsA?: Prisma.DmThreadCreateNestedManyWithoutAUserInput
+  dmThreadsB?: Prisma.DmThreadCreateNestedManyWithoutBUserInput
+  dmMessages?: Prisma.DmMessageCreateNestedManyWithoutSenderInput
+  dmMutes?: Prisma.DmMuteCreateNestedManyWithoutUserInput
+  dmReads?: Prisma.DmReadCreateNestedManyWithoutUserInput
+  dmMessageReactions?: Prisma.DmMessageReactionCreateNestedManyWithoutUserInput
+  eventChatMessages?: Prisma.EventChatMessageCreateNestedManyWithoutAuthorInput
+  eventChatReads?: Prisma.EventChatReadCreateNestedManyWithoutUserInput
+  eventChatMessageReactions?: Prisma.EventChatMessageReactionCreateNestedManyWithoutUserInput
+  notificationPreference?: Prisma.NotificationPreferenceCreateNestedOneWithoutUserInput
+  eventMutes?: Prisma.EventMuteCreateNestedManyWithoutUserInput
+  reportsFiled?: Prisma.ReportCreateNestedManyWithoutReporterInput
+  blocksInitiated?: Prisma.UserBlockCreateNestedManyWithoutBlockerInput
+  blocksReceived?: Prisma.UserBlockCreateNestedManyWithoutBlockedInput
+  suspendedBy?: Prisma.UserCreateNestedOneWithoutSuspendedUsersInput
+  suspendedUsers?: Prisma.UserCreateNestedManyWithoutSuspendedByInput
+  deletedBy?: Prisma.UserCreateNestedOneWithoutDeletedUsersInput
+  deletedUsers?: Prisma.UserCreateNestedManyWithoutDeletedByInput
+  ownershipTransfersFrom?: Prisma.EventOwnershipTransferCreateNestedManyWithoutFromUserInput
+  ownershipTransfersTo?: Prisma.EventOwnershipTransferCreateNestedManyWithoutToUserInput
+  ownershipTransfersActed?: Prisma.EventOwnershipTransferCreateNestedManyWithoutActorInput
+  createdInviteLinks?: Prisma.EventInviteLinkCreateNestedManyWithoutCreatedByInput
+  revokedInviteLinks?: Prisma.EventInviteLinkCreateNestedManyWithoutRevokedByInput
+  inviteLinkUsages?: Prisma.EventInviteLinkUsageCreateNestedManyWithoutUserInput
+  eventFavourites?: Prisma.EventFavouriteCreateNestedManyWithoutUserInput
+  agendaHostings?: Prisma.EventAgendaItemHostCreateNestedManyWithoutUserInput
+  checkinLogsAsActor?: Prisma.EventCheckinLogCreateNestedManyWithoutActorInput
+  checkinRejections?: Prisma.EventMemberCreateNestedManyWithoutLastCheckinRejectedByInput
+  auditLogsAsActor?: Prisma.EventAuditLogCreateNestedManyWithoutActorInput
+  subscriptions?: Prisma.UserSubscriptionCreateNestedManyWithoutUserInput
+  planPeriods?: Prisma.UserPlanPeriodCreateNestedManyWithoutUserInput
+  eventSponsorships?: Prisma.EventSponsorshipCreateNestedManyWithoutSponsorInput
+  eventSponsorshipPeriods?: Prisma.EventSponsorshipPeriodCreateNestedManyWithoutSponsorInput
+  profile?: Prisma.UserProfileCreateNestedOneWithoutUserInput
+  privacy?: Prisma.UserPrivacyCreateNestedOneWithoutUserInput
+  stats?: Prisma.UserStatsCreateNestedOneWithoutUserInput
+  socialLinks?: Prisma.UserSocialLinkCreateNestedManyWithoutUserInput
+  categoryLevels?: Prisma.UserCategoryLevelCreateNestedManyWithoutUserInput
+  availability?: Prisma.UserAvailabilityCreateNestedManyWithoutUserInput
+  badges?: Prisma.UserBadgeCreateNestedManyWithoutUserInput
+}
+
+export type UserUncheckedCreateWithoutUserAuditLogsAsActorInput = {
+  id?: string
+  email: string
+  name: string
+  avatarKey?: string | null
+  role?: $Enums.Role
+  verifiedAt?: Date | string | null
+  suspendedAt?: Date | string | null
+  suspendedUntil?: Date | string | null
+  suspendedById?: string | null
+  suspensionReason?: string | null
+  deletedAt?: Date | string | null
+  deletedById?: string | null
+  deletedReason?: string | null
+  restorationToken?: string | null
+  restorationTokenExpiry?: Date | string | null
+  createdAt?: Date | string
+  updatedAt?: Date | string
+  lastSeenAt?: Date | string | null
+  locale?: string
+  timezone?: string
+  acceptedTermsAt?: Date | string | null
+  acceptedMarketingAt?: Date | string | null
+  notifications?: Prisma.NotificationUncheckedCreateNestedManyWithoutRecipientInput
+  actedNotifications?: Prisma.NotificationUncheckedCreateNestedManyWithoutActorInput
+  eventMembers?: Prisma.EventMemberUncheckedCreateNestedManyWithoutUserInput
+  addedMemberships?: Prisma.EventMemberUncheckedCreateNestedManyWithoutAddedByInput
+  canceledEvents?: Prisma.EventUncheckedCreateNestedManyWithoutCanceledByInput
+  deletedEvents?: Prisma.EventUncheckedCreateNestedManyWithoutDeletedByInput
+  ownedEvents?: Prisma.EventUncheckedCreateNestedManyWithoutOwnerInput
+  memberEventsAsSubject?: Prisma.EventMemberEventUncheckedCreateNestedManyWithoutUserInput
+  memberEventsAsActor?: Prisma.EventMemberEventUncheckedCreateNestedManyWithoutActorInput
+  joinClosedEvents?: Prisma.EventUncheckedCreateNestedManyWithoutJoinManuallyClosedByInput
+  commentsWritten?: Prisma.CommentUncheckedCreateNestedManyWithoutAuthorInput
+  commentsDeleted?: Prisma.CommentUncheckedCreateNestedManyWithoutDeletedByInput
+  commentsHidden?: Prisma.CommentUncheckedCreateNestedManyWithoutHiddenByInput
+  reviewsWritten?: Prisma.ReviewUncheckedCreateNestedManyWithoutAuthorInput
+  reviewsDeleted?: Prisma.ReviewUncheckedCreateNestedManyWithoutDeletedByInput
+  reviewsHidden?: Prisma.ReviewUncheckedCreateNestedManyWithoutHiddenByInput
+  dmThreadsA?: Prisma.DmThreadUncheckedCreateNestedManyWithoutAUserInput
+  dmThreadsB?: Prisma.DmThreadUncheckedCreateNestedManyWithoutBUserInput
+  dmMessages?: Prisma.DmMessageUncheckedCreateNestedManyWithoutSenderInput
+  dmMutes?: Prisma.DmMuteUncheckedCreateNestedManyWithoutUserInput
+  dmReads?: Prisma.DmReadUncheckedCreateNestedManyWithoutUserInput
+  dmMessageReactions?: Prisma.DmMessageReactionUncheckedCreateNestedManyWithoutUserInput
+  eventChatMessages?: Prisma.EventChatMessageUncheckedCreateNestedManyWithoutAuthorInput
+  eventChatReads?: Prisma.EventChatReadUncheckedCreateNestedManyWithoutUserInput
+  eventChatMessageReactions?: Prisma.EventChatMessageReactionUncheckedCreateNestedManyWithoutUserInput
+  notificationPreference?: Prisma.NotificationPreferenceUncheckedCreateNestedOneWithoutUserInput
+  eventMutes?: Prisma.EventMuteUncheckedCreateNestedManyWithoutUserInput
+  reportsFiled?: Prisma.ReportUncheckedCreateNestedManyWithoutReporterInput
+  blocksInitiated?: Prisma.UserBlockUncheckedCreateNestedManyWithoutBlockerInput
+  blocksReceived?: Prisma.UserBlockUncheckedCreateNestedManyWithoutBlockedInput
+  suspendedUsers?: Prisma.UserUncheckedCreateNestedManyWithoutSuspendedByInput
+  deletedUsers?: Prisma.UserUncheckedCreateNestedManyWithoutDeletedByInput
+  ownershipTransfersFrom?: Prisma.EventOwnershipTransferUncheckedCreateNestedManyWithoutFromUserInput
+  ownershipTransfersTo?: Prisma.EventOwnershipTransferUncheckedCreateNestedManyWithoutToUserInput
+  ownershipTransfersActed?: Prisma.EventOwnershipTransferUncheckedCreateNestedManyWithoutActorInput
+  createdInviteLinks?: Prisma.EventInviteLinkUncheckedCreateNestedManyWithoutCreatedByInput
+  revokedInviteLinks?: Prisma.EventInviteLinkUncheckedCreateNestedManyWithoutRevokedByInput
+  inviteLinkUsages?: Prisma.EventInviteLinkUsageUncheckedCreateNestedManyWithoutUserInput
+  eventFavourites?: Prisma.EventFavouriteUncheckedCreateNestedManyWithoutUserInput
+  agendaHostings?: Prisma.EventAgendaItemHostUncheckedCreateNestedManyWithoutUserInput
+  checkinLogsAsActor?: Prisma.EventCheckinLogUncheckedCreateNestedManyWithoutActorInput
+  checkinRejections?: Prisma.EventMemberUncheckedCreateNestedManyWithoutLastCheckinRejectedByInput
+  auditLogsAsActor?: Prisma.EventAuditLogUncheckedCreateNestedManyWithoutActorInput
+  subscriptions?: Prisma.UserSubscriptionUncheckedCreateNestedManyWithoutUserInput
+  planPeriods?: Prisma.UserPlanPeriodUncheckedCreateNestedManyWithoutUserInput
+  eventSponsorships?: Prisma.EventSponsorshipUncheckedCreateNestedManyWithoutSponsorInput
+  eventSponsorshipPeriods?: Prisma.EventSponsorshipPeriodUncheckedCreateNestedManyWithoutSponsorInput
+  profile?: Prisma.UserProfileUncheckedCreateNestedOneWithoutUserInput
+  privacy?: Prisma.UserPrivacyUncheckedCreateNestedOneWithoutUserInput
+  stats?: Prisma.UserStatsUncheckedCreateNestedOneWithoutUserInput
+  socialLinks?: Prisma.UserSocialLinkUncheckedCreateNestedManyWithoutUserInput
+  categoryLevels?: Prisma.UserCategoryLevelUncheckedCreateNestedManyWithoutUserInput
+  availability?: Prisma.UserAvailabilityUncheckedCreateNestedManyWithoutUserInput
+  badges?: Prisma.UserBadgeUncheckedCreateNestedManyWithoutUserInput
+}
+
+export type UserCreateOrConnectWithoutUserAuditLogsAsActorInput = {
+  where: Prisma.UserWhereUniqueInput
+  create: Prisma.XOR<Prisma.UserCreateWithoutUserAuditLogsAsActorInput, Prisma.UserUncheckedCreateWithoutUserAuditLogsAsActorInput>
+}
+
+export type UserUpsertWithoutUserAuditLogsAsActorInput = {
+  update: Prisma.XOR<Prisma.UserUpdateWithoutUserAuditLogsAsActorInput, Prisma.UserUncheckedUpdateWithoutUserAuditLogsAsActorInput>
+  create: Prisma.XOR<Prisma.UserCreateWithoutUserAuditLogsAsActorInput, Prisma.UserUncheckedCreateWithoutUserAuditLogsAsActorInput>
+  where?: Prisma.UserWhereInput
+}
+
+export type UserUpdateToOneWithWhereWithoutUserAuditLogsAsActorInput = {
+  where?: Prisma.UserWhereInput
+  data: Prisma.XOR<Prisma.UserUpdateWithoutUserAuditLogsAsActorInput, Prisma.UserUncheckedUpdateWithoutUserAuditLogsAsActorInput>
+}
+
+export type UserUpdateWithoutUserAuditLogsAsActorInput = {
+  id?: Prisma.StringFieldUpdateOperationsInput | string
+  email?: Prisma.StringFieldUpdateOperationsInput | string
+  name?: Prisma.StringFieldUpdateOperationsInput | string
+  avatarKey?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  role?: Prisma.EnumRoleFieldUpdateOperationsInput | $Enums.Role
+  verifiedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  suspendedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  suspendedUntil?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  suspensionReason?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  deletedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  deletedReason?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  restorationToken?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  restorationTokenExpiry?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  lastSeenAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  locale?: Prisma.StringFieldUpdateOperationsInput | string
+  timezone?: Prisma.StringFieldUpdateOperationsInput | string
+  acceptedTermsAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  acceptedMarketingAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  notifications?: Prisma.NotificationUpdateManyWithoutRecipientNestedInput
+  actedNotifications?: Prisma.NotificationUpdateManyWithoutActorNestedInput
+  eventMembers?: Prisma.EventMemberUpdateManyWithoutUserNestedInput
+  addedMemberships?: Prisma.EventMemberUpdateManyWithoutAddedByNestedInput
+  canceledEvents?: Prisma.EventUpdateManyWithoutCanceledByNestedInput
+  deletedEvents?: Prisma.EventUpdateManyWithoutDeletedByNestedInput
+  ownedEvents?: Prisma.EventUpdateManyWithoutOwnerNestedInput
+  memberEventsAsSubject?: Prisma.EventMemberEventUpdateManyWithoutUserNestedInput
+  memberEventsAsActor?: Prisma.EventMemberEventUpdateManyWithoutActorNestedInput
+  joinClosedEvents?: Prisma.EventUpdateManyWithoutJoinManuallyClosedByNestedInput
+  commentsWritten?: Prisma.CommentUpdateManyWithoutAuthorNestedInput
+  commentsDeleted?: Prisma.CommentUpdateManyWithoutDeletedByNestedInput
+  commentsHidden?: Prisma.CommentUpdateManyWithoutHiddenByNestedInput
+  reviewsWritten?: Prisma.ReviewUpdateManyWithoutAuthorNestedInput
+  reviewsDeleted?: Prisma.ReviewUpdateManyWithoutDeletedByNestedInput
+  reviewsHidden?: Prisma.ReviewUpdateManyWithoutHiddenByNestedInput
+  dmThreadsA?: Prisma.DmThreadUpdateManyWithoutAUserNestedInput
+  dmThreadsB?: Prisma.DmThreadUpdateManyWithoutBUserNestedInput
+  dmMessages?: Prisma.DmMessageUpdateManyWithoutSenderNestedInput
+  dmMutes?: Prisma.DmMuteUpdateManyWithoutUserNestedInput
+  dmReads?: Prisma.DmReadUpdateManyWithoutUserNestedInput
+  dmMessageReactions?: Prisma.DmMessageReactionUpdateManyWithoutUserNestedInput
+  eventChatMessages?: Prisma.EventChatMessageUpdateManyWithoutAuthorNestedInput
+  eventChatReads?: Prisma.EventChatReadUpdateManyWithoutUserNestedInput
+  eventChatMessageReactions?: Prisma.EventChatMessageReactionUpdateManyWithoutUserNestedInput
+  notificationPreference?: Prisma.NotificationPreferenceUpdateOneWithoutUserNestedInput
+  eventMutes?: Prisma.EventMuteUpdateManyWithoutUserNestedInput
+  reportsFiled?: Prisma.ReportUpdateManyWithoutReporterNestedInput
+  blocksInitiated?: Prisma.UserBlockUpdateManyWithoutBlockerNestedInput
+  blocksReceived?: Prisma.UserBlockUpdateManyWithoutBlockedNestedInput
+  suspendedBy?: Prisma.UserUpdateOneWithoutSuspendedUsersNestedInput
+  suspendedUsers?: Prisma.UserUpdateManyWithoutSuspendedByNestedInput
+  deletedBy?: Prisma.UserUpdateOneWithoutDeletedUsersNestedInput
+  deletedUsers?: Prisma.UserUpdateManyWithoutDeletedByNestedInput
+  ownershipTransfersFrom?: Prisma.EventOwnershipTransferUpdateManyWithoutFromUserNestedInput
+  ownershipTransfersTo?: Prisma.EventOwnershipTransferUpdateManyWithoutToUserNestedInput
+  ownershipTransfersActed?: Prisma.EventOwnershipTransferUpdateManyWithoutActorNestedInput
+  createdInviteLinks?: Prisma.EventInviteLinkUpdateManyWithoutCreatedByNestedInput
+  revokedInviteLinks?: Prisma.EventInviteLinkUpdateManyWithoutRevokedByNestedInput
+  inviteLinkUsages?: Prisma.EventInviteLinkUsageUpdateManyWithoutUserNestedInput
+  eventFavourites?: Prisma.EventFavouriteUpdateManyWithoutUserNestedInput
+  agendaHostings?: Prisma.EventAgendaItemHostUpdateManyWithoutUserNestedInput
+  checkinLogsAsActor?: Prisma.EventCheckinLogUpdateManyWithoutActorNestedInput
+  checkinRejections?: Prisma.EventMemberUpdateManyWithoutLastCheckinRejectedByNestedInput
+  auditLogsAsActor?: Prisma.EventAuditLogUpdateManyWithoutActorNestedInput
+  subscriptions?: Prisma.UserSubscriptionUpdateManyWithoutUserNestedInput
+  planPeriods?: Prisma.UserPlanPeriodUpdateManyWithoutUserNestedInput
+  eventSponsorships?: Prisma.EventSponsorshipUpdateManyWithoutSponsorNestedInput
+  eventSponsorshipPeriods?: Prisma.EventSponsorshipPeriodUpdateManyWithoutSponsorNestedInput
+  profile?: Prisma.UserProfileUpdateOneWithoutUserNestedInput
+  privacy?: Prisma.UserPrivacyUpdateOneWithoutUserNestedInput
+  stats?: Prisma.UserStatsUpdateOneWithoutUserNestedInput
+  socialLinks?: Prisma.UserSocialLinkUpdateManyWithoutUserNestedInput
+  categoryLevels?: Prisma.UserCategoryLevelUpdateManyWithoutUserNestedInput
+  availability?: Prisma.UserAvailabilityUpdateManyWithoutUserNestedInput
+  badges?: Prisma.UserBadgeUpdateManyWithoutUserNestedInput
+}
+
+export type UserUncheckedUpdateWithoutUserAuditLogsAsActorInput = {
+  id?: Prisma.StringFieldUpdateOperationsInput | string
+  email?: Prisma.StringFieldUpdateOperationsInput | string
+  name?: Prisma.StringFieldUpdateOperationsInput | string
+  avatarKey?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  role?: Prisma.EnumRoleFieldUpdateOperationsInput | $Enums.Role
+  verifiedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  suspendedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  suspendedUntil?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  suspendedById?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  suspensionReason?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  deletedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  deletedById?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  deletedReason?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  restorationToken?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  restorationTokenExpiry?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  lastSeenAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  locale?: Prisma.StringFieldUpdateOperationsInput | string
+  timezone?: Prisma.StringFieldUpdateOperationsInput | string
+  acceptedTermsAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  acceptedMarketingAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  notifications?: Prisma.NotificationUncheckedUpdateManyWithoutRecipientNestedInput
+  actedNotifications?: Prisma.NotificationUncheckedUpdateManyWithoutActorNestedInput
+  eventMembers?: Prisma.EventMemberUncheckedUpdateManyWithoutUserNestedInput
+  addedMemberships?: Prisma.EventMemberUncheckedUpdateManyWithoutAddedByNestedInput
+  canceledEvents?: Prisma.EventUncheckedUpdateManyWithoutCanceledByNestedInput
+  deletedEvents?: Prisma.EventUncheckedUpdateManyWithoutDeletedByNestedInput
+  ownedEvents?: Prisma.EventUncheckedUpdateManyWithoutOwnerNestedInput
+  memberEventsAsSubject?: Prisma.EventMemberEventUncheckedUpdateManyWithoutUserNestedInput
+  memberEventsAsActor?: Prisma.EventMemberEventUncheckedUpdateManyWithoutActorNestedInput
+  joinClosedEvents?: Prisma.EventUncheckedUpdateManyWithoutJoinManuallyClosedByNestedInput
+  commentsWritten?: Prisma.CommentUncheckedUpdateManyWithoutAuthorNestedInput
+  commentsDeleted?: Prisma.CommentUncheckedUpdateManyWithoutDeletedByNestedInput
+  commentsHidden?: Prisma.CommentUncheckedUpdateManyWithoutHiddenByNestedInput
+  reviewsWritten?: Prisma.ReviewUncheckedUpdateManyWithoutAuthorNestedInput
+  reviewsDeleted?: Prisma.ReviewUncheckedUpdateManyWithoutDeletedByNestedInput
+  reviewsHidden?: Prisma.ReviewUncheckedUpdateManyWithoutHiddenByNestedInput
+  dmThreadsA?: Prisma.DmThreadUncheckedUpdateManyWithoutAUserNestedInput
+  dmThreadsB?: Prisma.DmThreadUncheckedUpdateManyWithoutBUserNestedInput
+  dmMessages?: Prisma.DmMessageUncheckedUpdateManyWithoutSenderNestedInput
+  dmMutes?: Prisma.DmMuteUncheckedUpdateManyWithoutUserNestedInput
+  dmReads?: Prisma.DmReadUncheckedUpdateManyWithoutUserNestedInput
+  dmMessageReactions?: Prisma.DmMessageReactionUncheckedUpdateManyWithoutUserNestedInput
+  eventChatMessages?: Prisma.EventChatMessageUncheckedUpdateManyWithoutAuthorNestedInput
+  eventChatReads?: Prisma.EventChatReadUncheckedUpdateManyWithoutUserNestedInput
+  eventChatMessageReactions?: Prisma.EventChatMessageReactionUncheckedUpdateManyWithoutUserNestedInput
+  notificationPreference?: Prisma.NotificationPreferenceUncheckedUpdateOneWithoutUserNestedInput
+  eventMutes?: Prisma.EventMuteUncheckedUpdateManyWithoutUserNestedInput
+  reportsFiled?: Prisma.ReportUncheckedUpdateManyWithoutReporterNestedInput
+  blocksInitiated?: Prisma.UserBlockUncheckedUpdateManyWithoutBlockerNestedInput
+  blocksReceived?: Prisma.UserBlockUncheckedUpdateManyWithoutBlockedNestedInput
+  suspendedUsers?: Prisma.UserUncheckedUpdateManyWithoutSuspendedByNestedInput
+  deletedUsers?: Prisma.UserUncheckedUpdateManyWithoutDeletedByNestedInput
+  ownershipTransfersFrom?: Prisma.EventOwnershipTransferUncheckedUpdateManyWithoutFromUserNestedInput
+  ownershipTransfersTo?: Prisma.EventOwnershipTransferUncheckedUpdateManyWithoutToUserNestedInput
+  ownershipTransfersActed?: Prisma.EventOwnershipTransferUncheckedUpdateManyWithoutActorNestedInput
+  createdInviteLinks?: Prisma.EventInviteLinkUncheckedUpdateManyWithoutCreatedByNestedInput
+  revokedInviteLinks?: Prisma.EventInviteLinkUncheckedUpdateManyWithoutRevokedByNestedInput
+  inviteLinkUsages?: Prisma.EventInviteLinkUsageUncheckedUpdateManyWithoutUserNestedInput
+  eventFavourites?: Prisma.EventFavouriteUncheckedUpdateManyWithoutUserNestedInput
+  agendaHostings?: Prisma.EventAgendaItemHostUncheckedUpdateManyWithoutUserNestedInput
+  checkinLogsAsActor?: Prisma.EventCheckinLogUncheckedUpdateManyWithoutActorNestedInput
+  checkinRejections?: Prisma.EventMemberUncheckedUpdateManyWithoutLastCheckinRejectedByNestedInput
+  auditLogsAsActor?: Prisma.EventAuditLogUncheckedUpdateManyWithoutActorNestedInput
+  subscriptions?: Prisma.UserSubscriptionUncheckedUpdateManyWithoutUserNestedInput
+  planPeriods?: Prisma.UserPlanPeriodUncheckedUpdateManyWithoutUserNestedInput
+  eventSponsorships?: Prisma.EventSponsorshipUncheckedUpdateManyWithoutSponsorNestedInput
+  eventSponsorshipPeriods?: Prisma.EventSponsorshipPeriodUncheckedUpdateManyWithoutSponsorNestedInput
+  profile?: Prisma.UserProfileUncheckedUpdateOneWithoutUserNestedInput
+  privacy?: Prisma.UserPrivacyUncheckedUpdateOneWithoutUserNestedInput
+  stats?: Prisma.UserStatsUncheckedUpdateOneWithoutUserNestedInput
+  socialLinks?: Prisma.UserSocialLinkUncheckedUpdateManyWithoutUserNestedInput
+  categoryLevels?: Prisma.UserCategoryLevelUncheckedUpdateManyWithoutUserNestedInput
+  availability?: Prisma.UserAvailabilityUncheckedUpdateManyWithoutUserNestedInput
+  badges?: Prisma.UserBadgeUncheckedUpdateManyWithoutUserNestedInput
+}
+
+export type UserCreateManySuspendedByInput = {
+  id?: string
+  email: string
+  name: string
+  avatarKey?: string | null
+  role?: $Enums.Role
+  verifiedAt?: Date | string | null
+  suspendedAt?: Date | string | null
+  suspendedUntil?: Date | string | null
+  suspensionReason?: string | null
+  deletedAt?: Date | string | null
+  deletedById?: string | null
+  deletedReason?: string | null
+  restorationToken?: string | null
+  restorationTokenExpiry?: Date | string | null
+  createdAt?: Date | string
+  updatedAt?: Date | string
+  lastSeenAt?: Date | string | null
+  locale?: string
+  timezone?: string
+  acceptedTermsAt?: Date | string | null
+  acceptedMarketingAt?: Date | string | null
+}
+
+export type UserCreateManyDeletedByInput = {
+  id?: string
+  email: string
+  name: string
+  avatarKey?: string | null
+  role?: $Enums.Role
+  verifiedAt?: Date | string | null
+  suspendedAt?: Date | string | null
+  suspendedUntil?: Date | string | null
+  suspendedById?: string | null
+  suspensionReason?: string | null
+  deletedAt?: Date | string | null
+  deletedReason?: string | null
+  restorationToken?: string | null
+  restorationTokenExpiry?: Date | string | null
+  createdAt?: Date | string
+  updatedAt?: Date | string
+  lastSeenAt?: Date | string | null
+  locale?: string
+  timezone?: string
+  acceptedTermsAt?: Date | string | null
+  acceptedMarketingAt?: Date | string | null
+}
+
+export type UserUpdateWithoutSuspendedByInput = {
+  id?: Prisma.StringFieldUpdateOperationsInput | string
+  email?: Prisma.StringFieldUpdateOperationsInput | string
+  name?: Prisma.StringFieldUpdateOperationsInput | string
+  avatarKey?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  role?: Prisma.EnumRoleFieldUpdateOperationsInput | $Enums.Role
+  verifiedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  suspendedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  suspendedUntil?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  suspensionReason?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  deletedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  deletedReason?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  restorationToken?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  restorationTokenExpiry?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  lastSeenAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  locale?: Prisma.StringFieldUpdateOperationsInput | string
+  timezone?: Prisma.StringFieldUpdateOperationsInput | string
+  acceptedTermsAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  acceptedMarketingAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  notifications?: Prisma.NotificationUpdateManyWithoutRecipientNestedInput
+  actedNotifications?: Prisma.NotificationUpdateManyWithoutActorNestedInput
+  eventMembers?: Prisma.EventMemberUpdateManyWithoutUserNestedInput
+  addedMemberships?: Prisma.EventMemberUpdateManyWithoutAddedByNestedInput
+  canceledEvents?: Prisma.EventUpdateManyWithoutCanceledByNestedInput
+  deletedEvents?: Prisma.EventUpdateManyWithoutDeletedByNestedInput
+  ownedEvents?: Prisma.EventUpdateManyWithoutOwnerNestedInput
+  memberEventsAsSubject?: Prisma.EventMemberEventUpdateManyWithoutUserNestedInput
+  memberEventsAsActor?: Prisma.EventMemberEventUpdateManyWithoutActorNestedInput
+  joinClosedEvents?: Prisma.EventUpdateManyWithoutJoinManuallyClosedByNestedInput
+  commentsWritten?: Prisma.CommentUpdateManyWithoutAuthorNestedInput
+  commentsDeleted?: Prisma.CommentUpdateManyWithoutDeletedByNestedInput
+  commentsHidden?: Prisma.CommentUpdateManyWithoutHiddenByNestedInput
+  reviewsWritten?: Prisma.ReviewUpdateManyWithoutAuthorNestedInput
+  reviewsDeleted?: Prisma.ReviewUpdateManyWithoutDeletedByNestedInput
+  reviewsHidden?: Prisma.ReviewUpdateManyWithoutHiddenByNestedInput
+  dmThreadsA?: Prisma.DmThreadUpdateManyWithoutAUserNestedInput
+  dmThreadsB?: Prisma.DmThreadUpdateManyWithoutBUserNestedInput
+  dmMessages?: Prisma.DmMessageUpdateManyWithoutSenderNestedInput
+  dmMutes?: Prisma.DmMuteUpdateManyWithoutUserNestedInput
+  dmReads?: Prisma.DmReadUpdateManyWithoutUserNestedInput
+  dmMessageReactions?: Prisma.DmMessageReactionUpdateManyWithoutUserNestedInput
+  eventChatMessages?: Prisma.EventChatMessageUpdateManyWithoutAuthorNestedInput
+  eventChatReads?: Prisma.EventChatReadUpdateManyWithoutUserNestedInput
+  eventChatMessageReactions?: Prisma.EventChatMessageReactionUpdateManyWithoutUserNestedInput
+  notificationPreference?: Prisma.NotificationPreferenceUpdateOneWithoutUserNestedInput
+  eventMutes?: Prisma.EventMuteUpdateManyWithoutUserNestedInput
+  reportsFiled?: Prisma.ReportUpdateManyWithoutReporterNestedInput
+  blocksInitiated?: Prisma.UserBlockUpdateManyWithoutBlockerNestedInput
+  blocksReceived?: Prisma.UserBlockUpdateManyWithoutBlockedNestedInput
+  suspendedUsers?: Prisma.UserUpdateManyWithoutSuspendedByNestedInput
+  deletedBy?: Prisma.UserUpdateOneWithoutDeletedUsersNestedInput
+  deletedUsers?: Prisma.UserUpdateManyWithoutDeletedByNestedInput
+  ownershipTransfersFrom?: Prisma.EventOwnershipTransferUpdateManyWithoutFromUserNestedInput
+  ownershipTransfersTo?: Prisma.EventOwnershipTransferUpdateManyWithoutToUserNestedInput
+  ownershipTransfersActed?: Prisma.EventOwnershipTransferUpdateManyWithoutActorNestedInput
+  createdInviteLinks?: Prisma.EventInviteLinkUpdateManyWithoutCreatedByNestedInput
+  revokedInviteLinks?: Prisma.EventInviteLinkUpdateManyWithoutRevokedByNestedInput
+  inviteLinkUsages?: Prisma.EventInviteLinkUsageUpdateManyWithoutUserNestedInput
+  eventFavourites?: Prisma.EventFavouriteUpdateManyWithoutUserNestedInput
+  agendaHostings?: Prisma.EventAgendaItemHostUpdateManyWithoutUserNestedInput
+  checkinLogsAsActor?: Prisma.EventCheckinLogUpdateManyWithoutActorNestedInput
+  checkinRejections?: Prisma.EventMemberUpdateManyWithoutLastCheckinRejectedByNestedInput
+  auditLogsAsActor?: Prisma.EventAuditLogUpdateManyWithoutActorNestedInput
+  userAuditLogsAsActor?: Prisma.UserAuditLogUpdateManyWithoutActorNestedInput
+  subscriptions?: Prisma.UserSubscriptionUpdateManyWithoutUserNestedInput
+  planPeriods?: Prisma.UserPlanPeriodUpdateManyWithoutUserNestedInput
+  eventSponsorships?: Prisma.EventSponsorshipUpdateManyWithoutSponsorNestedInput
+  eventSponsorshipPeriods?: Prisma.EventSponsorshipPeriodUpdateManyWithoutSponsorNestedInput
+  profile?: Prisma.UserProfileUpdateOneWithoutUserNestedInput
+  privacy?: Prisma.UserPrivacyUpdateOneWithoutUserNestedInput
+  stats?: Prisma.UserStatsUpdateOneWithoutUserNestedInput
+  socialLinks?: Prisma.UserSocialLinkUpdateManyWithoutUserNestedInput
+  categoryLevels?: Prisma.UserCategoryLevelUpdateManyWithoutUserNestedInput
+  availability?: Prisma.UserAvailabilityUpdateManyWithoutUserNestedInput
+  badges?: Prisma.UserBadgeUpdateManyWithoutUserNestedInput
+}
+
+export type UserUncheckedUpdateWithoutSuspendedByInput = {
+  id?: Prisma.StringFieldUpdateOperationsInput | string
+  email?: Prisma.StringFieldUpdateOperationsInput | string
+  name?: Prisma.StringFieldUpdateOperationsInput | string
+  avatarKey?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  role?: Prisma.EnumRoleFieldUpdateOperationsInput | $Enums.Role
+  verifiedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  suspendedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  suspendedUntil?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  suspensionReason?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  deletedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  deletedById?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  deletedReason?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  restorationToken?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  restorationTokenExpiry?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  lastSeenAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  locale?: Prisma.StringFieldUpdateOperationsInput | string
+  timezone?: Prisma.StringFieldUpdateOperationsInput | string
+  acceptedTermsAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  acceptedMarketingAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  notifications?: Prisma.NotificationUncheckedUpdateManyWithoutRecipientNestedInput
+  actedNotifications?: Prisma.NotificationUncheckedUpdateManyWithoutActorNestedInput
+  eventMembers?: Prisma.EventMemberUncheckedUpdateManyWithoutUserNestedInput
+  addedMemberships?: Prisma.EventMemberUncheckedUpdateManyWithoutAddedByNestedInput
+  canceledEvents?: Prisma.EventUncheckedUpdateManyWithoutCanceledByNestedInput
+  deletedEvents?: Prisma.EventUncheckedUpdateManyWithoutDeletedByNestedInput
+  ownedEvents?: Prisma.EventUncheckedUpdateManyWithoutOwnerNestedInput
+  memberEventsAsSubject?: Prisma.EventMemberEventUncheckedUpdateManyWithoutUserNestedInput
+  memberEventsAsActor?: Prisma.EventMemberEventUncheckedUpdateManyWithoutActorNestedInput
+  joinClosedEvents?: Prisma.EventUncheckedUpdateManyWithoutJoinManuallyClosedByNestedInput
+  commentsWritten?: Prisma.CommentUncheckedUpdateManyWithoutAuthorNestedInput
+  commentsDeleted?: Prisma.CommentUncheckedUpdateManyWithoutDeletedByNestedInput
+  commentsHidden?: Prisma.CommentUncheckedUpdateManyWithoutHiddenByNestedInput
+  reviewsWritten?: Prisma.ReviewUncheckedUpdateManyWithoutAuthorNestedInput
+  reviewsDeleted?: Prisma.ReviewUncheckedUpdateManyWithoutDeletedByNestedInput
+  reviewsHidden?: Prisma.ReviewUncheckedUpdateManyWithoutHiddenByNestedInput
+  dmThreadsA?: Prisma.DmThreadUncheckedUpdateManyWithoutAUserNestedInput
+  dmThreadsB?: Prisma.DmThreadUncheckedUpdateManyWithoutBUserNestedInput
+  dmMessages?: Prisma.DmMessageUncheckedUpdateManyWithoutSenderNestedInput
+  dmMutes?: Prisma.DmMuteUncheckedUpdateManyWithoutUserNestedInput
+  dmReads?: Prisma.DmReadUncheckedUpdateManyWithoutUserNestedInput
+  dmMessageReactions?: Prisma.DmMessageReactionUncheckedUpdateManyWithoutUserNestedInput
+  eventChatMessages?: Prisma.EventChatMessageUncheckedUpdateManyWithoutAuthorNestedInput
+  eventChatReads?: Prisma.EventChatReadUncheckedUpdateManyWithoutUserNestedInput
+  eventChatMessageReactions?: Prisma.EventChatMessageReactionUncheckedUpdateManyWithoutUserNestedInput
+  notificationPreference?: Prisma.NotificationPreferenceUncheckedUpdateOneWithoutUserNestedInput
+  eventMutes?: Prisma.EventMuteUncheckedUpdateManyWithoutUserNestedInput
+  reportsFiled?: Prisma.ReportUncheckedUpdateManyWithoutReporterNestedInput
+  blocksInitiated?: Prisma.UserBlockUncheckedUpdateManyWithoutBlockerNestedInput
+  blocksReceived?: Prisma.UserBlockUncheckedUpdateManyWithoutBlockedNestedInput
+  suspendedUsers?: Prisma.UserUncheckedUpdateManyWithoutSuspendedByNestedInput
+  deletedUsers?: Prisma.UserUncheckedUpdateManyWithoutDeletedByNestedInput
+  ownershipTransfersFrom?: Prisma.EventOwnershipTransferUncheckedUpdateManyWithoutFromUserNestedInput
+  ownershipTransfersTo?: Prisma.EventOwnershipTransferUncheckedUpdateManyWithoutToUserNestedInput
+  ownershipTransfersActed?: Prisma.EventOwnershipTransferUncheckedUpdateManyWithoutActorNestedInput
+  createdInviteLinks?: Prisma.EventInviteLinkUncheckedUpdateManyWithoutCreatedByNestedInput
+  revokedInviteLinks?: Prisma.EventInviteLinkUncheckedUpdateManyWithoutRevokedByNestedInput
+  inviteLinkUsages?: Prisma.EventInviteLinkUsageUncheckedUpdateManyWithoutUserNestedInput
+  eventFavourites?: Prisma.EventFavouriteUncheckedUpdateManyWithoutUserNestedInput
+  agendaHostings?: Prisma.EventAgendaItemHostUncheckedUpdateManyWithoutUserNestedInput
+  checkinLogsAsActor?: Prisma.EventCheckinLogUncheckedUpdateManyWithoutActorNestedInput
+  checkinRejections?: Prisma.EventMemberUncheckedUpdateManyWithoutLastCheckinRejectedByNestedInput
+  auditLogsAsActor?: Prisma.EventAuditLogUncheckedUpdateManyWithoutActorNestedInput
+  userAuditLogsAsActor?: Prisma.UserAuditLogUncheckedUpdateManyWithoutActorNestedInput
+  subscriptions?: Prisma.UserSubscriptionUncheckedUpdateManyWithoutUserNestedInput
+  planPeriods?: Prisma.UserPlanPeriodUncheckedUpdateManyWithoutUserNestedInput
+  eventSponsorships?: Prisma.EventSponsorshipUncheckedUpdateManyWithoutSponsorNestedInput
+  eventSponsorshipPeriods?: Prisma.EventSponsorshipPeriodUncheckedUpdateManyWithoutSponsorNestedInput
+  profile?: Prisma.UserProfileUncheckedUpdateOneWithoutUserNestedInput
+  privacy?: Prisma.UserPrivacyUncheckedUpdateOneWithoutUserNestedInput
+  stats?: Prisma.UserStatsUncheckedUpdateOneWithoutUserNestedInput
+  socialLinks?: Prisma.UserSocialLinkUncheckedUpdateManyWithoutUserNestedInput
+  categoryLevels?: Prisma.UserCategoryLevelUncheckedUpdateManyWithoutUserNestedInput
+  availability?: Prisma.UserAvailabilityUncheckedUpdateManyWithoutUserNestedInput
+  badges?: Prisma.UserBadgeUncheckedUpdateManyWithoutUserNestedInput
+}
+
+export type UserUncheckedUpdateManyWithoutSuspendedByInput = {
+  id?: Prisma.StringFieldUpdateOperationsInput | string
+  email?: Prisma.StringFieldUpdateOperationsInput | string
+  name?: Prisma.StringFieldUpdateOperationsInput | string
+  avatarKey?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  role?: Prisma.EnumRoleFieldUpdateOperationsInput | $Enums.Role
+  verifiedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  suspendedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  suspendedUntil?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  suspensionReason?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  deletedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  deletedById?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  deletedReason?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  restorationToken?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  restorationTokenExpiry?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  lastSeenAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  locale?: Prisma.StringFieldUpdateOperationsInput | string
+  timezone?: Prisma.StringFieldUpdateOperationsInput | string
+  acceptedTermsAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  acceptedMarketingAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+}
+
+export type UserUpdateWithoutDeletedByInput = {
+  id?: Prisma.StringFieldUpdateOperationsInput | string
+  email?: Prisma.StringFieldUpdateOperationsInput | string
+  name?: Prisma.StringFieldUpdateOperationsInput | string
+  avatarKey?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  role?: Prisma.EnumRoleFieldUpdateOperationsInput | $Enums.Role
+  verifiedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  suspendedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  suspendedUntil?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  suspensionReason?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  deletedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  deletedReason?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  restorationToken?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  restorationTokenExpiry?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  lastSeenAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  locale?: Prisma.StringFieldUpdateOperationsInput | string
+  timezone?: Prisma.StringFieldUpdateOperationsInput | string
+  acceptedTermsAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  acceptedMarketingAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  notifications?: Prisma.NotificationUpdateManyWithoutRecipientNestedInput
+  actedNotifications?: Prisma.NotificationUpdateManyWithoutActorNestedInput
+  eventMembers?: Prisma.EventMemberUpdateManyWithoutUserNestedInput
+  addedMemberships?: Prisma.EventMemberUpdateManyWithoutAddedByNestedInput
+  canceledEvents?: Prisma.EventUpdateManyWithoutCanceledByNestedInput
+  deletedEvents?: Prisma.EventUpdateManyWithoutDeletedByNestedInput
+  ownedEvents?: Prisma.EventUpdateManyWithoutOwnerNestedInput
+  memberEventsAsSubject?: Prisma.EventMemberEventUpdateManyWithoutUserNestedInput
+  memberEventsAsActor?: Prisma.EventMemberEventUpdateManyWithoutActorNestedInput
+  joinClosedEvents?: Prisma.EventUpdateManyWithoutJoinManuallyClosedByNestedInput
+  commentsWritten?: Prisma.CommentUpdateManyWithoutAuthorNestedInput
+  commentsDeleted?: Prisma.CommentUpdateManyWithoutDeletedByNestedInput
+  commentsHidden?: Prisma.CommentUpdateManyWithoutHiddenByNestedInput
+  reviewsWritten?: Prisma.ReviewUpdateManyWithoutAuthorNestedInput
+  reviewsDeleted?: Prisma.ReviewUpdateManyWithoutDeletedByNestedInput
+  reviewsHidden?: Prisma.ReviewUpdateManyWithoutHiddenByNestedInput
+  dmThreadsA?: Prisma.DmThreadUpdateManyWithoutAUserNestedInput
+  dmThreadsB?: Prisma.DmThreadUpdateManyWithoutBUserNestedInput
+  dmMessages?: Prisma.DmMessageUpdateManyWithoutSenderNestedInput
+  dmMutes?: Prisma.DmMuteUpdateManyWithoutUserNestedInput
+  dmReads?: Prisma.DmReadUpdateManyWithoutUserNestedInput
+  dmMessageReactions?: Prisma.DmMessageReactionUpdateManyWithoutUserNestedInput
+  eventChatMessages?: Prisma.EventChatMessageUpdateManyWithoutAuthorNestedInput
+  eventChatReads?: Prisma.EventChatReadUpdateManyWithoutUserNestedInput
+  eventChatMessageReactions?: Prisma.EventChatMessageReactionUpdateManyWithoutUserNestedInput
+  notificationPreference?: Prisma.NotificationPreferenceUpdateOneWithoutUserNestedInput
+  eventMutes?: Prisma.EventMuteUpdateManyWithoutUserNestedInput
+  reportsFiled?: Prisma.ReportUpdateManyWithoutReporterNestedInput
+  blocksInitiated?: Prisma.UserBlockUpdateManyWithoutBlockerNestedInput
+  blocksReceived?: Prisma.UserBlockUpdateManyWithoutBlockedNestedInput
+  suspendedBy?: Prisma.UserUpdateOneWithoutSuspendedUsersNestedInput
+  suspendedUsers?: Prisma.UserUpdateManyWithoutSuspendedByNestedInput
+  deletedUsers?: Prisma.UserUpdateManyWithoutDeletedByNestedInput
+  ownershipTransfersFrom?: Prisma.EventOwnershipTransferUpdateManyWithoutFromUserNestedInput
+  ownershipTransfersTo?: Prisma.EventOwnershipTransferUpdateManyWithoutToUserNestedInput
+  ownershipTransfersActed?: Prisma.EventOwnershipTransferUpdateManyWithoutActorNestedInput
+  createdInviteLinks?: Prisma.EventInviteLinkUpdateManyWithoutCreatedByNestedInput
+  revokedInviteLinks?: Prisma.EventInviteLinkUpdateManyWithoutRevokedByNestedInput
+  inviteLinkUsages?: Prisma.EventInviteLinkUsageUpdateManyWithoutUserNestedInput
+  eventFavourites?: Prisma.EventFavouriteUpdateManyWithoutUserNestedInput
+  agendaHostings?: Prisma.EventAgendaItemHostUpdateManyWithoutUserNestedInput
+  checkinLogsAsActor?: Prisma.EventCheckinLogUpdateManyWithoutActorNestedInput
+  checkinRejections?: Prisma.EventMemberUpdateManyWithoutLastCheckinRejectedByNestedInput
+  auditLogsAsActor?: Prisma.EventAuditLogUpdateManyWithoutActorNestedInput
+  userAuditLogsAsActor?: Prisma.UserAuditLogUpdateManyWithoutActorNestedInput
+  subscriptions?: Prisma.UserSubscriptionUpdateManyWithoutUserNestedInput
+  planPeriods?: Prisma.UserPlanPeriodUpdateManyWithoutUserNestedInput
+  eventSponsorships?: Prisma.EventSponsorshipUpdateManyWithoutSponsorNestedInput
+  eventSponsorshipPeriods?: Prisma.EventSponsorshipPeriodUpdateManyWithoutSponsorNestedInput
+  profile?: Prisma.UserProfileUpdateOneWithoutUserNestedInput
+  privacy?: Prisma.UserPrivacyUpdateOneWithoutUserNestedInput
+  stats?: Prisma.UserStatsUpdateOneWithoutUserNestedInput
+  socialLinks?: Prisma.UserSocialLinkUpdateManyWithoutUserNestedInput
+  categoryLevels?: Prisma.UserCategoryLevelUpdateManyWithoutUserNestedInput
+  availability?: Prisma.UserAvailabilityUpdateManyWithoutUserNestedInput
+  badges?: Prisma.UserBadgeUpdateManyWithoutUserNestedInput
+}
+
+export type UserUncheckedUpdateWithoutDeletedByInput = {
+  id?: Prisma.StringFieldUpdateOperationsInput | string
+  email?: Prisma.StringFieldUpdateOperationsInput | string
+  name?: Prisma.StringFieldUpdateOperationsInput | string
+  avatarKey?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  role?: Prisma.EnumRoleFieldUpdateOperationsInput | $Enums.Role
+  verifiedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  suspendedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  suspendedUntil?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  suspendedById?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   suspensionReason?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   deletedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   deletedReason?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
@@ -17764,6 +21021,8 @@ export type UserUncheckedUpdateWithoutAuditLogsAsActorInput = {
   reportsFiled?: Prisma.ReportUncheckedUpdateManyWithoutReporterNestedInput
   blocksInitiated?: Prisma.UserBlockUncheckedUpdateManyWithoutBlockerNestedInput
   blocksReceived?: Prisma.UserBlockUncheckedUpdateManyWithoutBlockedNestedInput
+  suspendedUsers?: Prisma.UserUncheckedUpdateManyWithoutSuspendedByNestedInput
+  deletedUsers?: Prisma.UserUncheckedUpdateManyWithoutDeletedByNestedInput
   ownershipTransfersFrom?: Prisma.EventOwnershipTransferUncheckedUpdateManyWithoutFromUserNestedInput
   ownershipTransfersTo?: Prisma.EventOwnershipTransferUncheckedUpdateManyWithoutToUserNestedInput
   ownershipTransfersActed?: Prisma.EventOwnershipTransferUncheckedUpdateManyWithoutActorNestedInput
@@ -17774,6 +21033,8 @@ export type UserUncheckedUpdateWithoutAuditLogsAsActorInput = {
   agendaHostings?: Prisma.EventAgendaItemHostUncheckedUpdateManyWithoutUserNestedInput
   checkinLogsAsActor?: Prisma.EventCheckinLogUncheckedUpdateManyWithoutActorNestedInput
   checkinRejections?: Prisma.EventMemberUncheckedUpdateManyWithoutLastCheckinRejectedByNestedInput
+  auditLogsAsActor?: Prisma.EventAuditLogUncheckedUpdateManyWithoutActorNestedInput
+  userAuditLogsAsActor?: Prisma.UserAuditLogUncheckedUpdateManyWithoutActorNestedInput
   subscriptions?: Prisma.UserSubscriptionUncheckedUpdateManyWithoutUserNestedInput
   planPeriods?: Prisma.UserPlanPeriodUncheckedUpdateManyWithoutUserNestedInput
   eventSponsorships?: Prisma.EventSponsorshipUncheckedUpdateManyWithoutSponsorNestedInput
@@ -17785,6 +21046,30 @@ export type UserUncheckedUpdateWithoutAuditLogsAsActorInput = {
   categoryLevels?: Prisma.UserCategoryLevelUncheckedUpdateManyWithoutUserNestedInput
   availability?: Prisma.UserAvailabilityUncheckedUpdateManyWithoutUserNestedInput
   badges?: Prisma.UserBadgeUncheckedUpdateManyWithoutUserNestedInput
+}
+
+export type UserUncheckedUpdateManyWithoutDeletedByInput = {
+  id?: Prisma.StringFieldUpdateOperationsInput | string
+  email?: Prisma.StringFieldUpdateOperationsInput | string
+  name?: Prisma.StringFieldUpdateOperationsInput | string
+  avatarKey?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  role?: Prisma.EnumRoleFieldUpdateOperationsInput | $Enums.Role
+  verifiedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  suspendedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  suspendedUntil?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  suspendedById?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  suspensionReason?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  deletedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  deletedReason?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  restorationToken?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  restorationTokenExpiry?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  lastSeenAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  locale?: Prisma.StringFieldUpdateOperationsInput | string
+  timezone?: Prisma.StringFieldUpdateOperationsInput | string
+  acceptedTermsAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  acceptedMarketingAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
 }
 
 
@@ -17822,6 +21107,8 @@ export type UserCountOutputType = {
   reportsFiled: number
   blocksInitiated: number
   blocksReceived: number
+  suspendedUsers: number
+  deletedUsers: number
   ownershipTransfersFrom: number
   ownershipTransfersTo: number
   ownershipTransfersActed: number
@@ -17833,6 +21120,7 @@ export type UserCountOutputType = {
   checkinLogsAsActor: number
   checkinRejections: number
   auditLogsAsActor: number
+  userAuditLogsAsActor: number
   subscriptions: number
   planPeriods: number
   eventSponsorships: number
@@ -17873,6 +21161,8 @@ export type UserCountOutputTypeSelect<ExtArgs extends runtime.Types.Extensions.I
   reportsFiled?: boolean | UserCountOutputTypeCountReportsFiledArgs
   blocksInitiated?: boolean | UserCountOutputTypeCountBlocksInitiatedArgs
   blocksReceived?: boolean | UserCountOutputTypeCountBlocksReceivedArgs
+  suspendedUsers?: boolean | UserCountOutputTypeCountSuspendedUsersArgs
+  deletedUsers?: boolean | UserCountOutputTypeCountDeletedUsersArgs
   ownershipTransfersFrom?: boolean | UserCountOutputTypeCountOwnershipTransfersFromArgs
   ownershipTransfersTo?: boolean | UserCountOutputTypeCountOwnershipTransfersToArgs
   ownershipTransfersActed?: boolean | UserCountOutputTypeCountOwnershipTransfersActedArgs
@@ -17884,6 +21174,7 @@ export type UserCountOutputTypeSelect<ExtArgs extends runtime.Types.Extensions.I
   checkinLogsAsActor?: boolean | UserCountOutputTypeCountCheckinLogsAsActorArgs
   checkinRejections?: boolean | UserCountOutputTypeCountCheckinRejectionsArgs
   auditLogsAsActor?: boolean | UserCountOutputTypeCountAuditLogsAsActorArgs
+  userAuditLogsAsActor?: boolean | UserCountOutputTypeCountUserAuditLogsAsActorArgs
   subscriptions?: boolean | UserCountOutputTypeCountSubscriptionsArgs
   planPeriods?: boolean | UserCountOutputTypeCountPlanPeriodsArgs
   eventSponsorships?: boolean | UserCountOutputTypeCountEventSponsorshipsArgs
@@ -18110,6 +21401,20 @@ export type UserCountOutputTypeCountBlocksReceivedArgs<ExtArgs extends runtime.T
 /**
  * UserCountOutputType without action
  */
+export type UserCountOutputTypeCountSuspendedUsersArgs<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
+  where?: Prisma.UserWhereInput
+}
+
+/**
+ * UserCountOutputType without action
+ */
+export type UserCountOutputTypeCountDeletedUsersArgs<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
+  where?: Prisma.UserWhereInput
+}
+
+/**
+ * UserCountOutputType without action
+ */
 export type UserCountOutputTypeCountOwnershipTransfersFromArgs<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
   where?: Prisma.EventOwnershipTransferWhereInput
 }
@@ -18187,6 +21492,13 @@ export type UserCountOutputTypeCountAuditLogsAsActorArgs<ExtArgs extends runtime
 /**
  * UserCountOutputType without action
  */
+export type UserCountOutputTypeCountUserAuditLogsAsActorArgs<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
+  where?: Prisma.UserAuditLogWhereInput
+}
+
+/**
+ * UserCountOutputType without action
+ */
 export type UserCountOutputTypeCountSubscriptionsArgs<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
   where?: Prisma.UserSubscriptionWhereInput
 }
@@ -18249,8 +21561,11 @@ export type UserSelect<ExtArgs extends runtime.Types.Extensions.InternalArgs = r
   role?: boolean
   verifiedAt?: boolean
   suspendedAt?: boolean
+  suspendedUntil?: boolean
+  suspendedById?: boolean
   suspensionReason?: boolean
   deletedAt?: boolean
+  deletedById?: boolean
   deletedReason?: boolean
   restorationToken?: boolean
   restorationTokenExpiry?: boolean
@@ -18291,6 +21606,10 @@ export type UserSelect<ExtArgs extends runtime.Types.Extensions.InternalArgs = r
   reportsFiled?: boolean | Prisma.User$reportsFiledArgs<ExtArgs>
   blocksInitiated?: boolean | Prisma.User$blocksInitiatedArgs<ExtArgs>
   blocksReceived?: boolean | Prisma.User$blocksReceivedArgs<ExtArgs>
+  suspendedBy?: boolean | Prisma.User$suspendedByArgs<ExtArgs>
+  suspendedUsers?: boolean | Prisma.User$suspendedUsersArgs<ExtArgs>
+  deletedBy?: boolean | Prisma.User$deletedByArgs<ExtArgs>
+  deletedUsers?: boolean | Prisma.User$deletedUsersArgs<ExtArgs>
   ownershipTransfersFrom?: boolean | Prisma.User$ownershipTransfersFromArgs<ExtArgs>
   ownershipTransfersTo?: boolean | Prisma.User$ownershipTransfersToArgs<ExtArgs>
   ownershipTransfersActed?: boolean | Prisma.User$ownershipTransfersActedArgs<ExtArgs>
@@ -18302,6 +21621,7 @@ export type UserSelect<ExtArgs extends runtime.Types.Extensions.InternalArgs = r
   checkinLogsAsActor?: boolean | Prisma.User$checkinLogsAsActorArgs<ExtArgs>
   checkinRejections?: boolean | Prisma.User$checkinRejectionsArgs<ExtArgs>
   auditLogsAsActor?: boolean | Prisma.User$auditLogsAsActorArgs<ExtArgs>
+  userAuditLogsAsActor?: boolean | Prisma.User$userAuditLogsAsActorArgs<ExtArgs>
   subscriptions?: boolean | Prisma.User$subscriptionsArgs<ExtArgs>
   planPeriods?: boolean | Prisma.User$planPeriodsArgs<ExtArgs>
   eventSponsorships?: boolean | Prisma.User$eventSponsorshipsArgs<ExtArgs>
@@ -18324,8 +21644,11 @@ export type UserSelectCreateManyAndReturn<ExtArgs extends runtime.Types.Extensio
   role?: boolean
   verifiedAt?: boolean
   suspendedAt?: boolean
+  suspendedUntil?: boolean
+  suspendedById?: boolean
   suspensionReason?: boolean
   deletedAt?: boolean
+  deletedById?: boolean
   deletedReason?: boolean
   restorationToken?: boolean
   restorationTokenExpiry?: boolean
@@ -18336,6 +21659,8 @@ export type UserSelectCreateManyAndReturn<ExtArgs extends runtime.Types.Extensio
   timezone?: boolean
   acceptedTermsAt?: boolean
   acceptedMarketingAt?: boolean
+  suspendedBy?: boolean | Prisma.User$suspendedByArgs<ExtArgs>
+  deletedBy?: boolean | Prisma.User$deletedByArgs<ExtArgs>
 }, ExtArgs["result"]["user"]>
 
 export type UserSelectUpdateManyAndReturn<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetSelect<{
@@ -18346,8 +21671,11 @@ export type UserSelectUpdateManyAndReturn<ExtArgs extends runtime.Types.Extensio
   role?: boolean
   verifiedAt?: boolean
   suspendedAt?: boolean
+  suspendedUntil?: boolean
+  suspendedById?: boolean
   suspensionReason?: boolean
   deletedAt?: boolean
+  deletedById?: boolean
   deletedReason?: boolean
   restorationToken?: boolean
   restorationTokenExpiry?: boolean
@@ -18358,6 +21686,8 @@ export type UserSelectUpdateManyAndReturn<ExtArgs extends runtime.Types.Extensio
   timezone?: boolean
   acceptedTermsAt?: boolean
   acceptedMarketingAt?: boolean
+  suspendedBy?: boolean | Prisma.User$suspendedByArgs<ExtArgs>
+  deletedBy?: boolean | Prisma.User$deletedByArgs<ExtArgs>
 }, ExtArgs["result"]["user"]>
 
 export type UserSelectScalar = {
@@ -18368,8 +21698,11 @@ export type UserSelectScalar = {
   role?: boolean
   verifiedAt?: boolean
   suspendedAt?: boolean
+  suspendedUntil?: boolean
+  suspendedById?: boolean
   suspensionReason?: boolean
   deletedAt?: boolean
+  deletedById?: boolean
   deletedReason?: boolean
   restorationToken?: boolean
   restorationTokenExpiry?: boolean
@@ -18382,7 +21715,7 @@ export type UserSelectScalar = {
   acceptedMarketingAt?: boolean
 }
 
-export type UserOmit<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetOmit<"id" | "email" | "name" | "avatarKey" | "role" | "verifiedAt" | "suspendedAt" | "suspensionReason" | "deletedAt" | "deletedReason" | "restorationToken" | "restorationTokenExpiry" | "createdAt" | "updatedAt" | "lastSeenAt" | "locale" | "timezone" | "acceptedTermsAt" | "acceptedMarketingAt", ExtArgs["result"]["user"]>
+export type UserOmit<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetOmit<"id" | "email" | "name" | "avatarKey" | "role" | "verifiedAt" | "suspendedAt" | "suspendedUntil" | "suspendedById" | "suspensionReason" | "deletedAt" | "deletedById" | "deletedReason" | "restorationToken" | "restorationTokenExpiry" | "createdAt" | "updatedAt" | "lastSeenAt" | "locale" | "timezone" | "acceptedTermsAt" | "acceptedMarketingAt", ExtArgs["result"]["user"]>
 export type UserInclude<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
   notifications?: boolean | Prisma.User$notificationsArgs<ExtArgs>
   actedNotifications?: boolean | Prisma.User$actedNotificationsArgs<ExtArgs>
@@ -18414,6 +21747,10 @@ export type UserInclude<ExtArgs extends runtime.Types.Extensions.InternalArgs = 
   reportsFiled?: boolean | Prisma.User$reportsFiledArgs<ExtArgs>
   blocksInitiated?: boolean | Prisma.User$blocksInitiatedArgs<ExtArgs>
   blocksReceived?: boolean | Prisma.User$blocksReceivedArgs<ExtArgs>
+  suspendedBy?: boolean | Prisma.User$suspendedByArgs<ExtArgs>
+  suspendedUsers?: boolean | Prisma.User$suspendedUsersArgs<ExtArgs>
+  deletedBy?: boolean | Prisma.User$deletedByArgs<ExtArgs>
+  deletedUsers?: boolean | Prisma.User$deletedUsersArgs<ExtArgs>
   ownershipTransfersFrom?: boolean | Prisma.User$ownershipTransfersFromArgs<ExtArgs>
   ownershipTransfersTo?: boolean | Prisma.User$ownershipTransfersToArgs<ExtArgs>
   ownershipTransfersActed?: boolean | Prisma.User$ownershipTransfersActedArgs<ExtArgs>
@@ -18425,6 +21762,7 @@ export type UserInclude<ExtArgs extends runtime.Types.Extensions.InternalArgs = 
   checkinLogsAsActor?: boolean | Prisma.User$checkinLogsAsActorArgs<ExtArgs>
   checkinRejections?: boolean | Prisma.User$checkinRejectionsArgs<ExtArgs>
   auditLogsAsActor?: boolean | Prisma.User$auditLogsAsActorArgs<ExtArgs>
+  userAuditLogsAsActor?: boolean | Prisma.User$userAuditLogsAsActorArgs<ExtArgs>
   subscriptions?: boolean | Prisma.User$subscriptionsArgs<ExtArgs>
   planPeriods?: boolean | Prisma.User$planPeriodsArgs<ExtArgs>
   eventSponsorships?: boolean | Prisma.User$eventSponsorshipsArgs<ExtArgs>
@@ -18438,8 +21776,14 @@ export type UserInclude<ExtArgs extends runtime.Types.Extensions.InternalArgs = 
   badges?: boolean | Prisma.User$badgesArgs<ExtArgs>
   _count?: boolean | Prisma.UserCountOutputTypeDefaultArgs<ExtArgs>
 }
-export type UserIncludeCreateManyAndReturn<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {}
-export type UserIncludeUpdateManyAndReturn<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {}
+export type UserIncludeCreateManyAndReturn<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
+  suspendedBy?: boolean | Prisma.User$suspendedByArgs<ExtArgs>
+  deletedBy?: boolean | Prisma.User$deletedByArgs<ExtArgs>
+}
+export type UserIncludeUpdateManyAndReturn<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
+  suspendedBy?: boolean | Prisma.User$suspendedByArgs<ExtArgs>
+  deletedBy?: boolean | Prisma.User$deletedByArgs<ExtArgs>
+}
 
 export type $UserPayload<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
   name: "User"
@@ -18474,6 +21818,10 @@ export type $UserPayload<ExtArgs extends runtime.Types.Extensions.InternalArgs =
     reportsFiled: Prisma.$ReportPayload<ExtArgs>[]
     blocksInitiated: Prisma.$UserBlockPayload<ExtArgs>[]
     blocksReceived: Prisma.$UserBlockPayload<ExtArgs>[]
+    suspendedBy: Prisma.$UserPayload<ExtArgs> | null
+    suspendedUsers: Prisma.$UserPayload<ExtArgs>[]
+    deletedBy: Prisma.$UserPayload<ExtArgs> | null
+    deletedUsers: Prisma.$UserPayload<ExtArgs>[]
     ownershipTransfersFrom: Prisma.$EventOwnershipTransferPayload<ExtArgs>[]
     ownershipTransfersTo: Prisma.$EventOwnershipTransferPayload<ExtArgs>[]
     ownershipTransfersActed: Prisma.$EventOwnershipTransferPayload<ExtArgs>[]
@@ -18485,6 +21833,7 @@ export type $UserPayload<ExtArgs extends runtime.Types.Extensions.InternalArgs =
     checkinLogsAsActor: Prisma.$EventCheckinLogPayload<ExtArgs>[]
     checkinRejections: Prisma.$EventMemberPayload<ExtArgs>[]
     auditLogsAsActor: Prisma.$EventAuditLogPayload<ExtArgs>[]
+    userAuditLogsAsActor: Prisma.$UserAuditLogPayload<ExtArgs>[]
     subscriptions: Prisma.$UserSubscriptionPayload<ExtArgs>[]
     planPeriods: Prisma.$UserPlanPeriodPayload<ExtArgs>[]
     eventSponsorships: Prisma.$EventSponsorshipPayload<ExtArgs>[]
@@ -18505,8 +21854,11 @@ export type $UserPayload<ExtArgs extends runtime.Types.Extensions.InternalArgs =
     role: $Enums.Role
     verifiedAt: Date | null
     suspendedAt: Date | null
+    suspendedUntil: Date | null
+    suspendedById: string | null
     suspensionReason: string | null
     deletedAt: Date | null
+    deletedById: string | null
     deletedReason: string | null
     restorationToken: string | null
     restorationTokenExpiry: Date | null
@@ -18941,6 +22293,10 @@ export interface Prisma__UserClient<T, Null = never, ExtArgs extends runtime.Typ
   reportsFiled<T extends Prisma.User$reportsFiledArgs<ExtArgs> = {}>(args?: Prisma.Subset<T, Prisma.User$reportsFiledArgs<ExtArgs>>): Prisma.PrismaPromise<runtime.Types.Result.GetResult<Prisma.$ReportPayload<ExtArgs>, T, "findMany", GlobalOmitOptions> | Null>
   blocksInitiated<T extends Prisma.User$blocksInitiatedArgs<ExtArgs> = {}>(args?: Prisma.Subset<T, Prisma.User$blocksInitiatedArgs<ExtArgs>>): Prisma.PrismaPromise<runtime.Types.Result.GetResult<Prisma.$UserBlockPayload<ExtArgs>, T, "findMany", GlobalOmitOptions> | Null>
   blocksReceived<T extends Prisma.User$blocksReceivedArgs<ExtArgs> = {}>(args?: Prisma.Subset<T, Prisma.User$blocksReceivedArgs<ExtArgs>>): Prisma.PrismaPromise<runtime.Types.Result.GetResult<Prisma.$UserBlockPayload<ExtArgs>, T, "findMany", GlobalOmitOptions> | Null>
+  suspendedBy<T extends Prisma.User$suspendedByArgs<ExtArgs> = {}>(args?: Prisma.Subset<T, Prisma.User$suspendedByArgs<ExtArgs>>): Prisma.Prisma__UserClient<runtime.Types.Result.GetResult<Prisma.$UserPayload<ExtArgs>, T, "findUniqueOrThrow", GlobalOmitOptions> | null, null, ExtArgs, GlobalOmitOptions>
+  suspendedUsers<T extends Prisma.User$suspendedUsersArgs<ExtArgs> = {}>(args?: Prisma.Subset<T, Prisma.User$suspendedUsersArgs<ExtArgs>>): Prisma.PrismaPromise<runtime.Types.Result.GetResult<Prisma.$UserPayload<ExtArgs>, T, "findMany", GlobalOmitOptions> | Null>
+  deletedBy<T extends Prisma.User$deletedByArgs<ExtArgs> = {}>(args?: Prisma.Subset<T, Prisma.User$deletedByArgs<ExtArgs>>): Prisma.Prisma__UserClient<runtime.Types.Result.GetResult<Prisma.$UserPayload<ExtArgs>, T, "findUniqueOrThrow", GlobalOmitOptions> | null, null, ExtArgs, GlobalOmitOptions>
+  deletedUsers<T extends Prisma.User$deletedUsersArgs<ExtArgs> = {}>(args?: Prisma.Subset<T, Prisma.User$deletedUsersArgs<ExtArgs>>): Prisma.PrismaPromise<runtime.Types.Result.GetResult<Prisma.$UserPayload<ExtArgs>, T, "findMany", GlobalOmitOptions> | Null>
   ownershipTransfersFrom<T extends Prisma.User$ownershipTransfersFromArgs<ExtArgs> = {}>(args?: Prisma.Subset<T, Prisma.User$ownershipTransfersFromArgs<ExtArgs>>): Prisma.PrismaPromise<runtime.Types.Result.GetResult<Prisma.$EventOwnershipTransferPayload<ExtArgs>, T, "findMany", GlobalOmitOptions> | Null>
   ownershipTransfersTo<T extends Prisma.User$ownershipTransfersToArgs<ExtArgs> = {}>(args?: Prisma.Subset<T, Prisma.User$ownershipTransfersToArgs<ExtArgs>>): Prisma.PrismaPromise<runtime.Types.Result.GetResult<Prisma.$EventOwnershipTransferPayload<ExtArgs>, T, "findMany", GlobalOmitOptions> | Null>
   ownershipTransfersActed<T extends Prisma.User$ownershipTransfersActedArgs<ExtArgs> = {}>(args?: Prisma.Subset<T, Prisma.User$ownershipTransfersActedArgs<ExtArgs>>): Prisma.PrismaPromise<runtime.Types.Result.GetResult<Prisma.$EventOwnershipTransferPayload<ExtArgs>, T, "findMany", GlobalOmitOptions> | Null>
@@ -18952,6 +22308,7 @@ export interface Prisma__UserClient<T, Null = never, ExtArgs extends runtime.Typ
   checkinLogsAsActor<T extends Prisma.User$checkinLogsAsActorArgs<ExtArgs> = {}>(args?: Prisma.Subset<T, Prisma.User$checkinLogsAsActorArgs<ExtArgs>>): Prisma.PrismaPromise<runtime.Types.Result.GetResult<Prisma.$EventCheckinLogPayload<ExtArgs>, T, "findMany", GlobalOmitOptions> | Null>
   checkinRejections<T extends Prisma.User$checkinRejectionsArgs<ExtArgs> = {}>(args?: Prisma.Subset<T, Prisma.User$checkinRejectionsArgs<ExtArgs>>): Prisma.PrismaPromise<runtime.Types.Result.GetResult<Prisma.$EventMemberPayload<ExtArgs>, T, "findMany", GlobalOmitOptions> | Null>
   auditLogsAsActor<T extends Prisma.User$auditLogsAsActorArgs<ExtArgs> = {}>(args?: Prisma.Subset<T, Prisma.User$auditLogsAsActorArgs<ExtArgs>>): Prisma.PrismaPromise<runtime.Types.Result.GetResult<Prisma.$EventAuditLogPayload<ExtArgs>, T, "findMany", GlobalOmitOptions> | Null>
+  userAuditLogsAsActor<T extends Prisma.User$userAuditLogsAsActorArgs<ExtArgs> = {}>(args?: Prisma.Subset<T, Prisma.User$userAuditLogsAsActorArgs<ExtArgs>>): Prisma.PrismaPromise<runtime.Types.Result.GetResult<Prisma.$UserAuditLogPayload<ExtArgs>, T, "findMany", GlobalOmitOptions> | Null>
   subscriptions<T extends Prisma.User$subscriptionsArgs<ExtArgs> = {}>(args?: Prisma.Subset<T, Prisma.User$subscriptionsArgs<ExtArgs>>): Prisma.PrismaPromise<runtime.Types.Result.GetResult<Prisma.$UserSubscriptionPayload<ExtArgs>, T, "findMany", GlobalOmitOptions> | Null>
   planPeriods<T extends Prisma.User$planPeriodsArgs<ExtArgs> = {}>(args?: Prisma.Subset<T, Prisma.User$planPeriodsArgs<ExtArgs>>): Prisma.PrismaPromise<runtime.Types.Result.GetResult<Prisma.$UserPlanPeriodPayload<ExtArgs>, T, "findMany", GlobalOmitOptions> | Null>
   eventSponsorships<T extends Prisma.User$eventSponsorshipsArgs<ExtArgs> = {}>(args?: Prisma.Subset<T, Prisma.User$eventSponsorshipsArgs<ExtArgs>>): Prisma.PrismaPromise<runtime.Types.Result.GetResult<Prisma.$EventSponsorshipPayload<ExtArgs>, T, "findMany", GlobalOmitOptions> | Null>
@@ -18999,8 +22356,11 @@ export interface UserFieldRefs {
   readonly role: Prisma.FieldRef<"User", 'Role'>
   readonly verifiedAt: Prisma.FieldRef<"User", 'DateTime'>
   readonly suspendedAt: Prisma.FieldRef<"User", 'DateTime'>
+  readonly suspendedUntil: Prisma.FieldRef<"User", 'DateTime'>
+  readonly suspendedById: Prisma.FieldRef<"User", 'String'>
   readonly suspensionReason: Prisma.FieldRef<"User", 'String'>
   readonly deletedAt: Prisma.FieldRef<"User", 'DateTime'>
+  readonly deletedById: Prisma.FieldRef<"User", 'String'>
   readonly deletedReason: Prisma.FieldRef<"User", 'String'>
   readonly restorationToken: Prisma.FieldRef<"User", 'String'>
   readonly restorationTokenExpiry: Prisma.FieldRef<"User", 'DateTime'>
@@ -19260,6 +22620,10 @@ export type UserCreateManyAndReturnArgs<ExtArgs extends runtime.Types.Extensions
    */
   data: Prisma.UserCreateManyInput | Prisma.UserCreateManyInput[]
   skipDuplicates?: boolean
+  /**
+   * Choose, which related nodes to fetch as well
+   */
+  include?: Prisma.UserIncludeCreateManyAndReturn<ExtArgs> | null
 }
 
 /**
@@ -19330,6 +22694,10 @@ export type UserUpdateManyAndReturnArgs<ExtArgs extends runtime.Types.Extensions
    * Limit how many Users to update.
    */
   limit?: number
+  /**
+   * Choose, which related nodes to fetch as well
+   */
+  include?: Prisma.UserIncludeUpdateManyAndReturn<ExtArgs> | null
 }
 
 /**
@@ -20114,6 +23482,92 @@ export type User$blocksReceivedArgs<ExtArgs extends runtime.Types.Extensions.Int
 }
 
 /**
+ * User.suspendedBy
+ */
+export type User$suspendedByArgs<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
+  /**
+   * Select specific fields to fetch from the User
+   */
+  select?: Prisma.UserSelect<ExtArgs> | null
+  /**
+   * Omit specific fields from the User
+   */
+  omit?: Prisma.UserOmit<ExtArgs> | null
+  /**
+   * Choose, which related nodes to fetch as well
+   */
+  include?: Prisma.UserInclude<ExtArgs> | null
+  where?: Prisma.UserWhereInput
+}
+
+/**
+ * User.suspendedUsers
+ */
+export type User$suspendedUsersArgs<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
+  /**
+   * Select specific fields to fetch from the User
+   */
+  select?: Prisma.UserSelect<ExtArgs> | null
+  /**
+   * Omit specific fields from the User
+   */
+  omit?: Prisma.UserOmit<ExtArgs> | null
+  /**
+   * Choose, which related nodes to fetch as well
+   */
+  include?: Prisma.UserInclude<ExtArgs> | null
+  where?: Prisma.UserWhereInput
+  orderBy?: Prisma.UserOrderByWithRelationInput | Prisma.UserOrderByWithRelationInput[]
+  cursor?: Prisma.UserWhereUniqueInput
+  take?: number
+  skip?: number
+  distinct?: Prisma.UserScalarFieldEnum | Prisma.UserScalarFieldEnum[]
+}
+
+/**
+ * User.deletedBy
+ */
+export type User$deletedByArgs<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
+  /**
+   * Select specific fields to fetch from the User
+   */
+  select?: Prisma.UserSelect<ExtArgs> | null
+  /**
+   * Omit specific fields from the User
+   */
+  omit?: Prisma.UserOmit<ExtArgs> | null
+  /**
+   * Choose, which related nodes to fetch as well
+   */
+  include?: Prisma.UserInclude<ExtArgs> | null
+  where?: Prisma.UserWhereInput
+}
+
+/**
+ * User.deletedUsers
+ */
+export type User$deletedUsersArgs<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
+  /**
+   * Select specific fields to fetch from the User
+   */
+  select?: Prisma.UserSelect<ExtArgs> | null
+  /**
+   * Omit specific fields from the User
+   */
+  omit?: Prisma.UserOmit<ExtArgs> | null
+  /**
+   * Choose, which related nodes to fetch as well
+   */
+  include?: Prisma.UserInclude<ExtArgs> | null
+  where?: Prisma.UserWhereInput
+  orderBy?: Prisma.UserOrderByWithRelationInput | Prisma.UserOrderByWithRelationInput[]
+  cursor?: Prisma.UserWhereUniqueInput
+  take?: number
+  skip?: number
+  distinct?: Prisma.UserScalarFieldEnum | Prisma.UserScalarFieldEnum[]
+}
+
+/**
  * User.ownershipTransfersFrom
  */
 export type User$ownershipTransfersFromArgs<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
@@ -20375,6 +23829,30 @@ export type User$auditLogsAsActorArgs<ExtArgs extends runtime.Types.Extensions.I
   take?: number
   skip?: number
   distinct?: Prisma.EventAuditLogScalarFieldEnum | Prisma.EventAuditLogScalarFieldEnum[]
+}
+
+/**
+ * User.userAuditLogsAsActor
+ */
+export type User$userAuditLogsAsActorArgs<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
+  /**
+   * Select specific fields to fetch from the UserAuditLog
+   */
+  select?: Prisma.UserAuditLogSelect<ExtArgs> | null
+  /**
+   * Omit specific fields from the UserAuditLog
+   */
+  omit?: Prisma.UserAuditLogOmit<ExtArgs> | null
+  /**
+   * Choose, which related nodes to fetch as well
+   */
+  include?: Prisma.UserAuditLogInclude<ExtArgs> | null
+  where?: Prisma.UserAuditLogWhereInput
+  orderBy?: Prisma.UserAuditLogOrderByWithRelationInput | Prisma.UserAuditLogOrderByWithRelationInput[]
+  cursor?: Prisma.UserAuditLogWhereUniqueInput
+  take?: number
+  skip?: number
+  distinct?: Prisma.UserAuditLogScalarFieldEnum | Prisma.UserAuditLogScalarFieldEnum[]
 }
 
 /**

@@ -376,3 +376,16 @@ export const AuditActorType = {
 } as const
 
 export type AuditActorType = (typeof AuditActorType)[keyof typeof AuditActorType]
+
+
+export const UserAuditAction = {
+  UPDATE_ROLE: 'UPDATE_ROLE',
+  UPDATE_VERIFIED: 'UPDATE_VERIFIED',
+  SUSPEND: 'SUSPEND',
+  UNSUSPEND: 'UNSUSPEND',
+  DELETE: 'DELETE',
+  UPDATE_PROFILE: 'UPDATE_PROFILE',
+  CREATE: 'CREATE'
+} as const
+
+export type UserAuditAction = (typeof UserAuditAction)[keyof typeof UserAuditAction]

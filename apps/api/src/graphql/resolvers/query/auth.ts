@@ -25,6 +25,9 @@ export const meQuery: QueryResolvers['me'] = resolverWithMetrics(
       avatarKey: user.avatarKey ?? null,
       role: user.role,
       verifiedAt: user.verifiedAt ?? null,
+      suspendedAt: user.suspendedAt ?? null,
+      suspendedUntil: user.suspendedUntil ?? null,
+      suspensionReason: user.suspensionReason ?? null,
       // Field resolvers handle these
       avatarBlurhash: null,
       effectivePlan: 'FREE' as UserEffectivePlan,

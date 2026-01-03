@@ -71,7 +71,7 @@ const DENSITY_CLASS: Record<Density, string> = {
 };
 
 const BASE_PANEL_CLASS =
-  'bg-white border shadow-2xl rounded-3xl border-zinc-200 ring-1 ring-black/5 ' +
+  'mx-auto bg-white border shadow-2xl rounded-3xl border-zinc-200 ring-1 ring-black/5 ' +
   'dark:border-zinc-800 dark:bg-zinc-900 dark:ring-white/10';
 
 const OVERLAY_MOTION = {
@@ -223,44 +223,45 @@ export function Modal({
             className="absolute inset-0 overflow-y-auto"
             onClick={closeOnBackdrop ? handleOnClose : undefined}
           >
-            <div className="mx-auto my-6 w-[min(760px,92vw)]">
-              <div
-                ref={panelRef}
-                className={clsx(BASE_PANEL_CLASS, className)}
-                // Stop propagation so clicking inside the panel does not close it.
-                onClick={(e) => e.stopPropagation()}
-              >
-                {header && (
-                  <div
-                    id={titleId}
-                    className={twMerge(
-                      'sticky top-0 z-10 px-4 py-4 border-b rounded-t-3xl border-zinc-200 bg-white/70 backdrop-blur-2xl dark:border-zinc-800 dark:bg-zinc-900/70',
-                      headerClassName
-                    )}
-                  >
-                    {header}
-                  </div>
-                )}
+            <div
+              ref={panelRef}
+              className={clsx(
+                'my-6',
+                SIZE_CLASS[size],
+                BASE_PANEL_CLASS,
+                className
+              )}
+              // Stop propagation so clicking inside the panel does not close it.
+              onClick={(e) => e.stopPropagation()}
+            >
+              {header && (
+                <div
+                  id={titleId}
+                  className={twMerge(
+                    'sticky top-0 z-10 px-4 py-4 border-b rounded-t-3xl border-zinc-200 bg-white/70 backdrop-blur-2xl dark:border-zinc-800 dark:bg-zinc-900/70',
+                    headerClassName
+                  )}
+                >
+                  {header}
+                </div>
+              )}
 
-                {content && (
-                  <div
-                    className={clsx(DENSITY_CLASS[density], contentClassName)}
-                  >
-                    {content}
-                  </div>
-                )}
+              {content && (
+                <div className={clsx(DENSITY_CLASS[density], contentClassName)}>
+                  {content}
+                </div>
+              )}
 
-                {footer && (
-                  <div
-                    className={clsx(
-                      'sticky bottom-0 z-10 p-4 border-t rounded-b-3xl border-zinc-200 bg-gradient-to-t from-white/75 via-white/70 backdrop-blur-2xl dark:border-zinc-800 dark:from-zinc-900/75 dark:via-zinc-900/70',
-                      footerClassName
-                    )}
-                  >
-                    {footer}
-                  </div>
-                )}
-              </div>
+              {footer && (
+                <div
+                  className={clsx(
+                    'sticky bottom-0 z-10 p-4 border-t rounded-b-3xl border-zinc-200 bg-gradient-to-t from-white/75 via-white/70 backdrop-blur-2xl dark:border-zinc-800 dark:from-zinc-900/75 dark:via-zinc-900/70',
+                    footerClassName
+                  )}
+                >
+                  {footer}
+                </div>
+              )}
             </div>
           </motion.div>
         )}

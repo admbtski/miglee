@@ -6,3 +6,4 @@ export * from './admin-comments';
 export * from './admin-event-members';
 export * from './admin-events';
 export * from './admin-users';
+export * from './admin-user-audit-logs';

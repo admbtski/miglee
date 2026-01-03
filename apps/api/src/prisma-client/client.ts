@@ -280,3 +280,8 @@ export type EventCheckinLog = Prisma.EventCheckinLogModel
  * 
  */
 export type EventAuditLog = Prisma.EventAuditLogModel
+/**
+ * Model UserAuditLog
+ * 
+ */
+export type UserAuditLog = Prisma.UserAuditLogModel

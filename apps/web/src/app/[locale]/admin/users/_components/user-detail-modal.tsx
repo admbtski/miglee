@@ -48,8 +48,9 @@ export function UserDetailModal({
     <Modal
       open={open}
       onClose={handleClose}
-      variant="centered"
       size="xl"
+      variant="default"
+      density="comfortable"
       labelledById="user-detail-title"
       ariaLabel="Szczegóły użytkownika"
       header={

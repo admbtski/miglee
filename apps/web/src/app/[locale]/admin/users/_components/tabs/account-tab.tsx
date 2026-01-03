@@ -42,6 +42,8 @@ export function AccountTab({ userId, onRefresh }: AccountTabProps) {
   const [deleteReason, setDeleteReason] = useState('');
   const [suspendOpen, setSuspendOpen] = useState(false);
   const [suspendReason, setSuspendReason] = useState('');
+  const [suspendedUntil, setSuspendedUntil] = useState<string>('');
+  const [isPermanentSuspension, setIsPermanentSuspension] = useState(false);
   const [resetPasswordOpen, setResetPasswordOpen] = useState(false);
   const [resetPasswordLoading, setResetPasswordLoading] = useState(false);
   const [successOpen, setSuccessOpen] = useState(false);
@@ -116,11 +118,19 @@ export function AccountTab({ userId, onRefresh }: AccountTabProps) {
   };
 
   const handleDeleteUser = async () => {
+    // ✅ Validate mandatory reason
+    if (!deleteReason.trim()) {
+      alert('Powód usunięcia jest wymagany.');
+      return;
+    }
+
     try {
       await deleteUserMutation.mutateAsync({
         id: userId,
-        anonymize: true,
-        deleteReason: deleteReason || undefined,
+        input: {
+          deleteReason: deleteReason.trim(),
+          anonymize: true, // Always anonymize for GDPR compliance
+        },
       });
       setDeleteUserOpen(false);
       setDeleteReason('');
@@ -132,13 +142,38 @@ export function AccountTab({ userId, onRefresh }: AccountTabProps) {
   };
 
   const handleSuspend = async () => {
+    // ✅ Validate mandatory reason
+    if (!suspendReason.trim()) {
+      alert('Powód zawieszenia jest wymagany.');
+      return;
+    }
+
+    // Validate suspendedUntil if not permanent
+    if (!isPermanentSuspension && suspendedUntil) {
+      const futureDate = new Date(suspendedUntil);
+      const now = new Date();
+      if (futureDate <= now) {
+        alert('Data odwieszenia musi być w przyszłości.');
+        return;
+      }
+    }
+
     try {
       await suspendMutation.mutateAsync({
         id: userId,
-        reason: suspendReason || undefined,
+        input: {
+          reason: suspendReason.trim(),
+          suspendedUntil: isPermanentSuspension
+            ? null
+            : suspendedUntil
+              ? new Date(suspendedUntil).toISOString()
+              : null,
+        },
       });
       setSuspendOpen(false);
       setSuspendReason('');
+      setSuspendedUntil('');
+      setIsPermanentSuspension(false);
       onRefresh?.();
     } catch (error) {
       console.error('Failed to suspend user:', error);
@@ -146,9 +181,15 @@ export function AccountTab({ userId, onRefresh }: AccountTabProps) {
   };
 
   const handleUnsuspend = async () => {
+    const reason = prompt(
+      'Powód odwieszenia (opcjonalnie):',
+      'Odwieszenie przez administratora'
+    );
+
     try {
       await unsuspendMutation.mutateAsync({
         id: userId,
+        reason: reason || undefined,
       });
       onRefresh?.();
     } catch (error) {
@@ -389,12 +430,26 @@ export function AccountTab({ userId, onRefresh }: AccountTabProps) {
                     )}
                     {user.suspendedAt && (
                       <p className="mt-1 text-xs">
-                        Data:{' '}
+                        Zawieszone:{' '}
                         {format(
                           new Date(user.suspendedAt),
                           'dd MMM yyyy, HH:mm',
                           { locale: pl }
                         )}
+                      </p>
+                    )}
+                    {user.suspendedUntil ? (
+                      <p className="mt-1 text-xs font-medium text-orange-700 dark:text-orange-300">
+                        ⏱️ Automatyczne odwieszenie:{' '}
+                        {format(
+                          new Date(user.suspendedUntil),
+                          'dd MMM yyyy, HH:mm',
+                          { locale: pl }
+                        )}
+                      </p>
+                    ) : (
+                      <p className="mt-1 text-xs font-medium">
+                        ⏳ Zawieszenie bezterminowe
                       </p>
                     )}
                   </div>
@@ -501,6 +556,7 @@ export function AccountTab({ userId, onRefresh }: AccountTabProps) {
         onClose={() => setDeleteUserOpen(false)}
         variant="error"
         size="md"
+        density="comfortable"
         title="Usunąć użytkownika?"
         subtitle="Ta akcja jest nieodwracalna. Wszystkie dane zostaną zanonimizowane."
         primaryLabel={deleteUserMutation.isPending ? 'Usuwanie...' : 'Usuń'}
@@ -511,17 +567,19 @@ export function AccountTab({ userId, onRefresh }: AccountTabProps) {
         <div className="space-y-4">
           <div>
             <label className="mb-2 block text-sm font-medium text-zinc-700 dark:text-zinc-300">
-              Powód usunięcia (opcjonalnie)
+              Powód usunięcia <span className="text-red-600">*</span>
             </label>
             <textarea
               value={deleteReason}
               onChange={(e) => setDeleteReason(e.target.value)}
-              placeholder="Wpisz powód usunięcia użytkownika..."
+              placeholder="Wpisz powód usunięcia użytkownika (wymagane)..."
               rows={3}
+              required
               className="w-full rounded-lg border border-zinc-300 px-4 py-2 text-sm focus:border-blue-500 focus:outline-none focus:ring-2 focus:ring-blue-500 dark:border-zinc-700 dark:bg-zinc-800 dark:text-zinc-100"
             />
-            <p className="mt-1 text-xs text-zinc-500 dark:text-zinc-500">
-              Powód zostanie zapisany w logach audytu
+            <p className="mt-1 text-xs text-zinc-500 dark:text-zinc-400">
+              Powód zostanie zapisany w logach audytu. Dane użytkownika zostaną
+              zanonimizowane zgodnie z GDPR.
             </p>
           </div>
         </div>
@@ -549,18 +607,58 @@ export function AccountTab({ userId, onRefresh }: AccountTabProps) {
               użytkownikowi logowanie i jakiekolwiek działania na platformie.
             </p>
           </div>
+
+          {/* ✅ MANDATORY: Reason */}
           <div>
             <label className="mb-2 block text-sm font-medium text-zinc-700 dark:text-zinc-300">
-              Powód zawieszenia (opcjonalnie)
+              Powód zawieszenia <span className="text-red-600">*</span>
             </label>
             <textarea
               value={suspendReason}
               onChange={(e) => setSuspendReason(e.target.value)}
-              placeholder="Wpisz powód zawieszenia..."
+              placeholder="Wpisz powód zawieszenia (wymagane)..."
               rows={3}
+              required
               className="w-full rounded-lg border border-zinc-300 px-4 py-2 text-sm focus:border-blue-500 focus:outline-none focus:ring-2 focus:ring-blue-500 dark:border-zinc-700 dark:bg-zinc-800 dark:text-zinc-100"
             />
+            <p className="mt-1 text-xs text-zinc-500 dark:text-zinc-400">
+              Powód zostanie zapisany w logach audytu i widoczny dla zespołu
+            </p>
           </div>
+
+          {/* Suspension Duration */}
+          <div>
+            <label className="mb-2 flex items-center gap-2 text-sm font-medium text-zinc-700 dark:text-zinc-300">
+              <input
+                type="checkbox"
+                checked={isPermanentSuspension}
+                onChange={(e) => setIsPermanentSuspension(e.target.checked)}
+                className="h-4 w-4 rounded border-zinc-300 text-blue-600 focus:ring-2 focus:ring-blue-500 dark:border-zinc-600 dark:bg-zinc-800"
+              />
+              Zawieszenie bezterminowe
+            </label>
+            <p className="mb-3 text-xs text-zinc-600 dark:text-zinc-400">
+              Konto będzie zawieszone do czasu ręcznego odwieszenia
+            </p>
+          </div>
+
+          {!isPermanentSuspension && (
+            <div>
+              <label className="mb-2 block text-sm font-medium text-zinc-700 dark:text-zinc-300">
+                Data automatycznego odwieszenia
+              </label>
+              <input
+                type="datetime-local"
+                value={suspendedUntil}
+                onChange={(e) => setSuspendedUntil(e.target.value)}
+                min={new Date(Date.now() + 60000).toISOString().slice(0, 16)}
+                className="w-full rounded-lg border border-zinc-300 px-4 py-2 text-sm focus:border-blue-500 focus:outline-none focus:ring-2 focus:ring-blue-500 dark:border-zinc-700 dark:bg-zinc-800 dark:text-zinc-100"
+              />
+              <p className="mt-1 text-xs text-zinc-500 dark:text-zinc-400">
+                Konto zostanie automatycznie odwieszone o tej dacie
+              </p>
+            </div>
+          )}
         </div>
       </NoticeModal>
 

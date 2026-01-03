@@ -176,6 +176,56 @@ type ArchiveAuditLogsResult {
   archivedAt: DateTime!
 }
 
+"""
+User Audit Log - tracks all administrative actions on user accounts
+"""
+enum UserAuditAction {
+  UPDATE_ROLE
+  UPDATE_VERIFIED
+  SUSPEND
+  UNSUSPEND
+  DELETE
+  UPDATE_PROFILE
+  CREATE
+}
+
+type UserAuditLog {
+  id: ID!
+  targetUserId: ID!
+  action: UserAuditAction!
+  actorId: ID
+
+  "Snapshot of fields before change"
+  before: JSON
+  "Snapshot of fields after change"
+  after: JSON
+  "Specific field changes"
+  diff: JSON
+
+  "Mandatory reason for high-risk operations"
+  reason: String
+  "Additional context"
+  meta: JSON
+
+  "Severity level (1=info, 3=moderate, 5=critical)"
+  severity: Int!
+
+  "IP address of the admin"
+  ipAddress: String
+  "User agent of the admin"
+  userAgent: String
+
+  createdAt: DateTime!
+
+  "Actor who performed the action (null for SYSTEM)"
+  actor: User
+}
+
+type UserAuditLogsResult {
+  items: [UserAuditLog!]!
+  pageInfo: PageInfo!
+}
+
 input UsersSort {
   by: UsersSortBy!
   dir: SortDir!
@@ -559,6 +609,9 @@ type SessionUser {
   avatarKey: String
   avatarBlurhash: String
   verifiedAt: DateTime
+  suspendedAt: DateTime
+  suspendedUntil: DateTime
+  suspensionReason: String
   profile: UserProfile
 
   # Billing & Subscriptions
@@ -588,7 +641,12 @@ type User {
   role: Role!
   verifiedAt: DateTime
   suspendedAt: DateTime
+  suspendedUntil: DateTime
+  suspendedById: ID
   suspensionReason: String
+  deletedAt: DateTime
+  deletedById: ID
+  deletedReason: String
   createdAt: DateTime!
   updatedAt: DateTime!
   lastSeenAt: DateTime
@@ -1882,6 +1940,16 @@ input AdminCreateUserInput {
   verified: Boolean!
 }
 
+input AdminSuspendUserInput {
+  reason: String! # Mandatory reason for audit trail
+  suspendedUntil: DateTime # Optional: auto-unsuspend at this time (null = permanent)
+}
+
+input AdminDeleteUserInput {
+  deleteReason: String! # Mandatory reason for audit trail
+  anonymize: Boolean # If true, PII will be removed (default: true)
+}
+
 # Admin Event Management Inputs
 input AdminBulkUpdateEventsInput {
   visibility: Visibility
@@ -2178,6 +2246,7 @@ type Query {
     offset: Int
   ): AdminMembershipsResult!
   adminUserEvents(userId: ID!, limit: Int, offset: Int): AdminEventsResult!
+  adminUserAuditLogs(userId: ID!, limit: Int, offset: Int): UserAuditLogsResult!
   adminUserNotifications(
     userId: ID!
     limit: Int
@@ -2555,11 +2624,11 @@ type Mutation {
 
   # Admin - User Management
   adminUpdateUser(id: ID!, input: AdminUpdateUserInput!): User!
-  adminDeleteUser(id: ID!, anonymize: Boolean, deleteReason: String): Boolean!
+  adminDeleteUser(id: ID!, input: AdminDeleteUserInput!): Boolean!
   adminInviteUser(input: AdminInviteUserInput!): User!
   adminCreateUser(input: AdminCreateUserInput!): User!
-  adminSuspendUser(id: ID!, reason: String): User!
-  adminUnsuspendUser(id: ID!): User!
+  adminSuspendUser(id: ID!, input: AdminSuspendUserInput!): User!
+  adminUnsuspendUser(id: ID!, reason: String): User!
 
   # Admin - Event Management
   adminUpdateEvent(id: ID!, input: UpdateEventInput!): Event!

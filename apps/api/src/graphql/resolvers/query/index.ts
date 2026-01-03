@@ -67,6 +67,7 @@ import {
   adminUserEventsQuery,
   adminUserNotificationsQuery,
 } from './admin-users';
+import { adminUserAuditLogsQuery } from './admin-user-audit-logs';
 import { adminCommentsQuery, adminReviewsQuery } from './admin-moderation';
 import { userEventsQuery } from './user-events';
 import { userReviewsQuery } from './user-reviews';
@@ -87,6 +88,7 @@ export const Query: Resolvers['Query'] = {
   adminUserReviews: adminUserReviewsQuery,
   adminUserMemberships: adminUserMembershipsQuery,
   adminUserEvents: adminUserEventsQuery,
+  adminUserAuditLogs: adminUserAuditLogsQuery,
   adminUserNotifications: adminUserNotificationsQuery,
   adminComments: adminCommentsQuery,
   adminReviews: adminReviewsQuery,

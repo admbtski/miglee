@@ -27,7 +27,11 @@ export async function createContext(
           avatarKey: user.avatarKey,
           verifiedAt: user.verifiedAt,
           suspendedAt: user.suspendedAt,
+          suspendedUntil: user.suspendedUntil,
+          suspendedById: user.suspendedById,
           suspensionReason: user.suspensionReason,
+          deletedAt: user.deletedAt,
+          deletedReason: user.deletedReason,
           locale: user.locale,
           timezone: user.timezone,
         }
