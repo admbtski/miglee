@@ -91,14 +91,13 @@ function CommentItem({
   const isHidden = Boolean(comment.hiddenAt);
   const isRemovedFromView = isDeleted || isHidden;
 
-  // Permissions matrix:
-  // - Edit: Only App Admin or Comment Author (App Moderator and Event Owner/Mod should use hide/delete)
-  // - Delete: App Admin, App Moderator, Event Owner/Mod, or Comment Author
+  // Permissions matrix (must match backend resolver rules):
+  // - Edit: ONLY Comment Author (admins/moderators CANNOT edit)
+  // - Delete: App Admin, App Moderator, or Comment Author (Event Owner/Mod CANNOT delete, only hide)
   // - Hide: App Admin, App Moderator, or Event Owner/Mod (not author unless they are also mod)
   // - Report: Any logged in user except the author
-  const canEdit = isAppAdmin || isAuthor;
-  const canDelete =
-    isAppAdmin || isAppModerator || isEventOwnerOrMod || isAuthor;
+  const canEdit = isAuthor;
+  const canDelete = isAppAdmin || isAppModerator || isAuthor;
   const canHide =
     (isAppAdmin || isAppModerator || isEventOwnerOrMod) && !isHidden;
   const canReport = Boolean(currentUserId) && !isAuthor;
@@ -439,9 +438,10 @@ export function EventComments({ event }: EventCommentsProps) {
     return event.userMembership.isOwner || event.userMembership.isModerator;
   }, [currentUserId, event.userMembership]);
 
-  // Permissions:
-  // - App Admin/Moderator: can edit, delete, hide, report any comment
-  // - Event Owner/Moderator: can delete, hide, report (not edit) others' comments
+  // Permissions (must match backend resolver rules):
+  // - App Admin: can delete, hide any comment (CANNOT edit)
+  // - App Moderator: can delete, hide any comment (CANNOT edit)
+  // - Event Owner/Moderator: can hide (CANNOT delete or edit) others' comments
   // - Comment Author: can edit and delete own comments
   // - Any logged user: can report comments
 

@@ -3,9 +3,9 @@
  *
  * Authorization:
  * - createReview: EVENT_PARTICIPANT (after event ends)
- * - updateReview: SELF or ADMIN
- * - deleteReview: SELF or APP_MOD_OR_ADMIN
- * - hideReview/unhideReview: APP_MOD_OR_ADMIN
+ * - updateReview: AUTHOR ONLY (admins/moderators CANNOT edit)
+ * - deleteReview: AUTHOR or APP_ADMIN or APP_MODERATOR (event moderators CANNOT delete)
+ * - hideReview/unhideReview: APP_ADMIN or APP_MODERATOR or EVENT_OWNER/MODERATOR
  *
  * CRITICAL for observability: Visibility changes generate disputes.
  */
@@ -199,7 +199,12 @@ export const createReviewMutation: MutationResolvers['createReview'] =
 
 /**
  * Mutation: Update a review
- * Authorization: SELF or ADMIN (author can edit own, admin can edit any)
+ *
+ * Permissions:
+ * - Review Author: can edit own reviews
+ * - App Admin: CANNOT edit
+ * - App Moderator: CANNOT edit (only hide/delete for moderation)
+ * - Event Owner/Moderator: CANNOT edit
  */
 export const updateReviewMutation: MutationResolvers['updateReview'] =
   resolverWithMetrics(
@@ -241,10 +246,10 @@ export const updateReviewMutation: MutationResolvers['updateReview'] =
         });
       }
 
-      // Permission check: Only Admin or Author can edit (not Moderator)
+      // Permission check: Only author can edit - no exceptions
       const isAuthor = existing.authorId === userId;
-      if (!isAdmin(ctx.user) && !isAuthor) {
-        throw new GraphQLError('Cannot edit reviews from other users.', {
+      if (!isAuthor) {
+        throw new GraphQLError('Only the author can edit their own reviews.', {
           extensions: { code: 'FORBIDDEN' },
         });
       }
@@ -291,7 +296,12 @@ export const updateReviewMutation: MutationResolvers['updateReview'] =
 
 /**
  * Mutation: Delete a review (soft delete)
- * Authorization: SELF or APP_MOD_OR_ADMIN
+ *
+ * Permissions:
+ * - App Admin: can delete any review
+ * - App Moderator: can delete any review
+ * - Review Author: can delete own reviews
+ * - Event Owner/Moderator: CANNOT delete (only hide)
  */
 export const deleteReviewMutation: MutationResolvers['deleteReview'] =
   resolverWithMetrics('Mutation', 'deleteReview', async (_p, { id }, ctx) => {
@@ -306,7 +316,7 @@ export const deleteReviewMutation: MutationResolvers['deleteReview'] =
       return false; // Idempotent
     }
 
-    // Permission check: SELF or APP_MOD_OR_ADMIN
+    // Permission check: SELF or APP_MOD_OR_ADMIN (event moderators cannot delete)
     requireSelfOrAppMod(ctx.user, existing.authorId);
 
     if (existing.deletedAt) {
@@ -344,18 +354,16 @@ export const deleteReviewMutation: MutationResolvers['deleteReview'] =
 
 /**
  * Mutation: Hide a review (moderation)
- * Authorization: APP_MOD_OR_ADMIN
+ *
+ * Permissions:
+ * - App Admin: can hide any review
+ * - App Moderator: can hide any review
+ * - Event Owner/Moderator: can hide reviews for their event
+ * - Review Author: CANNOT hide (not a moderation action)
  */
 export const hideReviewMutation: MutationResolvers['hideReview'] =
   resolverWithMetrics('Mutation', 'hideReview', async (_p, { id }, ctx) => {
     const userId = requireAuth(ctx);
-
-    // Only APP_MOD_OR_ADMIN can hide reviews
-    if (!isAdminOrModerator(ctx.user)) {
-      throw new GraphQLError('Insufficient permissions to hide reviews.', {
-        extensions: { code: 'FORBIDDEN' },
-      });
-    }
 
     const review = await prisma.review.findUnique({
       where: { id },
@@ -365,12 +373,35 @@ export const hideReviewMutation: MutationResolvers['hideReview'] =
         authorId: true,
         deletedAt: true,
         hiddenAt: true,
+        event: {
+          select: {
+            members: {
+              where: {
+                userId: userId,
+                role: { in: ['OWNER', 'MODERATOR'] },
+                status: 'JOINED',
+              },
+              select: { role: true },
+            },
+          },
+        },
       },
     });
 
     if (!review) {
       throw new GraphQLError('Review not found.', {
         extensions: { code: 'NOT_FOUND' },
+      });
+    }
+
+    // Check permissions: app admin/moderator OR event owner/moderator
+    const _isAdmin = isAdmin(ctx.user);
+    const _isModerator = isAdminOrModerator(ctx.user) && !_isAdmin; // App moderator
+    const isEventModerator = review.event.members.length > 0;
+
+    if (!_isAdmin && !_isModerator && !isEventModerator) {
+      throw new GraphQLError('Insufficient permissions to hide reviews.', {
+        extensions: { code: 'FORBIDDEN' },
       });
     }
 
@@ -426,7 +457,7 @@ export const hideReviewMutation: MutationResolvers['hideReview'] =
     await createAuditLog(prisma, {
       eventId: review.eventId,
       actorId: userId,
-      actorRole: ctx.user?.role,
+      actorRole: _isAdmin ? 'ADMIN' : _isModerator ? 'MODERATOR' : 'MODERATOR',
       scope: 'MODERATION' as AuditScope,
       action: 'HIDE' as AuditAction,
       entityType: 'Review',
@@ -440,7 +471,7 @@ export const hideReviewMutation: MutationResolvers['hideReview'] =
       id,
       review.eventId,
       undefined,
-      ctx.user?.role === 'ADMIN' ? 'admin' : 'moderator'
+      _isAdmin ? 'admin' : 'moderator'
     );
 
     return true;
@@ -448,27 +479,53 @@ export const hideReviewMutation: MutationResolvers['hideReview'] =
 
 /**
  * Mutation: Unhide a review (moderation)
- * Authorization: APP_MOD_OR_ADMIN
+ *
+ * Permissions:
+ * - App Admin: can unhide any review
+ * - App Moderator: can unhide any review
+ * - Event Owner/Moderator: can unhide reviews for their event
+ * - Review Author: CANNOT unhide (not a moderation action)
  */
 export const unhideReviewMutation: MutationResolvers['unhideReview'] =
   resolverWithMetrics('Mutation', 'unhideReview', async (_p, { id }, ctx) => {
-    requireAuth(ctx);
-
-    // Only APP_MOD_OR_ADMIN can unhide reviews
-    if (!isAdminOrModerator(ctx.user)) {
-      throw new GraphQLError('Insufficient permissions to unhide reviews.', {
-        extensions: { code: 'FORBIDDEN' },
-      });
-    }
+    const userId = requireAuth(ctx);
 
     const review = await prisma.review.findUnique({
       where: { id },
-      select: { id: true, eventId: true, deletedAt: true, hiddenAt: true },
+      select: {
+        id: true,
+        eventId: true,
+        deletedAt: true,
+        hiddenAt: true,
+        event: {
+          select: {
+            members: {
+              where: {
+                userId: userId,
+                role: { in: ['OWNER', 'MODERATOR'] },
+                status: 'JOINED',
+              },
+              select: { role: true },
+            },
+          },
+        },
+      },
     });
 
     if (!review) {
       throw new GraphQLError('Review not found.', {
         extensions: { code: 'NOT_FOUND' },
+      });
+    }
+
+    // Check permissions: app admin/moderator OR event owner/moderator
+    const _isAdmin = isAdmin(ctx.user);
+    const _isModerator = isAdminOrModerator(ctx.user) && !_isAdmin; // App moderator
+    const isEventModerator = review.event.members.length > 0;
+
+    if (!_isAdmin && !_isModerator && !isEventModerator) {
+      throw new GraphQLError('Insufficient permissions to unhide reviews.', {
+        extensions: { code: 'FORBIDDEN' },
       });
     }
 
@@ -484,8 +541,8 @@ export const unhideReviewMutation: MutationResolvers['unhideReview'] =
     // Audit log: MODERATION/UNHIDE (severity 4)
     await createAuditLog(prisma, {
       eventId: review.eventId,
-      actorId: ctx.user!.id,
-      actorRole: ctx.user?.role,
+      actorId: userId,
+      actorRole: _isAdmin ? 'ADMIN' : _isModerator ? 'MODERATOR' : 'MODERATOR',
       scope: 'MODERATION' as AuditScope,
       action: 'UNHIDE' as AuditAction,
       entityType: 'Review',
@@ -495,10 +552,10 @@ export const unhideReviewMutation: MutationResolvers['unhideReview'] =
 
     // Track visibility change
     trackReviewVisibility.unhide(
-      ctx.user!.id,
+      userId,
       id,
       review.eventId,
-      ctx.user?.role === 'ADMIN' ? 'admin' : 'moderator'
+      _isAdmin ? 'admin' : 'moderator'
     );
 
     return true;

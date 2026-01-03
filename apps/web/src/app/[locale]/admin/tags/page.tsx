@@ -1,12 +1,13 @@
 'use client';
 
 import { format, pl } from '@/lib/date';
-import { useState } from 'react';
+import { useState, useMemo } from 'react';
 import { useGetTagsQuery } from '@/features/tags';
 import { Plus, Edit, Trash2, Search } from 'lucide-react';
 import { AddTagModal } from './_components/add-tag-modal';
 import { EditTagModal } from './_components/edit-tag-modal';
 import { DeleteTagModal } from './_components/delete-tag-modal';
+import { Pagination } from '@/components/ui/pagination';
 
 type Tag = {
   id: string;
@@ -16,8 +17,11 @@ type Tag = {
   updatedAt: string;
 };
 
+const LIMIT = 100;
+
 export default function TagsPage() {
   const [search, setSearch] = useState('');
+  const [page, setPage] = useState(1);
   const [addModalOpen, setAddModalOpen] = useState(false);
   const [editModalOpen, setEditModalOpen] = useState(false);
   const [deleteModalOpen, setDeleteModalOpen] = useState(false);
@@ -25,10 +29,24 @@ export default function TagsPage() {
 
   const { data, isLoading } = useGetTagsQuery({
     query: search || undefined,
-    limit: 100,
+    limit: 1000, // Fetch all for client-side filtering
   });
 
-  const tags = (data?.tags ?? []) as Tag[];
+  const allTags = (data?.tags ?? []) as Tag[];
+
+  // Client-side pagination
+  const totalPages = Math.ceil(allTags.length / LIMIT);
+  const startIndex = (page - 1) * LIMIT;
+  const endIndex = startIndex + LIMIT;
+  const tags = useMemo(
+    () => allTags.slice(startIndex, endIndex),
+    [allTags, startIndex, endIndex]
+  );
+
+  const handleSearchChange = (value: string) => {
+    setSearch(value);
+    setPage(1);
+  };
 
   const handleEdit = (tag: Tag) => {
     setSelectedTag(tag);
@@ -69,7 +87,7 @@ export default function TagsPage() {
           <input
             type="search"
             value={search}
-            onChange={(e) => setSearch(e.target.value)}
+            onChange={(e) => handleSearchChange(e.target.value)}
             placeholder="Szukaj po slug lub nazwie..."
             className="w-full rounded-lg border border-zinc-300 py-2 pl-10 pr-4 text-sm focus:border-blue-500 focus:outline-none focus:ring-2 focus:ring-blue-500 dark:border-zinc-700 dark:bg-zinc-900 dark:text-zinc-100"
           />
@@ -155,6 +173,18 @@ export default function TagsPage() {
               </tbody>
             </table>
           </div>
+        )}
+
+        {/* Pagination */}
+        {!isLoading && tags.length > 0 && allTags.length > LIMIT && (
+          <Pagination
+            currentPage={page}
+            totalPages={totalPages}
+            onPageChange={setPage}
+            totalItems={allTags.length}
+            itemsPerPage={LIMIT}
+            itemsOnCurrentPage={tags.length}
+          />
         )}
       </div>
 

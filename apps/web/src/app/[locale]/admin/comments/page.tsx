@@ -6,22 +6,29 @@ import { useAdminComments, useAdminDeleteComment } from '@/features/admin';
 import { useHideComment, useUnhideComment } from '@/features/comments';
 import { Trash2, EyeOff, Eye, Search, ExternalLink } from 'lucide-react';
 import { NoticeModal } from '@/components/ui/notice-modal';
+import { Pagination } from '@/components/ui/pagination';
 import Link from 'next/link';
 import { useLocalePath } from '@/hooks/use-locale-path';
+
+const LIMIT = 100;
 
 export default function CommentsPage() {
   const [eventId, setEventId] = useState('');
   const [userId, setUserId] = useState('');
+  const [page, setPage] = useState(1);
   const [selectedCommentId, setSelectedCommentId] = useState<string | null>(
     null
   );
   const [deleteModalOpen, setDeleteModalOpen] = useState(false);
   const { localePath } = useLocalePath();
 
+  const offset = (page - 1) * LIMIT;
+
   const { data, isLoading, refetch } = useAdminComments({
     eventId: eventId || undefined,
     userId: userId || undefined,
-    limit: 100,
+    limit: LIMIT,
+    offset,
   });
 
   const deleteMutation = useAdminDeleteComment();
@@ -30,6 +37,18 @@ export default function CommentsPage() {
 
   const comments = data?.adminComments?.items ?? [];
   const total = data?.adminComments?.pageInfo?.total ?? 0;
+  const totalPages = Math.ceil(total / LIMIT);
+
+  // Reset to page 1 when filters change
+  const handleEventIdChange = (value: string) => {
+    setEventId(value);
+    setPage(1);
+  };
+
+  const handleUserIdChange = (value: string) => {
+    setUserId(value);
+    setPage(1);
+  };
 
   const handleDeleteComment = async () => {
     if (!selectedCommentId) return;
@@ -92,7 +111,7 @@ export default function CommentsPage() {
               <input
                 type="text"
                 value={eventId}
-                onChange={(e) => setEventId(e.target.value)}
+                onChange={(e) => handleEventIdChange(e.target.value)}
                 placeholder="Filtruj po ID wydarzenia..."
                 className="w-full rounded-lg border border-zinc-300 py-2 pl-10 pr-4 text-sm focus:border-blue-500 focus:outline-none focus:ring-2 focus:ring-blue-500 dark:border-zinc-700 dark:bg-zinc-900 dark:text-zinc-100"
               />
@@ -107,7 +126,7 @@ export default function CommentsPage() {
               <input
                 type="text"
                 value={userId}
-                onChange={(e) => setUserId(e.target.value)}
+                onChange={(e) => handleUserIdChange(e.target.value)}
                 placeholder="Filtruj po ID użytkownika..."
                 className="w-full rounded-lg border border-zinc-300 py-2 pl-10 pr-4 text-sm focus:border-blue-500 focus:outline-none focus:ring-2 focus:ring-blue-500 dark:border-zinc-700 dark:bg-zinc-900 dark:text-zinc-100"
               />
@@ -266,6 +285,18 @@ export default function CommentsPage() {
               </tbody>
             </table>
           </div>
+        )}
+
+        {/* Pagination */}
+        {!isLoading && comments.length > 0 && (
+          <Pagination
+            currentPage={page}
+            totalPages={totalPages}
+            onPageChange={setPage}
+            totalItems={total}
+            itemsPerPage={LIMIT}
+            itemsOnCurrentPage={comments.length}
+          />
         )}
       </div>
 

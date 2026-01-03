@@ -21,17 +21,23 @@ import { UserDetailModal } from './_components/user-detail-modal';
 import { AddUserModal } from './_components/add-user-modal';
 import { buildAvatarUrl } from '@/lib/media/url';
 import { Avatar } from '@/components/ui/avatar';
+import { Pagination } from '@/components/ui/pagination';
 import { useLocalePath } from '@/hooks/use-locale-path';
 
 type UserStatus = 'all' | 'deleted' | 'suspended' | 'verified';
+
+const LIMIT = 100;
 
 export default function UsersPage() {
   const { localePath } = useLocalePath();
   const [search, setSearch] = useState('');
   const [role, setRole] = useState<Role | undefined>();
   const [status, setStatus] = useState<UserStatus>('all');
+  const [page, setPage] = useState(1);
   const [selectedUserId, setSelectedUserId] = useState<string | null>(null);
   const [addUserOpen, setAddUserOpen] = useState(false);
+
+  const offset = (page - 1) * LIMIT;
 
   const { data, isLoading, refetch } = useAdminUsersQuery({
     q: search || undefined,
@@ -41,12 +47,30 @@ export default function UsersPage() {
     suspendedOnly: status === 'suspended' || undefined,
     sortBy: UsersSortBy.CreatedAt,
     sortDir: SortDir.Desc,
-    limit: 50,
+    limit: LIMIT,
+    offset,
   });
 
   // Users are now filtered server-side
   const users = data?.adminUsers?.items ?? [];
   const total = data?.adminUsers?.pageInfo?.total ?? 0;
+  const totalPages = Math.ceil(total / LIMIT);
+
+  // Reset to page 1 when filters change
+  const handleSearchChange = (value: string) => {
+    setSearch(value);
+    setPage(1);
+  };
+
+  const handleRoleChange = (value: Role | undefined) => {
+    setRole(value);
+    setPage(1);
+  };
+
+  const handleStatusChange = (value: UserStatus) => {
+    setStatus(value);
+    setPage(1);
+  };
 
   const handleRefresh = () => {
     refetch();
@@ -87,7 +111,7 @@ export default function UsersPage() {
               <input
                 type="search"
                 value={search}
-                onChange={(e) => setSearch(e.target.value)}
+                onChange={(e) => handleSearchChange(e.target.value)}
                 placeholder="Szukaj po nazwie lub email..."
                 className="w-full rounded-lg border border-zinc-300 py-2 pl-10 pr-4 text-sm focus:border-blue-500 focus:outline-none focus:ring-2 focus:ring-blue-500 dark:border-zinc-700 dark:bg-zinc-900 dark:text-zinc-100"
               />
@@ -101,7 +125,9 @@ export default function UsersPage() {
             </label>
             <select
               value={role || ''}
-              onChange={(e) => setRole((e.target.value as Role) || undefined)}
+              onChange={(e) =>
+                handleRoleChange((e.target.value as Role) || undefined)
+              }
               className="w-full rounded-lg border border-zinc-300 px-3 py-2 text-sm focus:border-blue-500 focus:outline-none focus:ring-2 focus:ring-blue-500 dark:border-zinc-700 dark:bg-zinc-900 dark:text-zinc-100"
             >
               <option value="">Wszystkie</option>
@@ -118,7 +144,7 @@ export default function UsersPage() {
             </label>
             <select
               value={status}
-              onChange={(e) => setStatus(e.target.value as UserStatus)}
+              onChange={(e) => handleStatusChange(e.target.value as UserStatus)}
               className="w-full rounded-lg border border-zinc-300 px-3 py-2 text-sm focus:border-blue-500 focus:outline-none focus:ring-2 focus:ring-blue-500 dark:border-zinc-700 dark:bg-zinc-900 dark:text-zinc-100"
             >
               <option value="all">Wszystkie</option>
@@ -129,16 +155,9 @@ export default function UsersPage() {
           </div>
         </div>
 
-        <div className="mt-4 flex items-center justify-between text-sm text-zinc-600 dark:text-zinc-400">
-          <div>
-            Znaleziono: <span className="font-semibold">{total}</span>{' '}
-            użytkowników
-          </div>
-          {total > 50 && (
-            <div className="text-xs text-zinc-500">
-              Wyświetlono pierwsze 50 wyników
-            </div>
-          )}
+        <div className="mt-4 text-sm text-zinc-600 dark:text-zinc-400">
+          Znaleziono: <span className="font-semibold">{total}</span>{' '}
+          użytkowników
         </div>
       </div>
 
@@ -309,6 +328,18 @@ export default function UsersPage() {
               </tbody>
             </table>
           </div>
+        )}
+
+        {/* Pagination */}
+        {!isLoading && users.length > 0 && (
+          <Pagination
+            currentPage={page}
+            totalPages={totalPages}
+            onPageChange={setPage}
+            totalItems={total}
+            itemsPerPage={LIMIT}
+            itemsOnCurrentPage={users.length}
+          />
         )}
       </div>
 

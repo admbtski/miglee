@@ -34,8 +34,7 @@ type ReviewCardProps = {
   currentUserId?: string;
   isAppAdmin?: boolean;
   isAppModerator?: boolean;
-  // Note: isEventOwnerOrMod is eventionally NOT included for reviews
-  // Event owners/moderators cannot moderate reviews to protect review integrity
+  isEventOwnerOrMod?: boolean;
   onEdit?: (reviewId: string) => void;
   onDelete?: (reviewId: string) => void;
   onHide?: (reviewId: string) => void;
@@ -47,6 +46,7 @@ export function ReviewCard({
   currentUserId,
   isAppAdmin = false,
   isAppModerator = false,
+  isEventOwnerOrMod = false,
   onEdit,
   onDelete,
   onHide,
@@ -57,18 +57,19 @@ export function ReviewCard({
   const isHidden = Boolean(review.hiddenAt);
   const isRemovedFromView = isDeleted || isHidden;
 
-  // Permissions matrix for reviews (different from comments to protect review integrity):
-  // - Edit: Only App Admin or Review Author (App Moderator and Event Owner/Mod should NOT edit)
-  // - Delete: Only App Admin, App Moderator, or Review Author (Event Owner/Mod CANNOT delete)
-  // - Hide: Only App Admin or App Moderator (Event Owner/Mod CANNOT hide - protects ratings)
+  // Permissions matrix (must match backend resolver rules):
+  // - Edit: ONLY Review Author (admins/moderators CANNOT edit)
+  // - Delete: App Admin, App Moderator, or Review Author (Event Owner/Mod CANNOT delete)
+  // - Hide: App Admin, App Moderator, or Event Owner/Mod
   // - Report: Any logged in user except the author
-  const canEdit = isAppAdmin || isAuthor;
+  const canEdit = isAuthor;
   const canDelete = isAppAdmin || isAppModerator || isAuthor;
-  const canHide = (isAppAdmin || isAppModerator) && !isHidden;
+  const canHide =
+    (isAppAdmin || isAppModerator || isEventOwnerOrMod) && !isHidden;
   const canReport = Boolean(currentUserId) && !isAuthor;
-  // Only app-level moderators can see hidden/deleted reviews (not event owner/mod)
+  // App-level moderators and event moderators can see hidden/deleted reviews
   const showModerationBadge =
-    (isAppAdmin || isAppModerator) && isRemovedFromView;
+    (isAppAdmin || isAppModerator || isEventOwnerOrMod) && isRemovedFromView;
 
   return (
     <div className="p-4 border rounded-lg border-zinc-200 bg-white dark:border-zinc-800 dark:bg-zinc-950">

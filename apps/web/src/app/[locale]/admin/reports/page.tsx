@@ -9,23 +9,40 @@ import {
 import { ReportsTable } from './_components/reports-table';
 import { ReportsFilters } from './_components/reports-filters';
 import { ReportDetailModal } from './_components/report-detail-modal';
+import { Pagination } from '@/components/ui/pagination';
+
+const LIMIT = 100;
 
 export default function ReportsPage() {
   const [status, setStatus] = useState<ReportStatus | undefined>(
     ReportStatus.Open
   );
   const [entity, setEntity] = useState<ReportEntity | undefined>();
+  const [page, setPage] = useState(1);
   const [selectedReportId, setSelectedReportId] = useState<string | null>(null);
 
+  const offset = (page - 1) * LIMIT;
+
   const { data, isLoading, error, refetch } = useGetReports({
-    limit: 50,
-    offset: 0,
+    limit: LIMIT,
+    offset,
     status,
     entity,
   });
 
   const reports = data?.reports?.items ?? [];
   const total = data?.reports?.pageInfo?.total ?? 0;
+  const totalPages = Math.ceil(total / LIMIT);
+
+  const handleStatusChange = (newStatus?: ReportStatus) => {
+    setStatus(newStatus);
+    setPage(1);
+  };
+
+  const handleEntityChange = (newEntity?: ReportEntity) => {
+    setEntity(newEntity);
+    setPage(1);
+  };
 
   return (
     <div className="space-y-6">
@@ -43,8 +60,8 @@ export default function ReportsPage() {
       <ReportsFilters
         status={status}
         entity={entity}
-        onStatusChange={setStatus}
-        onEntityChange={setEntity}
+        onStatusChange={handleStatusChange}
+        onEntityChange={handleEntityChange}
         totalCount={total}
       />
 
@@ -81,6 +98,18 @@ export default function ReportsPage() {
           <ReportsTable
             reports={reports as any}
             onSelectReport={setSelectedReportId}
+          />
+        )}
+
+        {/* Pagination */}
+        {!isLoading && !error && reports.length > 0 && (
+          <Pagination
+            currentPage={page}
+            totalPages={totalPages}
+            onPageChange={setPage}
+            totalItems={total}
+            itemsPerPage={LIMIT}
+            itemsOnCurrentPage={reports.length}
           />
         )}
       </div>

@@ -225,10 +225,10 @@ export const createCommentMutation: MutationResolvers['createComment'] =
  * Mutation: Update a comment
  *
  * Permissions:
- * - App Admin: can edit any comment
- * - App Moderator: CANNOT edit (only hide/delete for moderation)
- * - Event Owner/Moderator: CANNOT edit others' comments
  * - Comment Author: can edit own comments
+ * - App Admin: CANNOT edit
+ * - App Moderator: CANNOT edit (only hide/delete for moderation)
+ * - Event Owner/Moderator: CANNOT edit
  */
 export const updateCommentMutation: MutationResolvers['updateComment'] =
   resolverWithMetrics(
@@ -261,8 +261,9 @@ export const updateCommentMutation: MutationResolvers['updateComment'] =
 
       const isAuthor = existing.authorId === user.id;
 
+      // Only author can edit - no exceptions
       if (!isAuthor) {
-        throw new GraphQLError('Cannot edit comments from other users.', {
+        throw new GraphQLError('Only the author can edit their own comments.', {
           extensions: { code: 'FORBIDDEN' },
         });
       }
@@ -289,8 +290,8 @@ export const updateCommentMutation: MutationResolvers['updateComment'] =
  * Permissions:
  * - App Admin: can delete any comment
  * - App Moderator: can delete any comment
- * - Event Owner/Moderator: can delete comments in their event
  * - Comment Author: can delete own comments
+ * - Event Owner/Moderator: CANNOT delete (only hide)
  */
 export const deleteCommentMutation: MutationResolvers['deleteComment'] =
   resolverWithMetrics('Mutation', 'deleteComment', async (_p, { id }, ctx) => {
@@ -303,18 +304,6 @@ export const deleteCommentMutation: MutationResolvers['deleteComment'] =
         deletedAt: true,
         hiddenAt: true,
         eventId: true,
-        event: {
-          select: {
-            members: {
-              where: {
-                userId: user.id,
-                role: { in: ['OWNER', 'MODERATOR'] },
-                status: 'JOINED',
-              },
-              select: { role: true },
-            },
-          },
-        },
       },
     });
 
@@ -322,12 +311,12 @@ export const deleteCommentMutation: MutationResolvers['deleteComment'] =
       return false; // Idempotent
     }
 
-    // Permission check
+    // Permission check: App Admin, App Moderator, or Author
     const _isAdmin = isAdmin(user);
     const _isModerator = isModerator(user);
-    const isEventModerator = existing.event.members.length > 0;
+    const isAuthor = existing.authorId === user.id;
 
-    if (!_isAdmin && !_isModerator && !isEventModerator) {
+    if (!_isAdmin && !_isModerator && !isAuthor) {
       throw new GraphQLError('Cannot delete comments from other users.', {
         extensions: { code: 'FORBIDDEN' },
       });
@@ -357,7 +346,13 @@ export const deleteCommentMutation: MutationResolvers['deleteComment'] =
   });
 
 /**
- * Mutation: Hide a comment (moderation - soft delete)
+ * Mutation: Hide a comment (moderation)
+ *
+ * Permissions:
+ * - App Admin: can hide any comment
+ * - App Moderator: can hide any comment
+ * - Event Owner/Moderator: can hide comments in their event
+ * - Comment Author: CANNOT hide (not a moderation action)
  */
 export const hideCommentMutation: MutationResolvers['hideComment'] =
   resolverWithMetrics('Mutation', 'hideComment', async (_p, { id }, ctx) => {
@@ -379,6 +374,7 @@ export const hideCommentMutation: MutationResolvers['hideComment'] =
               where: {
                 userId: user.id,
                 role: { in: ['OWNER', 'MODERATOR'] },
+                status: 'JOINED',
               },
               select: { role: true },
             },
@@ -490,6 +486,12 @@ export const hideCommentMutation: MutationResolvers['hideComment'] =
 
 /**
  * Mutation: Unhide a comment (moderation)
+ *
+ * Permissions:
+ * - App Admin: can unhide any comment
+ * - App Moderator: can unhide any comment
+ * - Event Owner/Moderator: can unhide comments in their event
+ * - Comment Author: CANNOT unhide (not a moderation action)
  */
 export const unhideCommentMutation: MutationResolvers['unhideComment'] =
   resolverWithMetrics('Mutation', 'unhideComment', async (_p, { id }, ctx) => {
@@ -509,6 +511,7 @@ export const unhideCommentMutation: MutationResolvers['unhideComment'] =
               where: {
                 userId: user.id,
                 role: { in: ['OWNER', 'MODERATOR'] },
+                status: 'JOINED',
               },
               select: { role: true },
             },

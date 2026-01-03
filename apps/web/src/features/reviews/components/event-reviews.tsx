@@ -36,10 +36,12 @@ export function EventReviews({ event }: EventReviewsProps) {
   const userRole = authData?.me?.role;
 
   // Check permissions hierarchy for reviews
-  // Note: Unlike comments, Event Owner/Moderators CANNOT moderate reviews
-  // This protects review integrity and prevents organizers from "polishing" ratings
   const isAppAdmin = userRole === 'ADMIN';
   const isAppModerator = userRole === 'MODERATOR';
+  const isEventOwnerOrMod =
+    currentUserId &&
+    event.userMembership &&
+    (event.userMembership.isOwner || event.userMembership.isModerator);
 
   // Fetch reviews
   const {
@@ -244,6 +246,7 @@ export function EventReviews({ event }: EventReviewsProps) {
               currentUserId={currentUserId}
               isAppAdmin={isAppAdmin}
               isAppModerator={isAppModerator}
+              isEventOwnerOrMod={!!isEventOwnerOrMod}
               onEdit={handleEditReview}
               onDelete={handleDeleteClick}
               onHide={handleHideReview}

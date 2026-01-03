@@ -1,12 +1,13 @@
 'use client';
 
 import { format, pl } from '@/lib/date';
-import { useState } from 'react';
+import { useState, useMemo } from 'react';
 import { useGetCategoriesQuery } from '@/features/categories';
 import { Plus, Edit, Trash2, Search } from 'lucide-react';
 import { AddCategoryModal } from './_components/add-category-modal';
 import { EditCategoryModal } from './_components/edit-category-modal';
 import { DeleteCategoryModal } from './_components/delete-category-modal';
+import { Pagination } from '@/components/ui/pagination';
 
 type Category = {
   id: string;
@@ -16,8 +17,11 @@ type Category = {
   updatedAt: string;
 };
 
+const LIMIT = 100;
+
 export default function CategoriesPage() {
   const [search, setSearch] = useState('');
+  const [page, setPage] = useState(1);
   const [addModalOpen, setAddModalOpen] = useState(false);
   const [editModalOpen, setEditModalOpen] = useState(false);
   const [deleteModalOpen, setDeleteModalOpen] = useState(false);
@@ -27,10 +31,24 @@ export default function CategoriesPage() {
 
   const { data, isLoading } = useGetCategoriesQuery({
     query: search || undefined,
-    limit: 100,
+    limit: 1000, // Fetch all for client-side filtering
   });
 
-  const categories = (data?.categories ?? []) as Category[];
+  const allCategories = (data?.categories ?? []) as Category[];
+
+  // Client-side pagination
+  const totalPages = Math.ceil(allCategories.length / LIMIT);
+  const startIndex = (page - 1) * LIMIT;
+  const endIndex = startIndex + LIMIT;
+  const categories = useMemo(
+    () => allCategories.slice(startIndex, endIndex),
+    [allCategories, startIndex, endIndex]
+  );
+
+  const handleSearchChange = (value: string) => {
+    setSearch(value);
+    setPage(1);
+  };
 
   const handleEdit = (category: Category) => {
     setSelectedCategory(category);
@@ -84,7 +102,7 @@ export default function CategoriesPage() {
           <input
             type="search"
             value={search}
-            onChange={(e) => setSearch(e.target.value)}
+            onChange={(e) => handleSearchChange(e.target.value)}
             placeholder="Szukaj po slug lub nazwie..."
             className="w-full rounded-lg border border-zinc-300 py-2 pl-10 pr-4 text-sm focus:border-blue-500 focus:outline-none focus:ring-2 focus:ring-blue-500 dark:border-zinc-700 dark:bg-zinc-900 dark:text-zinc-100"
           />
@@ -204,6 +222,20 @@ export default function CategoriesPage() {
             </table>
           </div>
         )}
+
+        {/* Pagination */}
+        {!isLoading &&
+          categories.length > 0 &&
+          allCategories.length > LIMIT && (
+            <Pagination
+              currentPage={page}
+              totalPages={totalPages}
+              onPageChange={setPage}
+              totalItems={allCategories.length}
+              itemsPerPage={LIMIT}
+              itemsOnCurrentPage={categories.length}
+            />
+          )}
       </div>
 
       {/* Modals */}

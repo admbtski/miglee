@@ -53,5 +53,8 @@ export { ShareModal } from './share-modal';
 // Progress & Quota
 export { QuotaBar } from './quota-bar';
 
+// Navigation & Pagination
+export { Pagination } from './pagination';
+
 // Icons
 export { HybridLocationIcon } from './icons/hybrid-location-icon';
