@@ -916,14 +916,75 @@ type CommentExtended = CommentWithGraph & {
   _count?: { replies: number };
 };
 
-export function mapComment(c: CommentExtended, viewerId?: string): GQLComment {
+type CommentViewContext = {
+  viewerId?: string;
+  viewerRole?: string;
+  isEventOwnerOrMod?: boolean;
+};
+
+/**
+ * Determines if viewer can see comment content based on comment state and viewer permissions.
+ *
+ * Rules:
+ * - HIDDEN (hiddenAt != null): Only Admin/Moderator/Event Owner can see content
+ * - DELETED (deletedAt != null, hiddenAt == null): Only Admin/Moderator can see content
+ * - ACTIVE: Everyone sees content
+ * - Hidden has priority over deleted
+ */
+function canViewCommentContent(
+  comment: CommentExtended,
+  context?: CommentViewContext
+): boolean {
+  // If active (not hidden, not deleted), everyone can see
+  if (!comment.hiddenAt && !comment.deletedAt) {
+    return true;
+  }
+
+  // If no viewer context, assume public view
+  if (!context?.viewerId) {
+    return false;
+  }
+
+  const isAdmin = context.viewerRole === 'ADMIN';
+  const isModerator = context.viewerRole === 'MODERATOR';
+
+  // HIDDEN state (has priority)
+  if (comment.hiddenAt) {
+    // Admin, Moderator, or Event Owner/Mod can see hidden content
+    return isAdmin || isModerator || context.isEventOwnerOrMod || false;
+  }
+
+  // DELETED state
+  if (comment.deletedAt) {
+    // Only Admin or Moderator can see deleted content
+    return isAdmin || isModerator;
+  }
+
+  return false;
+}
+
+export function mapComment(
+  c: CommentExtended,
+  viewerId?: string,
+  context?: CommentViewContext
+): GQLComment {
+  // Merge viewerId into context if provided
+  const fullContext: CommentViewContext = {
+    viewerId: viewerId || context?.viewerId,
+    viewerRole: context?.viewerRole,
+    isEventOwnerOrMod: context?.isEventOwnerOrMod,
+  };
+
+  // Determine if content should be visible
+  const canViewContent = canViewCommentContent(c, fullContext);
+
   return {
     id: c.id,
     eventId: c.eventId,
     authorId: c.authorId,
     threadId: c.threadId,
     parentId: c.parentId ?? null,
-    content: c.content,
+    content: canViewContent ? c.content : null,
     createdAt: c.createdAt,
     updatedAt: c.updatedAt,
     deletedAt: c.deletedAt ?? null,
@@ -933,15 +994,19 @@ export function mapComment(c: CommentExtended, viewerId?: string): GQLComment {
 
     // Event reference - field resolver can provide full event if needed
     event: c.event
-      ? mapEvent(c.event as unknown as EventWithGraph, viewerId)
+      ? mapEvent(c.event as unknown as EventWithGraph, fullContext.viewerId)
       : (null as unknown as GQLEvent),
     author: c.author ? mapUser(c.author) : (null as unknown as GQLUser),
     parent: c.parent
-      ? mapComment(c.parent as unknown as CommentExtended, viewerId)
+      ? mapComment(
+          c.parent as unknown as CommentExtended,
+          undefined,
+          fullContext
+        )
       : null,
     replies:
       c.replies?.map((r) =>
-        mapComment(r as unknown as CommentExtended, viewerId)
+        mapComment(r as unknown as CommentExtended, undefined, fullContext)
       ) ?? [],
     deletedBy: c.deletedBy ? mapUser(c.deletedBy) : null,
     hiddenBy: c.hiddenBy ? mapUser(c.hiddenBy) : null,
@@ -961,13 +1026,74 @@ type ReviewExtended = ReviewWithGraph & {
   hiddenBy?: PrismaUser | null;
 };
 
-export function mapReview(r: ReviewExtended, viewerId?: string): GQLReview {
+type ReviewViewContext = {
+  viewerId?: string;
+  viewerRole?: string;
+  isEventOwnerOrMod?: boolean;
+};
+
+/**
+ * Determines if viewer can see review content based on review state and viewer permissions.
+ *
+ * Rules (same as comments):
+ * - HIDDEN (hiddenAt != null): Only Admin/Moderator/Event Owner can see content
+ * - DELETED (deletedAt != null, hiddenAt == null): Only Admin/Moderator can see content
+ * - ACTIVE: Everyone sees content
+ * - Hidden has priority over deleted
+ */
+function canViewReviewContent(
+  review: ReviewExtended,
+  context?: ReviewViewContext
+): boolean {
+  // If active (not hidden, not deleted), everyone can see
+  if (!review.hiddenAt && !review.deletedAt) {
+    return true;
+  }
+
+  // If no viewer context, assume public view
+  if (!context?.viewerId) {
+    return false;
+  }
+
+  const isAdmin = context.viewerRole === 'ADMIN';
+  const isModerator = context.viewerRole === 'MODERATOR';
+
+  // HIDDEN state (has priority)
+  if (review.hiddenAt) {
+    // Admin, Moderator, or Event Owner/Mod can see hidden content
+    return isAdmin || isModerator || context.isEventOwnerOrMod || false;
+  }
+
+  // DELETED state
+  if (review.deletedAt) {
+    // Only Admin or Moderator can see deleted content
+    return isAdmin || isModerator;
+  }
+
+  return false;
+}
+
+export function mapReview(
+  r: ReviewExtended,
+  viewerId?: string,
+  context?: ReviewViewContext
+): GQLReview {
+  // Merge viewerId into context if provided
+  const fullContext: ReviewViewContext = {
+    viewerId: viewerId || context?.viewerId,
+    viewerRole: context?.viewerRole,
+    isEventOwnerOrMod: context?.isEventOwnerOrMod,
+  };
+
+  // Determine if content should be visible
+  const canViewContent = canViewReviewContent(r, fullContext);
+
   return {
     id: r.id,
     eventId: r.eventId,
     authorId: r.authorId,
     rating: r.rating,
-    content: r.content ?? null,
+    content: canViewContent ? (r.content ?? null) : null,
     createdAt: r.createdAt,
     updatedAt: r.updatedAt,
     deletedAt: r.deletedAt ?? null,
@@ -976,7 +1102,7 @@ export function mapReview(r: ReviewExtended, viewerId?: string): GQLReview {
     hiddenById: r.hiddenById ?? null,
 
     event: r.event
-      ? mapEvent(r.event as unknown as EventWithGraph, viewerId)
+      ? mapEvent(r.event as unknown as EventWithGraph, fullContext.viewerId)
       : (null as unknown as GQLEvent),
     author: r.author ? mapUser(r.author) : (null as unknown as GQLUser),
     deletedBy: r.deletedBy ? mapUser(r.deletedBy) : null,

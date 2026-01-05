@@ -117,14 +117,37 @@ exporters:
     default_labels_enabled:
       exporter: true
       job: true
+      level: true
+      service: true
 
   # Prometheus exporter (metrics)
   prometheus:
     endpoint: 0.0.0.0:8889
     namespace: app
-    resource_to_telemetry_conversion:
-      enabled: true
+    # Disabled to prevent duplicate label names error
+    # resource_to_telemetry_conversion:
+    #   enabled: true
     enable_open_metrics: true
+
+# =============================================================================
+# Connectors - link pipelines together
+# =============================================================================
+connectors:
+  # Span metrics connector - generate RED metrics from traces
+  spanmetrics:
+    histogram:
+      explicit:
+        buckets: [2ms, 5ms, 10ms, 25ms, 50ms, 100ms, 250ms, 500ms, 1s, 2s, 5s]
+    dimensions:
+      - name: http.method
+      - name: http.status_code
+      - name: http.route
+      # GraphQL-specific dimensions
+      - name: graphql.operation.name
+      - name: graphql.operation.type
+    dimensions_cache_size: 1000
+    aggregation_temporality: AGGREGATION_TEMPORALITY_CUMULATIVE
+    metrics_flush_interval: 15s
 
 extensions:
   # Health check endpoint
@@ -159,11 +182,11 @@ service:
         - attributes/redact
         - transform
         - batch
-      exporters: [otlp/tempo, debug]
+      exporters: [otlp/tempo, debug, spanmetrics] # Export to Tempo and spanmetrics connector
 
-    # Metrics pipeline
+    # Metrics pipeline (receives from OTLP, Prometheus scraper, and spanmetrics connector)
     metrics:
-      receivers: [otlp, prometheus]
+      receivers: [otlp, prometheus, spanmetrics]
       processors:
         - memory_limiter
         - resource

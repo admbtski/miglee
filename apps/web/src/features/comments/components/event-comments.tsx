@@ -91,6 +91,9 @@ function CommentItem({
   const isHidden = Boolean(comment.hiddenAt);
   const isRemovedFromView = isDeleted || isHidden;
 
+  // Content is null when comment is hidden/deleted and viewer cannot see it
+  const contentVisible = comment.content !== null;
+
   // Permissions matrix (must match backend resolver rules):
   // - Edit: ONLY Comment Author (admins/moderators CANNOT edit)
   // - Delete: App Admin, App Moderator, or Comment Author (Event Owner/Mod CANNOT delete, only hide)
@@ -151,14 +154,20 @@ function CommentItem({
       className={`${isReply ? 'ml-8 border-l-2 border-zinc-200 pl-4 dark:border-zinc-800' : ''}`}
     >
       <div className="p-4 bg-white rounded-lg shadow-sm group dark:bg-zinc-900">
-        {/* Deleted/Hidden Comment Placeholder */}
-        {isRemovedFromView && !showModerationBadge ? (
+        {/* Deleted/Hidden Comment Placeholder (for users who cannot see content) */}
+        {!contentVisible ? (
           <div className="flex items-center gap-3 py-6 text-sm text-zinc-500 dark:text-zinc-400">
             <EyeOff className="w-4 h-4" />
             <span className="italic">
-              {isDeleted
-                ? 'Ten komentarz został usunięty'
-                : 'Ten komentarz został ukryty'}
+              {isHidden
+                ? isAuthor
+                  ? 'Twój komentarz został ukryty przez moderację'
+                  : 'Ten komentarz został ukryty przez moderację'
+                : isDeleted
+                  ? isAuthor
+                    ? 'Usunąłeś ten komentarz'
+                    : 'Ten komentarz został usunięty przez autora'
+                  : 'Ten komentarz jest niedostępny'}
             </span>
           </div>
         ) : (
@@ -307,7 +316,7 @@ function CommentItem({
                   </button>
                 </div>
               </div>
-            ) : (
+            ) : contentVisible ? (
               <>
                 <p className="text-sm text-zinc-700 dark:text-zinc-300">
                   {comment.content}
@@ -350,7 +359,7 @@ function CommentItem({
                   )}
                 </div>
               </>
-            )}
+            ) : null}
           </>
         )}
       </div>

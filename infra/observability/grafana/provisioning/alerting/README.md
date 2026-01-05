@@ -15,39 +15,74 @@ Alerting rules are **temporarily disabled** (`alerts.yaml.disabled`) for the ini
 
 ## 📋 Available Alert Rules
 
-The disabled `alerts.yaml.disabled` file contains pre-configured alerts:
-
-### API Alerts
+### API Alerts (`alerts.yaml.disabled`)
 - **api-5xx-rate**: Triggers when 5xx error rate > 5% for 5 minutes
 - **api-latency-p95**: Triggers when p95 latency > 1000ms for 5 minutes
 
-### Worker Alerts
+### Worker Alerts (`alerts.yaml.disabled`)
 - **worker-queue-depth**: Triggers when queue depth > 100 jobs for 10 minutes
 - **worker-job-fail-rate**: Triggers when job fail rate > 10% for 5 minutes
+
+### Core Web Vitals Alerts (`web-vitals-alerts.yaml`) ✅ **READY TO USE**
+
+**LCP (Largest Contentful Paint)**:
+- 🔴 **Critical**: LCP p75 > 4s (fires after 5m)
+- 🟡 **Warning**: LCP p75 between 2.5s and 4s (fires after 10m)
+
+**INP (Interaction to Next Paint)**:
+- 🔴 **Critical**: INP p75 > 500ms (fires after 5m)
+- 🟡 **Warning**: INP p75 between 200ms and 500ms (fires after 10m)
+
+**CLS (Cumulative Layout Shift)**:
+- 🔴 **Critical**: CLS p75 > 0.25 (fires after 5m)
+- 🟡 **Warning**: CLS p75 between 0.1 and 0.25 (fires after 10m)
+
+**Quality Metrics**:
+- ⚠️ **Warning**: % Good experiences < 75% (fires after 15m)
+- ⚠️ **Warning**: Low sample count < 0.01 samples/s (fires after 10m)
 
 ---
 
 ## 🔧 How to Enable Alerting
 
-### Step 1: Fix Datasource UIDs
+### Option A: Enable Web Vitals Alerts ONLY (Recommended)
 
-Ensure Prometheus datasource has explicit UID in `../datasources/datasources.yaml`:
+**Web Vitals alerts are ready to use without any changes!**
 
-```yaml
-- name: Prometheus
-  type: prometheus
-  uid: prometheus  # ← Required
-  # ... rest of config
+```bash
+# Just restart Grafana to load web-vitals-alerts.yaml
+cd infra/observability
+docker compose -f docker-compose.observability.yml restart grafana
+
+# Verify alerts loaded
+docker logs grafana 2>&1 | grep "web-vitals"
 ```
 
-### Step 2: Enable Alerts
+Then check: **Grafana** → **Alerting** → **Alert rules** → Look for folder **"Web Vitals"**
+
+You should see 9 alert rules:
+- 2 LCP alerts (Critical + Warning)
+- 2 INP alerts (Critical + Warning)
+- 2 CLS alerts (Critical + Warning)
+- 1 Good % alert
+- 1 Sample count alert
+
+---
+
+### Option B: Enable ALL Alerts (API + Workers + Web Vitals)
+
+### Step 1: Fix Datasource UIDs (Already Done ✅)
+
+Prometheus datasource already has UID `prometheus` in `../datasources/datasources.yaml`.
+
+### Step 2: Enable API/Worker Alerts
 
 ```bash
 cd infra/observability/grafana/provisioning/alerting
 mv alerts.yaml.disabled alerts.yaml
 ```
 
-### Step 3: (Optional) Configure SMTP
+### Step 3: (Optional) Configure SMTP for Email Notifications
 
 Edit `docker-compose.observability.yml`:
 
@@ -62,10 +97,19 @@ services:
       - GF_SMTP_FROM_ADDRESS=your-email@gmail.com
 ```
 
+**Alternative notification channels**:
+- Slack
+- PagerDuty
+- Discord
+- Webhook
+
+Configure in Grafana UI: **Alerting** → **Contact points**
+
 ### Step 4: Restart Grafana
 
 ```bash
-docker restart grafana
+cd infra/observability
+docker compose -f docker-compose.observability.yml restart grafana
 ```
 
 ---

@@ -1,4 +1,8 @@
-import pino, { LoggerOptions, TransportSingleOptions } from 'pino';
+import pino, {
+  LoggerOptions,
+  TransportSingleOptions,
+  TransportMultiOptions,
+} from 'pino';
 import { pinoTraceMixin } from '@appname/observability/pino';
 import { config } from '../env';
 
@@ -83,8 +87,51 @@ export function buildLogger({
     timestamp: pino.stdTimeFunctions.isoTime,
   } satisfies LoggerOptions;
 
-  // Development: pretty print to console via transport
+  // Development: pretty print + OTLP export
   if (config.isDevelopment) {
+    // If OTLP endpoint is configured, use multi-transport (console + OTLP)
+    if (process.env.OTEL_EXPORTER_OTLP_ENDPOINT) {
+      const transport = {
+        targets: [
+          // Pretty console output
+          {
+            target: 'pino-pretty',
+            level: level,
+            options: {
+              colorize: true,
+              translateTime: 'SYS:yyyy-mm-dd HH:MM:ss.l',
+              singleLine: false,
+              ignore: 'pid,hostname',
+            },
+          },
+          // OpenTelemetry OTLP export
+          {
+            target: 'pino-opentelemetry-transport',
+            level: level,
+            options: {
+              resourceAttributes: {
+                'service.name': name,
+                'service.version': '1.0.0',
+                'deployment.environment': env,
+              },
+              logRecordProcessorOptions: [
+                {
+                  recordProcessorType: 'batch',
+                  exporterOptions: {
+                    protocol: 'http/json',
+                    endpoint: `${process.env.OTEL_EXPORTER_OTLP_ENDPOINT}/v1/logs`,
+                  },
+                },
+              ],
+            },
+          },
+        ],
+      } satisfies TransportMultiOptions;
+
+      return { ...baseOptions, transport };
+    }
+
+    // Fallback: only pretty console (no OTLP)
     const transport = {
       target: 'pino-pretty',
       options: {

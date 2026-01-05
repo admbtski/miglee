@@ -11,6 +11,7 @@ import {
   Trash2,
   Edit,
   UserPlus,
+  RefreshCw,
 } from 'lucide-react';
 import { useAdminUserAuditLogsQuery } from '@/features/admin';
 
@@ -92,7 +93,7 @@ const getSeverityLabel = (severity: number) => {
 export function AuditLogTab({ userId }: AuditLogTabProps) {
   const [filter, setFilter] = useState<string>('all');
 
-  const { data, isLoading } = useAdminUserAuditLogsQuery({
+  const { data, isLoading, refetch } = useAdminUserAuditLogsQuery({
     userId,
     limit: 50,
     offset: 0,
@@ -114,6 +115,16 @@ export function AuditLogTab({ userId }: AuditLogTabProps) {
             Wszystkie akcje wykonane przez administratorów na tym koncie
           </p>
         </div>
+        <button
+          type="button"
+          onClick={() => refetch()}
+          disabled={isLoading}
+          className="inline-flex items-center gap-2 rounded-lg border border-zinc-300 bg-white px-3 py-1.5 text-sm font-medium text-zinc-700 hover:bg-zinc-50 disabled:opacity-50 disabled:cursor-not-allowed dark:border-zinc-700 dark:bg-zinc-900 dark:text-zinc-300 dark:hover:bg-zinc-800"
+          title="Odśwież historię"
+        >
+          <RefreshCw className={`h-3.5 w-3.5 ${isLoading ? 'animate-spin' : ''}`} />
+          Odśwież
+        </button>
       </div>
 
       {/* Filters */}

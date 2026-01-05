@@ -31,7 +31,9 @@ type CategoryLevel = NonNullable<
 type SocialLink = NonNullable<NonNullable<UserProfile>['socialLinks']>[number];
 
 type Category = NonNullable<
-  NonNullable<ReturnType<typeof useCategoriesQuery>['data']>['categories']
+  NonNullable<
+    NonNullable<ReturnType<typeof useCategoriesQuery>['data']>['categories']
+  >['items']
 >[number];
 
 type EditedProfile = {
@@ -62,7 +64,7 @@ export function ProfileTab({ userId }: ProfileTabProps) {
   const privacy = user?.privacy;
   const stats = user?.stats;
 
-  const categories = categoriesData?.categories || [];
+  const categories = categoriesData?.categories?.items || [];
 
   const getCategoryName = (categoryId: string) => {
     const cat = categories.find((c: Category) => c.id === categoryId);

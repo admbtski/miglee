@@ -49,8 +49,9 @@ export const tagsBySlugsQuery: QueryResolvers['tagsBySlugs'] =
 export const tagsQuery: QueryResolvers['tags'] = resolverWithMetrics(
   'Query',
   'tags',
-  async (_p, { query: q, limit }): Promise<GQLTag[]> => {
+  async (_p, { query: q, limit, offset }) => {
     const take = Math.max(1, Math.min(limit ?? 50, 200));
+    const skip = Math.max(0, offset ?? 0);
     const query = q?.trim();
 
     const where: Prisma.TagWhereInput = query
@@ -62,15 +63,27 @@ export const tagsQuery: QueryResolvers['tags'] = resolverWithMetrics(
         }
       : {};
 
+    // Get total count for pagination
+    const total = await prisma.tag.count({ where });
+
     const list = await prisma.tag.findMany({
       where,
       take,
+      skip,
       orderBy: { label: 'asc' },
       select: tagSelect,
     });
 
-    // Select już zwraca shape zgodny z GQLTag.
-    return list;
+    return {
+      items: list,
+      pageInfo: {
+        total,
+        limit: take,
+        offset: skip,
+        hasNext: skip + take < total,
+        hasPrev: skip > 0,
+      },
+    };
   }
 );
 

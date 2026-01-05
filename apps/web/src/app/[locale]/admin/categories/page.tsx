@@ -1,7 +1,7 @@
 'use client';
 
 import { format, pl } from '@/lib/date';
-import { useState, useMemo } from 'react';
+import { useState } from 'react';
 import { useGetCategoriesQuery } from '@/features/categories';
 import { Plus, Edit, Trash2, Search } from 'lucide-react';
 import { AddCategoryModal } from './_components/add-category-modal';
@@ -29,21 +29,18 @@ export default function CategoriesPage() {
     null
   );
 
+  const offset = (page - 1) * LIMIT;
+
+  // Server-side pagination
   const { data, isLoading } = useGetCategoriesQuery({
     query: search || undefined,
-    limit: 1000, // Fetch all for client-side filtering
+    limit: LIMIT,
+    offset,
   });
 
-  const allCategories = (data?.categories ?? []) as Category[];
-
-  // Client-side pagination
-  const totalPages = Math.ceil(allCategories.length / LIMIT);
-  const startIndex = (page - 1) * LIMIT;
-  const endIndex = startIndex + LIMIT;
-  const categories = useMemo(
-    () => allCategories.slice(startIndex, endIndex),
-    [allCategories, startIndex, endIndex]
-  );
+  const categories = (data?.categories?.items ?? []) as Category[];
+  const total = data?.categories?.pageInfo?.total ?? 0;
+  const totalPages = Math.ceil(total / LIMIT);
 
   const handleSearchChange = (value: string) => {
     setSearch(value);
@@ -224,18 +221,16 @@ export default function CategoriesPage() {
         )}
 
         {/* Pagination */}
-        {!isLoading &&
-          categories.length > 0 &&
-          allCategories.length > LIMIT && (
-            <Pagination
-              currentPage={page}
-              totalPages={totalPages}
-              onPageChange={setPage}
-              totalItems={allCategories.length}
-              itemsPerPage={LIMIT}
-              itemsOnCurrentPage={categories.length}
-            />
-          )}
+        {!isLoading && total > LIMIT && (
+          <Pagination
+            currentPage={page}
+            totalPages={totalPages}
+            onPageChange={setPage}
+            totalItems={total}
+            itemsPerPage={LIMIT}
+            itemsOnCurrentPage={categories.length}
+          />
+        )}
       </div>
 
       {/* Modals */}

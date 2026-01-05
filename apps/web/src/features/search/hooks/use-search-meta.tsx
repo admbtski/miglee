@@ -87,13 +87,13 @@ export function useSearchMeta(query: string) {
   const data: SearchMeta = useMemo(
     () => ({
       tags:
-        tagsData?.tags.map((t) => ({
+        tagsData?.tags?.items?.map((t) => ({
           id: t.id,
           label: t.label ?? t.slug ?? '-',
           slug: t.slug,
         })) ?? [],
       categories:
-        categoriesData?.categories.map((c) => ({
+        categoriesData?.categories?.items?.map((c) => ({
           id: c.id,
           label:
             c.names[appLanguage] ??

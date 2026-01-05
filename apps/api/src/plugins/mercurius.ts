@@ -9,8 +9,8 @@ import { GraphQLError, type ValueNode } from 'graphql';
 import mercurius, { MercuriusContext } from 'mercurius';
 import { join } from 'path';
 import { WebSocket } from 'ws';
-// OpenTelemetry trace (for future use)
-// import { trace } from '@opentelemetry/api';
+// OpenTelemetry trace for GraphQL operations
+import { trace, SpanStatusCode } from '@opentelemetry/api';
 import { config, env } from '../env';
 import { createContext } from '../graphql/context';
 import { resolvers } from '../graphql/resolvers';
@@ -293,6 +293,98 @@ export const mercuriusPlugin = fastifyPlugin(async (fastify) => {
   // =============================================================================
   // GraphQL Hooks
   // =============================================================================
+
+  // ✅ OpenTelemetry tracing hook - add GraphQL operation name to spans
+  fastify.graphql.addHook(
+    'preExecution',
+    async (_schema, document, context) => {
+      try {
+        // Extract operation details from GraphQL document
+        const operation = document.definitions.find(
+          (def) => def.kind === 'OperationDefinition'
+        );
+
+        if (operation && operation.kind === 'OperationDefinition') {
+          const operationName = operation.name?.value || 'anonymous';
+          const operationType = operation.operation || 'query';
+
+          // Get the active span from the current context
+          // OpenTelemetry's HTTP instrumentation should have created a span for the HTTP request
+          const tracer = trace.getTracer('mercurius');
+          const currentSpan = trace.getActiveSpan();
+
+          if (currentSpan) {
+            // Add GraphQL attributes to the HTTP request span
+            currentSpan.setAttribute('graphql.operation.name', operationName);
+            currentSpan.setAttribute('graphql.operation.type', operationType);
+
+            // Update span name to be more descriptive
+            currentSpan.updateName(`GraphQL ${operationType} ${operationName}`);
+          }
+
+          // Also create a child span for the GraphQL operation
+          const gqlSpan = tracer.startSpan(
+            `GraphQL ${operationType} ${operationName}`,
+            {
+              attributes: {
+                'graphql.operation.name': operationName,
+                'graphql.operation.type': operationType,
+              },
+            }
+          );
+
+          // Store span in context for cleanup in onResolution
+          (context as any).__gqlSpan = gqlSpan;
+
+          // Log for debugging
+          context.reply.request.log.trace(
+            { operationName, operationType, hasSpan: !!currentSpan },
+            'GraphQL operation traced'
+          );
+        }
+      } catch (error) {
+        context.reply.request.log.error(
+          { error },
+          'Failed to add GraphQL tracing'
+        );
+      }
+    }
+  );
+
+  // ✅ OnResolution hook - close GraphQL operation span with proper status
+  fastify.graphql.addHook('onResolution', async (execution, context) => {
+    try {
+      const gqlSpan = (context as any).__gqlSpan;
+      if (gqlSpan) {
+        // Check if there were GraphQL errors
+        const hasErrors = execution.errors && execution.errors.length > 0;
+
+        if (hasErrors && execution.errors) {
+          // Set span status to ERROR
+          const errorMessages = execution.errors
+            .map((e: any) => e.message)
+            .join(', ');
+          gqlSpan.setStatus({
+            code: SpanStatusCode.ERROR,
+            message: `GraphQL errors: ${errorMessages}`,
+          });
+
+          // Record error details
+          gqlSpan.recordException({
+            name: 'GraphQLError',
+            message: errorMessages,
+          });
+        } else {
+          // Set span status to OK (success)
+          gqlSpan.setStatus({ code: SpanStatusCode.OK });
+        }
+
+        gqlSpan.end();
+      }
+    } catch (error) {
+      context.reply.request.log.error({ error }, 'Failed to end GraphQL span');
+    }
+  });
 
   // ✅ Pre-execution hook for suspended user check & auto-unsuspend
   fastify.graphql.addHook(

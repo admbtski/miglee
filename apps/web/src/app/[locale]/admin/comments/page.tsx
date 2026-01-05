@@ -198,9 +198,11 @@ export default function CommentsPage() {
                     <td className="max-w-xs px-6 py-4 text-sm">
                       {comment.event?.id ? (
                         <Link
-                          href={localePath(`/event/${comment.event.id}`)}
+                          href={localePath(`/e/${comment.event.id}`)}
                           className="inline-flex items-center gap-1 text-blue-600 hover:text-blue-900 hover:underline dark:text-blue-400 dark:hover:text-blue-300"
                           title="Przejdź do wydarzenia"
+                          target="_blank"
+                          rel="noopener noreferrer"
                         >
                           <span className="truncate">
                             {comment.event.title}

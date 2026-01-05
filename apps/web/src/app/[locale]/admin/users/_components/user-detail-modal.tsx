@@ -7,7 +7,6 @@ import { AccountTab } from './tabs/account-tab';
 import { CommunicationTab } from './tabs/communication-tab';
 import { ActivityTab } from './tabs/activity-tab';
 import { AuditLogTab } from './tabs/audit-log-tab';
-import { NotificationsTab } from './tabs/notifications-tab';
 
 type UserDetailModalProps = {
   userId: string;
@@ -16,18 +15,12 @@ type UserDetailModalProps = {
   onRefresh?: () => void;
 };
 
-type TabId =
-  | 'account'
-  | 'activity'
-  | 'communication'
-  | 'notifications'
-  | 'audit';
+type TabId = 'account' | 'activity' | 'communication' | 'audit';
 
 const tabs: { id: TabId; label: string }[] = [
   { id: 'account', label: 'Konto' },
   { id: 'activity', label: 'Aktywność' },
   { id: 'communication', label: 'Komunikacja' },
-  { id: 'notifications', label: 'Powiadomienia' },
   { id: 'audit', label: 'Historia' },
 ];
 
@@ -50,7 +43,7 @@ export function UserDetailModal({
       onClose={handleClose}
       size="xl"
       variant="default"
-      density="comfortable"
+      density="compact"
       labelledById="user-detail-title"
       ariaLabel="Szczegóły użytkownika"
       header={
@@ -99,9 +92,7 @@ export function UserDetailModal({
             {activeTab === 'communication' && (
               <CommunicationTab userId={userId} />
             )}
-            {activeTab === 'notifications' && (
-              <NotificationsTab userId={userId} />
-            )}
+
             {activeTab === 'audit' && <AuditLogTab userId={userId} />}
           </div>
         </div>

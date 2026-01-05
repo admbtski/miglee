@@ -217,7 +217,13 @@ export const createCommentMutation: MutationResolvers['createComment'] =
         }
       }
 
-      return mapComment(comment);
+      // Author sees their new comment (always active at creation)
+      const viewerContext = {
+        viewerId: user.id,
+        viewerRole: user.role,
+        isEventOwnerOrMod: false, // Not relevant for newly created comment
+      };
+      return mapComment(comment, undefined, viewerContext);
     }
   );
 
@@ -280,7 +286,13 @@ export const updateCommentMutation: MutationResolvers['updateComment'] =
         include: COMMENT_INCLUDE,
       });
 
-      return mapComment(updated);
+      // Author sees their updated comment
+      const viewerContext = {
+        viewerId: user.id,
+        viewerRole: user.role,
+        isEventOwnerOrMod: false, // Not relevant for author's own comment
+      };
+      return mapComment(updated, undefined, viewerContext);
     }
   );
 

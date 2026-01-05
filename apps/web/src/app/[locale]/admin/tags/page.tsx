@@ -1,7 +1,7 @@
 'use client';
 
 import { format, pl } from '@/lib/date';
-import { useState, useMemo } from 'react';
+import { useState } from 'react';
 import { useGetTagsQuery } from '@/features/tags';
 import { Plus, Edit, Trash2, Search } from 'lucide-react';
 import { AddTagModal } from './_components/add-tag-modal';
@@ -27,21 +27,18 @@ export default function TagsPage() {
   const [deleteModalOpen, setDeleteModalOpen] = useState(false);
   const [selectedTag, setSelectedTag] = useState<Tag | null>(null);
 
+  const offset = (page - 1) * LIMIT;
+
+  // Server-side pagination
   const { data, isLoading } = useGetTagsQuery({
     query: search || undefined,
-    limit: 1000, // Fetch all for client-side filtering
+    limit: LIMIT,
+    offset,
   });
 
-  const allTags = (data?.tags ?? []) as Tag[];
-
-  // Client-side pagination
-  const totalPages = Math.ceil(allTags.length / LIMIT);
-  const startIndex = (page - 1) * LIMIT;
-  const endIndex = startIndex + LIMIT;
-  const tags = useMemo(
-    () => allTags.slice(startIndex, endIndex),
-    [allTags, startIndex, endIndex]
-  );
+  const tags = (data?.tags?.items ?? []) as Tag[];
+  const total = data?.tags?.pageInfo?.total ?? 0;
+  const totalPages = Math.ceil(total / LIMIT);
 
   const handleSearchChange = (value: string) => {
     setSearch(value);
@@ -176,12 +173,12 @@ export default function TagsPage() {
         )}
 
         {/* Pagination */}
-        {!isLoading && tags.length > 0 && allTags.length > LIMIT && (
+        {!isLoading && total > LIMIT && (
           <Pagination
             currentPage={page}
             totalPages={totalPages}
             onPageChange={setPage}
-            totalItems={allTags.length}
+            totalItems={total}
             itemsPerPage={LIMIT}
             itemsOnCurrentPage={tags.length}
           />

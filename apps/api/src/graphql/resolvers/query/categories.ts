@@ -19,8 +19,9 @@ export const categoriesQuery: QueryResolvers['categories'] =
   resolverWithMetrics(
     'Query',
     'categories',
-    async (_p, { query: queryArg, limit }) => {
+    async (_p, { query: queryArg, limit, offset }) => {
       const take = Math.max(1, Math.min(limit ?? 50, 200));
+      const skip = Math.max(0, offset ?? 0);
       const query = queryArg?.trim();
 
       const namePathFilters: Prisma.CategoryWhereInput[] = query
@@ -43,14 +44,27 @@ export const categoriesQuery: QueryResolvers['categories'] =
           }
         : {};
 
+      // Get total count for pagination
+      const total = await prisma.category.count({ where });
+
       const list = await prisma.category.findMany({
         where,
         take,
+        skip,
         orderBy: { slug: 'asc' },
         select: categorySelect,
       });
 
-      return list.map(mapCategory);
+      return {
+        items: list.map(mapCategory),
+        pageInfo: {
+          total,
+          limit: take,
+          offset: skip,
+          hasNext: skip + take < total,
+          hasPrev: skip > 0,
+        },
+      };
     }
   );
 

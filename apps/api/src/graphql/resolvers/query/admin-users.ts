@@ -58,9 +58,16 @@ export const adminUserCommentsQuery: QueryResolvers['adminUserComments'] =
         skip,
       });
 
+      // Admin sees all comments with full content
+      const viewerContext = {
+        viewerId: currentUser.id,
+        viewerRole: currentUser.role, // ADMIN
+        isEventOwnerOrMod: false, // Not relevant for admin view
+      };
+
       return {
         items: comments.map((c) =>
-          mapComment(c as unknown as CommentWithGraph, currentUser.id)
+          mapComment(c as unknown as CommentWithGraph, undefined, viewerContext)
         ),
         pageInfo: {
           total,
@@ -101,9 +108,16 @@ export const adminUserReviewsQuery: QueryResolvers['adminUserReviews'] =
         skip,
       });
 
+      // Admin sees all reviews with full content
+      const viewerContext = {
+        viewerId: currentUser.id,
+        viewerRole: currentUser.role, // ADMIN
+        isEventOwnerOrMod: false, // Not relevant for admin view
+      };
+
       return {
         items: reviews.map((r) =>
-          mapReview(r as unknown as ReviewWithGraph, currentUser.id)
+          mapReview(r as unknown as ReviewWithGraph, undefined, viewerContext)
         ),
         pageInfo: {
           total,

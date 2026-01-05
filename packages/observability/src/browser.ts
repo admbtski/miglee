@@ -187,8 +187,40 @@ export function getConnectionType(): string {
 
   // Extended Navigator interface for experimental connection API
   const nav = navigator as any;
-  const connection = nav.connection || nav.mozConnection || nav.webkitConnection;
+  const connection =
+    nav.connection || nav.mozConnection || nav.webkitConnection;
 
   if (!connection) return 'unknown';
   return connection.effectiveType || 'unknown';
+}
+
+/**
+ * Get render type (SSR vs CSR) for web vitals
+ * Detects if the current page was server-rendered or client-rendered
+ */
+export function getRenderType(): 'ssr' | 'csr' {
+  if (typeof window === 'undefined') return 'ssr';
+
+  // Check if this is the initial page load (SSR) or client-side navigation (CSR)
+  if (typeof performance !== 'undefined' && performance.getEntriesByType) {
+    const navEntries = performance.getEntriesByType(
+      'navigation'
+    ) as PerformanceNavigationTiming[];
+    if (navEntries.length > 0) {
+      const navType = navEntries[0]?.type;
+      // 'navigate' = full page load (SSR), 'reload' = page reload (SSR)
+      // In Next.js, client-side navigations don't create new navigation entries
+      return navType === 'navigate' || navType === 'reload' ? 'ssr' : 'csr';
+    }
+  }
+
+  // Fallback: Check if Next.js has loaded (indicates potential SSR)
+  const win = window as any;
+  if (win.__NEXT_DATA__) {
+    // If page was pre-rendered, it's SSR
+    return win.__NEXT_DATA__.isFallback === false ? 'ssr' : 'csr';
+  }
+
+  // Default to CSR if we can't determine
+  return 'csr';
 }

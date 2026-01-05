@@ -8,7 +8,7 @@ import { QueryKey, useQuery, UseQueryOptions } from '@tanstack/react-query';
 import { categoriesKeys } from './categories-query-keys';
 
 export function buildGetCategoriesOptions(
-  variables?: GetCategoriesQueryVariables,
+  variables: GetCategoriesQueryVariables = {},
   options?: Omit<
     UseQueryOptions<GetCategoriesQuery, Error, GetCategoriesQuery, QueryKey>,
     'queryKey' | 'queryFn'
@@ -17,22 +17,22 @@ export function buildGetCategoriesOptions(
   return {
     queryKey: categoriesKeys.list(variables) as unknown as QueryKey,
     queryFn: async () =>
-      variables
-        ? gqlClient.request<GetCategoriesQuery, GetCategoriesQueryVariables>(
-            GetCategoriesDocument,
-            variables
-          )
-        : gqlClient.request<GetCategoriesQuery>(GetCategoriesDocument),
-    ...(options ?? {}),
+      gqlClient.request<GetCategoriesQuery, GetCategoriesQueryVariables>(
+        GetCategoriesDocument,
+        variables
+      ),
+    ...options,
   };
 }
 
 export function useGetCategoriesQuery(
-  variables?: GetCategoriesQueryVariables,
+  variables: GetCategoriesQueryVariables = {},
   options?: Omit<
     UseQueryOptions<GetCategoriesQuery, Error, GetCategoriesQuery, QueryKey>,
     'queryKey' | 'queryFn'
   >
 ) {
-  return useQuery(buildGetCategoriesOptions(variables, options));
+  return useQuery<GetCategoriesQuery, Error, GetCategoriesQuery, QueryKey>(
+    buildGetCategoriesOptions(variables, options)
+  );
 }

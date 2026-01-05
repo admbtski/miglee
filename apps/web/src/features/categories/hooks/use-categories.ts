@@ -27,7 +27,7 @@ export function useCategories(query: string, initial?: CategoryOption[]) {
   );
 
   const optionsFromApi: CategoryOption[] = useMemo(() => {
-    const categories = data?.categories ?? [];
+    const categories = data?.categories?.items ?? [];
     return categories.map((c) => ({
       id: c.id,
       slug: c.slug,

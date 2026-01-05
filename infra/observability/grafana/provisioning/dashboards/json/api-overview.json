@@ -15,7 +15,7 @@
       }
     ]
   },
-  "description": "API Overview - RED Metrics (Rate, Errors, Duration)",
+  "description": "GraphQL API Overview - RED Metrics (Rate, Errors, Duration) with per-operation breakdown",
   "editable": true,
   "fiscalYearStartMonth": 0,
   "graphTooltip": 1,
@@ -33,7 +33,7 @@
       },
       "id": 1,
       "panels": [],
-      "title": "Overview",
+      "title": "📊 RED Metrics Overview",
       "type": "row"
     },
     {
@@ -53,6 +53,14 @@
               {
                 "color": "green",
                 "value": null
+              },
+              {
+                "color": "yellow",
+                "value": 50
+              },
+              {
+                "color": "red",
+                "value": 100
               }
             ]
           },
@@ -61,7 +69,7 @@
         "overrides": []
       },
       "gridPos": {
-        "h": 4,
+        "h": 6,
         "w": 6,
         "x": 0,
         "y": 1
@@ -77,7 +85,8 @@
           "fields": "",
           "values": false
         },
-        "textMode": "auto"
+        "textMode": "auto",
+        "wideLayout": true
       },
       "pluginVersion": "11.0.0",
       "targets": [
@@ -86,12 +95,13 @@
             "type": "prometheus",
             "uid": "${datasource}"
           },
-          "expr": "sum(rate(app_http_server_request_duration_seconds_count{service_name=~\"$service\"}[$__rate_interval]))",
+          "expr": "sum(rate(app_calls_total{service_name=~\"$service\", graphql_operation_name=~\"$operation\"}[$__rate_interval]))",
           "legendFormat": "Request Rate",
           "refId": "A"
         }
       ],
-      "title": "Request Rate",
+      "title": "⚡ Request Rate",
+      "description": "Total GraphQL requests per second",
       "type": "stat"
     },
     {
@@ -105,6 +115,8 @@
             "mode": "thresholds"
           },
           "mappings": [],
+          "max": 100,
+          "min": 0,
           "thresholds": {
             "mode": "absolute",
             "steps": [
@@ -127,7 +139,7 @@
         "overrides": []
       },
       "gridPos": {
-        "h": 4,
+        "h": 6,
         "w": 6,
         "x": 6,
         "y": 1
@@ -143,7 +155,8 @@
           "fields": "",
           "values": false
         },
-        "textMode": "auto"
+        "textMode": "auto",
+        "wideLayout": true
       },
       "pluginVersion": "11.0.0",
       "targets": [
@@ -152,12 +165,1544 @@
             "type": "prometheus",
             "uid": "${datasource}"
           },
-          "expr": "100 * sum(rate(app_http_server_request_duration_seconds_count{service_name=~\"$service\", http_status_code=~\"5..\"}[$__rate_interval])) / sum(rate(app_http_server_request_duration_seconds_count{service_name=~\"$service\"}[$__rate_interval]))",
+          "expr": "100 * sum(rate(app_calls_total{service_name=~\"$service\", graphql_operation_name=~\"$operation\", status_code=\"STATUS_CODE_ERROR\"}[$__rate_interval])) / sum(rate(app_calls_total{service_name=~\"$service\", graphql_operation_name=~\"$operation\"}[$__rate_interval]))",
           "legendFormat": "Error Rate",
           "refId": "A"
         }
       ],
-      "title": "Error Rate (5xx)",
+      "title": "❌ Error Rate",
+      "description": "Percentage of failed GraphQL operations",
+      "type": "stat"
+    },
+    {
+      "datasource": {
+        "type": "prometheus",
+        "uid": "${datasource}"
+      },
+      "fieldConfig": {
+        "defaults": {
+          "color": {
+            "mode": "thresholds"
+          },
+          "mappings": [],
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "green",
+                "value": null
+              },
+              {
+                "color": "yellow",
+                "value": 500
+              },
+              {
+                "color": "red",
+                "value": 1000
+              }
+            ]
+          },
+          "unit": "ms"
+        },
+        "overrides": []
+      },
+      "gridPos": {
+        "h": 6,
+        "w": 6,
+        "x": 12,
+        "y": 1
+      },
+      "id": 4,
+      "options": {
+        "colorMode": "value",
+        "graphMode": "area",
+        "justifyMode": "auto",
+        "orientation": "auto",
+        "reduceOptions": {
+          "calcs": ["lastNotNull"],
+          "fields": "",
+          "values": false
+        },
+        "textMode": "auto",
+        "wideLayout": true
+      },
+      "pluginVersion": "11.0.0",
+      "targets": [
+        {
+          "datasource": {
+            "type": "prometheus",
+            "uid": "${datasource}"
+          },
+          "expr": "histogram_quantile(0.95, sum(rate(app_duration_milliseconds_bucket{service_name=~\"$service\", graphql_operation_name=~\"$operation\"}[$__rate_interval])) by (le))",
+          "legendFormat": "p95 Latency",
+          "refId": "A"
+        }
+      ],
+      "title": "⏱️ Latency (p95)",
+      "description": "95th percentile response time",
+      "type": "stat"
+    },
+    {
+      "datasource": {
+        "type": "prometheus",
+        "uid": "${datasource}"
+      },
+      "fieldConfig": {
+        "defaults": {
+          "color": {
+            "mode": "thresholds"
+          },
+          "mappings": [],
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "green",
+                "value": null
+              },
+              {
+                "color": "yellow",
+                "value": 1000
+              },
+              {
+                "color": "red",
+                "value": 2000
+              }
+            ]
+          },
+          "unit": "ms"
+        },
+        "overrides": []
+      },
+      "gridPos": {
+        "h": 6,
+        "w": 6,
+        "x": 18,
+        "y": 1
+      },
+      "id": 5,
+      "options": {
+        "colorMode": "value",
+        "graphMode": "area",
+        "justifyMode": "auto",
+        "orientation": "auto",
+        "reduceOptions": {
+          "calcs": ["lastNotNull"],
+          "fields": "",
+          "values": false
+        },
+        "textMode": "auto",
+        "wideLayout": true
+      },
+      "pluginVersion": "11.0.0",
+      "targets": [
+        {
+          "datasource": {
+            "type": "prometheus",
+            "uid": "${datasource}"
+          },
+          "expr": "histogram_quantile(0.99, sum(rate(app_duration_milliseconds_bucket{service_name=~\"$service\", graphql_operation_name=~\"$operation\"}[$__rate_interval])) by (le))",
+          "legendFormat": "p99 Latency",
+          "refId": "A"
+        }
+      ],
+      "title": "🐌 Latency (p99)",
+      "description": "99th percentile response time",
+      "type": "stat"
+    },
+    {
+      "collapsed": false,
+      "gridPos": {
+        "h": 1,
+        "w": 24,
+        "x": 0,
+        "y": 7
+      },
+      "id": 10,
+      "panels": [],
+      "title": "📈 Request Rate & Error Rate Trends",
+      "type": "row"
+    },
+    {
+      "datasource": {
+        "type": "prometheus",
+        "uid": "${datasource}"
+      },
+      "fieldConfig": {
+        "defaults": {
+          "color": {
+            "mode": "palette-classic"
+          },
+          "custom": {
+            "axisBorderShow": false,
+            "axisCenteredZero": false,
+            "axisColorMode": "text",
+            "axisLabel": "",
+            "axisPlacement": "auto",
+            "barAlignment": 0,
+            "drawStyle": "line",
+            "fillOpacity": 10,
+            "gradientMode": "none",
+            "hideFrom": {
+              "legend": false,
+              "tooltip": false,
+              "viz": false
+            },
+            "insertNulls": false,
+            "lineInterpolation": "smooth",
+            "lineWidth": 2,
+            "pointSize": 5,
+            "scaleDistribution": {
+              "type": "linear"
+            },
+            "showPoints": "never",
+            "spanNulls": false,
+            "stacking": {
+              "group": "A",
+              "mode": "none"
+            },
+            "thresholdsStyle": {
+              "mode": "off"
+            }
+          },
+          "mappings": [],
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "green",
+                "value": null
+              }
+            ]
+          },
+          "unit": "reqps"
+        },
+        "overrides": []
+      },
+      "gridPos": {
+        "h": 8,
+        "w": 12,
+        "x": 0,
+        "y": 8
+      },
+      "id": 11,
+      "options": {
+        "legend": {
+          "calcs": ["mean", "max", "lastNotNull"],
+          "displayMode": "table",
+          "placement": "bottom",
+          "showLegend": true
+        },
+        "tooltip": {
+          "mode": "multi",
+          "sort": "desc"
+        }
+      },
+      "targets": [
+        {
+          "datasource": {
+            "type": "prometheus",
+            "uid": "${datasource}"
+          },
+          "expr": "sum(rate(app_calls_total{service_name=~\"$service\", graphql_operation_name=~\"$operation\"}[$__rate_interval]))",
+          "legendFormat": "Total Requests",
+          "refId": "A"
+        },
+        {
+          "datasource": {
+            "type": "prometheus",
+            "uid": "${datasource}"
+          },
+          "expr": "sum(rate(app_calls_total{service_name=~\"$service\", graphql_operation_name=~\"$operation\", status_code=\"STATUS_CODE_ERROR\"}[$__rate_interval]))",
+          "legendFormat": "Errors",
+          "refId": "B"
+        }
+      ],
+      "title": "Request Rate & Errors Over Time",
+      "type": "timeseries"
+    },
+    {
+      "datasource": {
+        "type": "prometheus",
+        "uid": "${datasource}"
+      },
+      "fieldConfig": {
+        "defaults": {
+          "color": {
+            "mode": "palette-classic"
+          },
+          "custom": {
+            "axisBorderShow": false,
+            "axisCenteredZero": false,
+            "axisColorMode": "text",
+            "axisLabel": "",
+            "axisPlacement": "auto",
+            "barAlignment": 0,
+            "drawStyle": "line",
+            "fillOpacity": 10,
+            "gradientMode": "none",
+            "hideFrom": {
+              "legend": false,
+              "tooltip": false,
+              "viz": false
+            },
+            "insertNulls": false,
+            "lineInterpolation": "smooth",
+            "lineWidth": 2,
+            "pointSize": 5,
+            "scaleDistribution": {
+              "type": "linear"
+            },
+            "showPoints": "never",
+            "spanNulls": false,
+            "stacking": {
+              "group": "A",
+              "mode": "none"
+            },
+            "thresholdsStyle": {
+              "mode": "off"
+            }
+          },
+          "mappings": [],
+          "max": 100,
+          "min": 0,
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "green",
+                "value": null
+              }
+            ]
+          },
+          "unit": "percent"
+        },
+        "overrides": []
+      },
+      "gridPos": {
+        "h": 8,
+        "w": 12,
+        "x": 12,
+        "y": 8
+      },
+      "id": 12,
+      "options": {
+        "legend": {
+          "calcs": ["mean", "max", "lastNotNull"],
+          "displayMode": "table",
+          "placement": "bottom",
+          "showLegend": true
+        },
+        "tooltip": {
+          "mode": "multi",
+          "sort": "desc"
+        }
+      },
+      "targets": [
+        {
+          "datasource": {
+            "type": "prometheus",
+            "uid": "${datasource}"
+          },
+          "expr": "100 * sum(rate(app_calls_total{service_name=~\"$service\", graphql_operation_name=~\"$operation\", status_code=\"STATUS_CODE_ERROR\"}[$__rate_interval])) / sum(rate(app_calls_total{service_name=~\"$service\", graphql_operation_name=~\"$operation\"}[$__rate_interval]))",
+          "legendFormat": "Error Rate %",
+          "refId": "A"
+        }
+      ],
+      "title": "Error Rate % Over Time",
+      "type": "timeseries"
+    },
+    {
+      "collapsed": false,
+      "gridPos": {
+        "h": 1,
+        "w": 24,
+        "x": 0,
+        "y": 16
+      },
+      "id": 20,
+      "panels": [],
+      "title": "⏱️ Latency Analysis",
+      "type": "row"
+    },
+    {
+      "datasource": {
+        "type": "prometheus",
+        "uid": "${datasource}"
+      },
+      "fieldConfig": {
+        "defaults": {
+          "color": {
+            "mode": "palette-classic"
+          },
+          "custom": {
+            "axisBorderShow": false,
+            "axisCenteredZero": false,
+            "axisColorMode": "text",
+            "axisLabel": "",
+            "axisPlacement": "auto",
+            "barAlignment": 0,
+            "drawStyle": "line",
+            "fillOpacity": 10,
+            "gradientMode": "none",
+            "hideFrom": {
+              "legend": false,
+              "tooltip": false,
+              "viz": false
+            },
+            "insertNulls": false,
+            "lineInterpolation": "smooth",
+            "lineWidth": 2,
+            "pointSize": 5,
+            "scaleDistribution": {
+              "type": "linear"
+            },
+            "showPoints": "never",
+            "spanNulls": false,
+            "stacking": {
+              "group": "A",
+              "mode": "none"
+            },
+            "thresholdsStyle": {
+              "mode": "off"
+            }
+          },
+          "mappings": [],
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "green",
+                "value": null
+              }
+            ]
+          },
+          "unit": "ms"
+        },
+        "overrides": []
+      },
+      "gridPos": {
+        "h": 8,
+        "w": 24,
+        "x": 0,
+        "y": 17
+      },
+      "id": 21,
+      "options": {
+        "legend": {
+          "calcs": ["mean", "max", "lastNotNull"],
+          "displayMode": "table",
+          "placement": "right",
+          "showLegend": true
+        },
+        "tooltip": {
+          "mode": "multi",
+          "sort": "desc"
+        }
+      },
+      "targets": [
+        {
+          "datasource": {
+            "type": "prometheus",
+            "uid": "${datasource}"
+          },
+          "expr": "histogram_quantile(0.50, sum(rate(app_duration_milliseconds_bucket{service_name=~\"$service\", graphql_operation_name=~\"$operation\"}[$__rate_interval])) by (le))",
+          "legendFormat": "p50 (median)",
+          "refId": "A"
+        },
+        {
+          "datasource": {
+            "type": "prometheus",
+            "uid": "${datasource}"
+          },
+          "expr": "histogram_quantile(0.75, sum(rate(app_duration_milliseconds_bucket{service_name=~\"$service\", graphql_operation_name=~\"$operation\"}[$__rate_interval])) by (le))",
+          "legendFormat": "p75",
+          "refId": "B"
+        },
+        {
+          "datasource": {
+            "type": "prometheus",
+            "uid": "${datasource}"
+          },
+          "expr": "histogram_quantile(0.90, sum(rate(app_duration_milliseconds_bucket{service_name=~\"$service\", graphql_operation_name=~\"$operation\"}[$__rate_interval])) by (le))",
+          "legendFormat": "p90",
+          "refId": "C"
+        },
+        {
+          "datasource": {
+            "type": "prometheus",
+            "uid": "${datasource}"
+          },
+          "expr": "histogram_quantile(0.95, sum(rate(app_duration_milliseconds_bucket{service_name=~\"$service\", graphql_operation_name=~\"$operation\"}[$__rate_interval])) by (le))",
+          "legendFormat": "p95",
+          "refId": "D"
+        },
+        {
+          "datasource": {
+            "type": "prometheus",
+            "uid": "${datasource}"
+          },
+          "expr": "histogram_quantile(0.99, sum(rate(app_duration_milliseconds_bucket{service_name=~\"$service\", graphql_operation_name=~\"$operation\"}[$__rate_interval])) by (le))",
+          "legendFormat": "p99",
+          "refId": "E"
+        }
+      ],
+      "title": "Latency Percentiles",
+      "description": "Response time distribution across percentiles",
+      "type": "timeseries"
+    },
+    {
+      "collapsed": false,
+      "gridPos": {
+        "h": 1,
+        "w": 24,
+        "x": 0,
+        "y": 25
+      },
+      "id": 30,
+      "panels": [],
+      "title": "🔍 GraphQL Operations Breakdown",
+      "type": "row"
+    },
+    {
+      "datasource": {
+        "type": "prometheus",
+        "uid": "${datasource}"
+      },
+      "fieldConfig": {
+        "defaults": {
+          "color": {
+            "mode": "palette-classic"
+          },
+          "custom": {
+            "axisBorderShow": false,
+            "axisCenteredZero": false,
+            "axisColorMode": "text",
+            "axisLabel": "",
+            "axisPlacement": "auto",
+            "barAlignment": 0,
+            "drawStyle": "line",
+            "fillOpacity": 10,
+            "gradientMode": "none",
+            "hideFrom": {
+              "legend": false,
+              "tooltip": false,
+              "viz": false
+            },
+            "insertNulls": false,
+            "lineInterpolation": "smooth",
+            "lineWidth": 1,
+            "pointSize": 5,
+            "scaleDistribution": {
+              "type": "linear"
+            },
+            "showPoints": "never",
+            "spanNulls": false,
+            "stacking": {
+              "group": "A",
+              "mode": "none"
+            },
+            "thresholdsStyle": {
+              "mode": "off"
+            }
+          },
+          "mappings": [],
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "green",
+                "value": null
+              }
+            ]
+          },
+          "unit": "reqps"
+        },
+        "overrides": []
+      },
+      "gridPos": {
+        "h": 8,
+        "w": 12,
+        "x": 0,
+        "y": 26
+      },
+      "id": 31,
+      "options": {
+        "legend": {
+          "calcs": ["mean", "max", "lastNotNull"],
+          "displayMode": "table",
+          "placement": "bottom",
+          "showLegend": true,
+          "sortBy": "Mean",
+          "sortDesc": true
+        },
+        "tooltip": {
+          "mode": "multi",
+          "sort": "desc"
+        }
+      },
+      "targets": [
+        {
+          "datasource": {
+            "type": "prometheus",
+            "uid": "${datasource}"
+          },
+          "expr": "topk(10, sum by (graphql_operation_name) (rate(app_calls_total{service_name=~\"$service\", graphql_operation_name!=\"\", graphql_operation_name=~\"$operation\"}[$__rate_interval])))",
+          "legendFormat": "{{graphql_operation_name}}",
+          "refId": "A"
+        }
+      ],
+      "title": "Top 10 Operations by Request Rate",
+      "description": "Most frequently called GraphQL operations",
+      "type": "timeseries"
+    },
+    {
+      "datasource": {
+        "type": "prometheus",
+        "uid": "${datasource}"
+      },
+      "fieldConfig": {
+        "defaults": {
+          "color": {
+            "mode": "palette-classic"
+          },
+          "custom": {
+            "axisBorderShow": false,
+            "axisCenteredZero": false,
+            "axisColorMode": "text",
+            "axisLabel": "",
+            "axisPlacement": "auto",
+            "barAlignment": 0,
+            "drawStyle": "line",
+            "fillOpacity": 10,
+            "gradientMode": "none",
+            "hideFrom": {
+              "legend": false,
+              "tooltip": false,
+              "viz": false
+            },
+            "insertNulls": false,
+            "lineInterpolation": "smooth",
+            "lineWidth": 1,
+            "pointSize": 5,
+            "scaleDistribution": {
+              "type": "linear"
+            },
+            "showPoints": "never",
+            "spanNulls": false,
+            "stacking": {
+              "group": "A",
+              "mode": "none"
+            },
+            "thresholdsStyle": {
+              "mode": "off"
+            }
+          },
+          "mappings": [],
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "green",
+                "value": null
+              }
+            ]
+          },
+          "unit": "ms"
+        },
+        "overrides": []
+      },
+      "gridPos": {
+        "h": 8,
+        "w": 12,
+        "x": 12,
+        "y": 26
+      },
+      "id": 32,
+      "options": {
+        "legend": {
+          "calcs": ["mean", "max", "lastNotNull"],
+          "displayMode": "table",
+          "placement": "bottom",
+          "showLegend": true,
+          "sortBy": "Mean",
+          "sortDesc": true
+        },
+        "tooltip": {
+          "mode": "multi",
+          "sort": "desc"
+        }
+      },
+      "targets": [
+        {
+          "datasource": {
+            "type": "prometheus",
+            "uid": "${datasource}"
+          },
+          "expr": "topk(10, histogram_quantile(0.95, sum by (le, graphql_operation_name) (rate(app_duration_milliseconds_bucket{service_name=~\"$service\", graphql_operation_name!=\"\", graphql_operation_name=~\"$operation\"}[$__rate_interval]))))",
+          "legendFormat": "{{graphql_operation_name}}",
+          "refId": "A"
+        }
+      ],
+      "title": "Slowest Operations (p95 latency)",
+      "description": "Operations with highest 95th percentile latency",
+      "type": "timeseries"
+    },
+    {
+      "datasource": {
+        "type": "prometheus",
+        "uid": "${datasource}"
+      },
+      "fieldConfig": {
+        "defaults": {
+          "color": {
+            "mode": "thresholds"
+          },
+          "custom": {
+            "align": "auto",
+            "cellOptions": {
+              "type": "auto"
+            },
+            "inspect": false
+          },
+          "mappings": [],
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "green",
+                "value": null
+              }
+            ]
+          }
+        },
+        "overrides": [
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "Operation"
+            },
+            "properties": [
+              {
+                "id": "custom.width",
+                "value": 300
+              }
+            ]
+          },
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "Rate (req/s)"
+            },
+            "properties": [
+              {
+                "id": "unit",
+                "value": "reqps"
+              },
+              {
+                "id": "decimals",
+                "value": 2
+              },
+              {
+                "id": "custom.cellOptions",
+                "value": {
+                  "type": "color-background",
+                  "mode": "gradient"
+                }
+              }
+            ]
+          },
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "Error Rate %"
+            },
+            "properties": [
+              {
+                "id": "unit",
+                "value": "percent"
+              },
+              {
+                "id": "decimals",
+                "value": 2
+              },
+              {
+                "id": "custom.cellOptions",
+                "value": {
+                  "type": "color-background",
+                  "mode": "gradient"
+                }
+              },
+              {
+                "id": "thresholds",
+                "value": {
+                  "mode": "absolute",
+                  "steps": [
+                    {
+                      "color": "green",
+                      "value": null
+                    },
+                    {
+                      "color": "yellow",
+                      "value": 1
+                    },
+                    {
+                      "color": "red",
+                      "value": 5
+                    }
+                  ]
+                }
+              }
+            ]
+          },
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "p50 (ms)"
+            },
+            "properties": [
+              {
+                "id": "unit",
+                "value": "ms"
+              },
+              {
+                "id": "decimals",
+                "value": 1
+              }
+            ]
+          },
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "p95 (ms)"
+            },
+            "properties": [
+              {
+                "id": "unit",
+                "value": "ms"
+              },
+              {
+                "id": "decimals",
+                "value": 1
+              },
+              {
+                "id": "custom.cellOptions",
+                "value": {
+                  "type": "color-background",
+                  "mode": "gradient"
+                }
+              },
+              {
+                "id": "thresholds",
+                "value": {
+                  "mode": "absolute",
+                  "steps": [
+                    {
+                      "color": "green",
+                      "value": null
+                    },
+                    {
+                      "color": "yellow",
+                      "value": 500
+                    },
+                    {
+                      "color": "red",
+                      "value": 1000
+                    }
+                  ]
+                }
+              }
+            ]
+          },
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "p99 (ms)"
+            },
+            "properties": [
+              {
+                "id": "unit",
+                "value": "ms"
+              },
+              {
+                "id": "decimals",
+                "value": 1
+              }
+            ]
+          }
+        ]
+      },
+      "gridPos": {
+        "h": 10,
+        "w": 24,
+        "x": 0,
+        "y": 34
+      },
+      "id": 33,
+      "options": {
+        "cellHeight": "sm",
+        "footer": {
+          "countRows": false,
+          "fields": "",
+          "reducer": ["sum"],
+          "show": false
+        },
+        "showHeader": true,
+        "sortBy": [
+          {
+            "desc": true,
+            "displayName": "Rate (req/s)"
+          }
+        ]
+      },
+      "pluginVersion": "11.0.0",
+      "targets": [
+        {
+          "datasource": {
+            "type": "prometheus",
+            "uid": "${datasource}"
+          },
+          "expr": "sum by (graphql_operation_name) (rate(app_calls_total{service_name=~\"$service\", graphql_operation_name!=\"\", graphql_operation_name=~\"$operation\"}[$__rate_interval]))",
+          "format": "table",
+          "instant": true,
+          "legendFormat": "{{graphql_operation_name}}",
+          "refId": "A"
+        },
+        {
+          "datasource": {
+            "type": "prometheus",
+            "uid": "${datasource}"
+          },
+          "expr": "100 * sum by (graphql_operation_name) (rate(app_calls_total{service_name=~\"$service\", graphql_operation_name!=\"\", graphql_operation_name=~\"$operation\", status_code=\"STATUS_CODE_ERROR\"}[$__rate_interval])) / sum by (graphql_operation_name) (rate(app_calls_total{service_name=~\"$service\", graphql_operation_name!=\"\", graphql_operation_name=~\"$operation\"}[$__rate_interval]))",
+          "format": "table",
+          "instant": true,
+          "legendFormat": "__auto",
+          "refId": "B"
+        },
+        {
+          "datasource": {
+            "type": "prometheus",
+            "uid": "${datasource}"
+          },
+          "expr": "histogram_quantile(0.50, sum by (le, graphql_operation_name) (rate(app_duration_milliseconds_bucket{service_name=~\"$service\", graphql_operation_name!=\"\", graphql_operation_name=~\"$operation\"}[$__rate_interval])))",
+          "format": "table",
+          "instant": true,
+          "legendFormat": "__auto",
+          "refId": "C"
+        },
+        {
+          "datasource": {
+            "type": "prometheus",
+            "uid": "${datasource}"
+          },
+          "expr": "histogram_quantile(0.95, sum by (le, graphql_operation_name) (rate(app_duration_milliseconds_bucket{service_name=~\"$service\", graphql_operation_name!=\"\", graphql_operation_name=~\"$operation\"}[$__rate_interval])))",
+          "format": "table",
+          "instant": true,
+          "legendFormat": "__auto",
+          "refId": "D"
+        },
+        {
+          "datasource": {
+            "type": "prometheus",
+            "uid": "${datasource}"
+          },
+          "expr": "histogram_quantile(0.99, sum by (le, graphql_operation_name) (rate(app_duration_milliseconds_bucket{service_name=~\"$service\", graphql_operation_name!=\"\", graphql_operation_name=~\"$operation\"}[$__rate_interval])))",
+          "format": "table",
+          "instant": true,
+          "legendFormat": "__auto",
+          "refId": "E"
+        }
+      ],
+      "title": "Operations Summary Table",
+      "description": "Overview of all GraphQL operations with key metrics",
+      "transformations": [
+        {
+          "id": "merge",
+          "options": {}
+        },
+        {
+          "id": "organize",
+          "options": {
+            "excludeByName": {
+              "Time": true,
+              "__name__": true,
+              "instance": true,
+              "job": true,
+              "service_name": true,
+              "span_kind": true,
+              "span_name": true
+            },
+            "indexByName": {
+              "graphql_operation_name": 0,
+              "Value #A": 1,
+              "Value #B": 2,
+              "Value #C": 3,
+              "Value #D": 4,
+              "Value #E": 5
+            },
+            "renameByName": {
+              "Value #A": "Rate (req/s)",
+              "Value #B": "Error Rate %",
+              "Value #C": "p50 (ms)",
+              "Value #D": "p95 (ms)",
+              "Value #E": "p99 (ms)",
+              "graphql_operation_name": "Operation"
+            }
+          }
+        }
+      ],
+      "type": "table"
+    },
+    {
+      "collapsed": false,
+      "gridPos": {
+        "h": 1,
+        "w": 24,
+        "x": 0,
+        "y": 44
+      },
+      "id": 40,
+      "panels": [],
+      "title": "📊 Operation Type Breakdown (Query vs Mutation)",
+      "type": "row"
+    },
+    {
+      "datasource": {
+        "type": "prometheus",
+        "uid": "${datasource}"
+      },
+      "fieldConfig": {
+        "defaults": {
+          "color": {
+            "mode": "palette-classic"
+          },
+          "custom": {
+            "hideFrom": {
+              "legend": false,
+              "tooltip": false,
+              "viz": false
+            }
+          },
+          "mappings": [],
+          "unit": "short"
+        },
+        "overrides": [
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "query"
+            },
+            "properties": [
+              {
+                "id": "color",
+                "value": {
+                  "fixedColor": "blue",
+                  "mode": "fixed"
+                }
+              }
+            ]
+          },
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "mutation"
+            },
+            "properties": [
+              {
+                "id": "color",
+                "value": {
+                  "fixedColor": "orange",
+                  "mode": "fixed"
+                }
+              }
+            ]
+          }
+        ]
+      },
+      "gridPos": {
+        "h": 8,
+        "w": 12,
+        "x": 0,
+        "y": 45
+      },
+      "id": 41,
+      "options": {
+        "displayLabels": ["name", "percent"],
+        "legend": {
+          "displayMode": "table",
+          "placement": "right",
+          "showLegend": true,
+          "values": ["value", "percent"]
+        },
+        "pieType": "donut",
+        "reduceOptions": {
+          "calcs": ["lastNotNull"],
+          "fields": "",
+          "values": false
+        },
+        "tooltip": {
+          "mode": "single",
+          "sort": "none"
+        }
+      },
+      "pluginVersion": "11.0.0",
+      "targets": [
+        {
+          "datasource": {
+            "type": "prometheus",
+            "uid": "${datasource}"
+          },
+          "expr": "sum by (graphql_operation_type) (rate(app_calls_total{service_name=~\"$service\", graphql_operation_name!=\"\", graphql_operation_name=~\"$operation\"}[$__rate_interval]))",
+          "legendFormat": "{{graphql_operation_type}}",
+          "refId": "A"
+        }
+      ],
+      "title": "Operations by Type",
+      "description": "Distribution of query vs mutation operations",
+      "type": "piechart"
+    },
+    {
+      "datasource": {
+        "type": "prometheus",
+        "uid": "${datasource}"
+      },
+      "fieldConfig": {
+        "defaults": {
+          "color": {
+            "mode": "palette-classic"
+          },
+          "custom": {
+            "axisBorderShow": false,
+            "axisCenteredZero": false,
+            "axisColorMode": "text",
+            "axisLabel": "",
+            "axisPlacement": "auto",
+            "barAlignment": 0,
+            "drawStyle": "line",
+            "fillOpacity": 10,
+            "gradientMode": "none",
+            "hideFrom": {
+              "legend": false,
+              "tooltip": false,
+              "viz": false
+            },
+            "insertNulls": false,
+            "lineInterpolation": "smooth",
+            "lineWidth": 2,
+            "pointSize": 5,
+            "scaleDistribution": {
+              "type": "linear"
+            },
+            "showPoints": "never",
+            "spanNulls": false,
+            "stacking": {
+              "group": "A",
+              "mode": "normal"
+            },
+            "thresholdsStyle": {
+              "mode": "off"
+            }
+          },
+          "mappings": [],
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "green",
+                "value": null
+              }
+            ]
+          },
+          "unit": "reqps"
+        },
+        "overrides": []
+      },
+      "gridPos": {
+        "h": 8,
+        "w": 12,
+        "x": 12,
+        "y": 45
+      },
+      "id": 42,
+      "options": {
+        "legend": {
+          "calcs": ["mean", "lastNotNull"],
+          "displayMode": "table",
+          "placement": "right",
+          "showLegend": true
+        },
+        "tooltip": {
+          "mode": "multi",
+          "sort": "desc"
+        }
+      },
+      "targets": [
+        {
+          "datasource": {
+            "type": "prometheus",
+            "uid": "${datasource}"
+          },
+          "expr": "sum by (graphql_operation_type) (rate(app_calls_total{service_name=~\"$service\", graphql_operation_name!=\"\", graphql_operation_name=~\"$operation\"}[$__rate_interval]))",
+          "legendFormat": "{{graphql_operation_type}}",
+          "refId": "A"
+        }
+      ],
+      "title": "Operations Rate by Type Over Time",
+      "type": "timeseries"
+    },
+    {
+      "collapsed": false,
+      "gridPos": {
+        "h": 1,
+        "w": 24,
+        "x": 0,
+        "y": 37
+      },
+      "id": 20,
+      "panels": [],
+      "title": "🔧 Advanced Metrics",
+      "type": "row"
+    },
+    {
+      "datasource": {
+        "type": "prometheus",
+        "uid": "${datasource}"
+      },
+      "fieldConfig": {
+        "defaults": {
+          "color": {
+            "mode": "palette-classic"
+          },
+          "custom": {
+            "axisBorderShow": false,
+            "axisCenteredZero": false,
+            "axisColorMode": "text",
+            "axisLabel": "",
+            "axisPlacement": "auto",
+            "barAlignment": 0,
+            "drawStyle": "bars",
+            "fillOpacity": 80,
+            "gradientMode": "none",
+            "hideFrom": {
+              "tooltip": false,
+              "viz": false,
+              "legend": false
+            },
+            "lineInterpolation": "linear",
+            "lineWidth": 1,
+            "pointSize": 5,
+            "scaleDistribution": {
+              "type": "linear"
+            },
+            "showPoints": "never",
+            "spanNulls": false,
+            "stacking": {
+              "group": "A",
+              "mode": "normal"
+            },
+            "thresholdsStyle": {
+              "mode": "off"
+            }
+          },
+          "mappings": [],
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "green",
+                "value": null
+              }
+            ]
+          },
+          "unit": "short"
+        },
+        "overrides": [
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "2xx"
+            },
+            "properties": [
+              {
+                "id": "color",
+                "value": {
+                  "fixedColor": "green",
+                  "mode": "fixed"
+                }
+              }
+            ]
+          },
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "4xx"
+            },
+            "properties": [
+              {
+                "id": "color",
+                "value": {
+                  "fixedColor": "orange",
+                  "mode": "fixed"
+                }
+              }
+            ]
+          },
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "5xx"
+            },
+            "properties": [
+              {
+                "id": "color",
+                "value": {
+                  "fixedColor": "red",
+                  "mode": "fixed"
+                }
+              }
+            ]
+          }
+        ]
+      },
+      "gridPos": {
+        "h": 8,
+        "w": 12,
+        "x": 0,
+        "y": 38
+      },
+      "id": 21,
+      "options": {
+        "legend": {
+          "calcs": ["mean", "lastNotNull"],
+          "displayMode": "table",
+          "placement": "bottom",
+          "showLegend": true
+        },
+        "tooltip": {
+          "mode": "multi",
+          "sort": "none"
+        }
+      },
+      "pluginVersion": "11.0.0",
+      "targets": [
+        {
+          "datasource": {
+            "type": "prometheus",
+            "uid": "${datasource}"
+          },
+          "expr": "sum(rate(http_server_duration_bucket{service_name=~\"$service\", http_status_code=~\"2..\"}[$__rate_interval]))",
+          "legendFormat": "2xx",
+          "refId": "A"
+        },
+        {
+          "datasource": {
+            "type": "prometheus",
+            "uid": "${datasource}"
+          },
+          "expr": "sum(rate(http_server_duration_bucket{service_name=~\"$service\", http_status_code=~\"4..\"}[$__rate_interval]))",
+          "legendFormat": "4xx",
+          "refId": "B"
+        },
+        {
+          "datasource": {
+            "type": "prometheus",
+            "uid": "${datasource}"
+          },
+          "expr": "sum(rate(http_server_duration_bucket{service_name=~\"$service\", http_status_code=~\"5..\"}[$__rate_interval]))",
+          "legendFormat": "5xx",
+          "refId": "C"
+        }
+      ],
+      "title": "📊 HTTP Status Code Distribution",
+      "description": "Distribution of HTTP status codes over time",
+      "type": "timeseries"
+    },
+    {
+      "datasource": {
+        "type": "prometheus",
+        "uid": "${datasource}"
+      },
+      "fieldConfig": {
+        "defaults": {
+          "color": {
+            "mode": "palette-classic"
+          },
+          "custom": {
+            "hideFrom": {
+              "tooltip": false,
+              "viz": false,
+              "legend": false
+            }
+          },
+          "mappings": []
+        },
+        "overrides": []
+      },
+      "gridPos": {
+        "h": 8,
+        "w": 12,
+        "x": 12,
+        "y": 38
+      },
+      "id": 22,
+      "options": {
+        "displayLabels": ["percent"],
+        "legend": {
+          "displayMode": "table",
+          "placement": "right",
+          "showLegend": true,
+          "values": ["value", "percent"]
+        },
+        "pieType": "donut",
+        "tooltip": {
+          "mode": "single",
+          "sort": "none"
+        }
+      },
+      "pluginVersion": "11.0.0",
+      "targets": [
+        {
+          "datasource": {
+            "type": "prometheus",
+            "uid": "${datasource}"
+          },
+          "expr": "topk(10, sum by (graphql_operation_name) (rate(app_calls_total{service_name=~\"$service\", status_code=\"STATUS_CODE_ERROR\"}[$__rate_interval])))",
+          "legendFormat": "{{graphql_operation_name}}",
+          "refId": "A"
+        }
+      ],
+      "title": "🔥 Top Operations with Errors",
+      "description": "Top 10 GraphQL operations with the most errors",
+      "type": "piechart"
+    },
+    {
+      "datasource": {
+        "type": "prometheus",
+        "uid": "${datasource}"
+      },
+      "fieldConfig": {
+        "defaults": {
+          "color": {
+            "mode": "thresholds"
+          },
+          "mappings": [],
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "green",
+                "value": null
+              },
+              {
+                "color": "yellow",
+                "value": 100
+              },
+              {
+                "color": "red",
+                "value": 500
+              }
+            ]
+          },
+          "unit": "reqps"
+        },
+        "overrides": []
+      },
+      "gridPos": {
+        "h": 4,
+        "w": 6,
+        "x": 0,
+        "y": 46
+      },
+      "id": 23,
+      "options": {
+        "colorMode": "value",
+        "graphMode": "area",
+        "justifyMode": "auto",
+        "orientation": "auto",
+        "reduceOptions": {
+          "values": false,
+          "calcs": ["lastNotNull"],
+          "fields": ""
+        },
+        "textMode": "auto",
+        "wideLayout": true
+      },
+      "pluginVersion": "11.0.0",
+      "targets": [
+        {
+          "datasource": {
+            "type": "prometheus",
+            "uid": "${datasource}"
+          },
+          "expr": "sum(rate(app_calls_total{service_name=~\"$service\"}[$__rate_interval]))",
+          "refId": "A"
+        }
+      ],
+      "title": "🚀 Total Throughput",
+      "description": "Total requests per second across all operations",
+      "type": "stat"
+    },
+    {
+      "datasource": {
+        "type": "prometheus",
+        "uid": "${datasource}"
+      },
+      "fieldConfig": {
+        "defaults": {
+          "color": {
+            "mode": "thresholds"
+          },
+          "mappings": [],
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "green",
+                "value": null
+              },
+              {
+                "color": "red",
+                "value": 1
+              }
+            ]
+          },
+          "unit": "percentunit"
+        },
+        "overrides": []
+      },
+      "gridPos": {
+        "h": 4,
+        "w": 6,
+        "x": 6,
+        "y": 46
+      },
+      "id": 24,
+      "options": {
+        "colorMode": "value",
+        "graphMode": "area",
+        "justifyMode": "auto",
+        "orientation": "auto",
+        "reduceOptions": {
+          "values": false,
+          "calcs": ["lastNotNull"],
+          "fields": ""
+        },
+        "textMode": "auto",
+        "wideLayout": true
+      },
+      "pluginVersion": "11.0.0",
+      "targets": [
+        {
+          "datasource": {
+            "type": "prometheus",
+            "uid": "${datasource}"
+          },
+          "expr": "sum(rate(app_calls_total{service_name=~\"$service\", status_code=\"STATUS_CODE_ERROR\"}[$__rate_interval])) / sum(rate(app_calls_total{service_name=~\"$service\"}[$__rate_interval]))",
+          "refId": "A"
+        }
+      ],
+      "title": "❌ Overall Error Rate",
+      "description": "Percentage of failed requests across all operations",
       "type": "stat"
     },
     {
@@ -196,20 +1741,21 @@
         "h": 4,
         "w": 6,
         "x": 12,
-        "y": 1
+        "y": 46
       },
-      "id": 4,
+      "id": 25,
       "options": {
         "colorMode": "value",
         "graphMode": "area",
         "justifyMode": "auto",
         "orientation": "auto",
         "reduceOptions": {
+          "values": false,
           "calcs": ["lastNotNull"],
-          "fields": "",
-          "values": false
+          "fields": ""
         },
-        "textMode": "auto"
+        "textMode": "auto",
+        "wideLayout": true
       },
       "pluginVersion": "11.0.0",
       "targets": [
@@ -218,12 +1764,12 @@
             "type": "prometheus",
             "uid": "${datasource}"
           },
-          "expr": "histogram_quantile(0.95, sum(rate(app_http_server_request_duration_seconds_bucket{service_name=~\"$service\"}[$__rate_interval])) by (le)) * 1000",
-          "legendFormat": "p95",
+          "expr": "histogram_quantile(0.50, sum(rate(app_duration_milliseconds_bucket{service_name=~\"$service\"}[$__rate_interval])) by (le))",
           "refId": "A"
         }
       ],
-      "title": "Latency p95",
+      "title": "⏱️ Median Latency (p50)",
+      "description": "50th percentile latency across all operations",
       "type": "stat"
     },
     {
@@ -243,18 +1789,10 @@
               {
                 "color": "green",
                 "value": null
-              },
-              {
-                "color": "yellow",
-                "value": 1000
-              },
-              {
-                "color": "red",
-                "value": 2000
               }
             ]
           },
-          "unit": "ms"
+          "unit": "short"
         },
         "overrides": []
       },
@@ -262,20 +1800,21 @@
         "h": 4,
         "w": 6,
         "x": 18,
-        "y": 1
+        "y": 46
       },
-      "id": 5,
+      "id": 26,
       "options": {
         "colorMode": "value",
         "graphMode": "area",
         "justifyMode": "auto",
         "orientation": "auto",
         "reduceOptions": {
+          "values": false,
           "calcs": ["lastNotNull"],
-          "fields": "",
-          "values": false
+          "fields": ""
         },
-        "textMode": "auto"
+        "textMode": "auto",
+        "wideLayout": true
       },
       "pluginVersion": "11.0.0",
       "targets": [
@@ -284,475 +1823,18 @@
             "type": "prometheus",
             "uid": "${datasource}"
           },
-          "expr": "histogram_quantile(0.99, sum(rate(app_http_server_request_duration_seconds_bucket{service_name=~\"$service\"}[$__rate_interval])) by (le)) * 1000",
-          "legendFormat": "p99",
+          "expr": "count(count by (graphql_operation_name) (app_calls_total{service_name=~\"$service\", graphql_operation_name!=\"\"}))",
           "refId": "A"
         }
       ],
-      "title": "Latency p99",
+      "title": "📋 Total Operations",
+      "description": "Number of unique GraphQL operations",
       "type": "stat"
-    },
-    {
-      "collapsed": false,
-      "gridPos": {
-        "h": 1,
-        "w": 24,
-        "x": 0,
-        "y": 5
-      },
-      "id": 6,
-      "panels": [],
-      "title": "Request Rate",
-      "type": "row"
-    },
-    {
-      "datasource": {
-        "type": "prometheus",
-        "uid": "${datasource}"
-      },
-      "fieldConfig": {
-        "defaults": {
-          "color": {
-            "mode": "palette-classic"
-          },
-          "custom": {
-            "axisBorderShow": false,
-            "axisCenteredZero": false,
-            "axisColorMode": "text",
-            "axisLabel": "",
-            "axisPlacement": "auto",
-            "barAlignment": 0,
-            "drawStyle": "line",
-            "fillOpacity": 10,
-            "gradientMode": "none",
-            "hideFrom": {
-              "legend": false,
-              "tooltip": false,
-              "viz": false
-            },
-            "insertNulls": false,
-            "lineInterpolation": "smooth",
-            "lineWidth": 1,
-            "pointSize": 5,
-            "scaleDistribution": {
-              "type": "linear"
-            },
-            "showPoints": "never",
-            "spanNulls": false,
-            "stacking": {
-              "group": "A",
-              "mode": "none"
-            },
-            "thresholdsStyle": {
-              "mode": "off"
-            }
-          },
-          "mappings": [],
-          "thresholds": {
-            "mode": "absolute",
-            "steps": [
-              {
-                "color": "green",
-                "value": null
-              }
-            ]
-          },
-          "unit": "reqps"
-        },
-        "overrides": []
-      },
-      "gridPos": {
-        "h": 8,
-        "w": 12,
-        "x": 0,
-        "y": 6
-      },
-      "id": 7,
-      "options": {
-        "legend": {
-          "calcs": ["mean", "max"],
-          "displayMode": "table",
-          "placement": "bottom",
-          "showLegend": true
-        },
-        "tooltip": {
-          "mode": "multi",
-          "sort": "desc"
-        }
-      },
-      "targets": [
-        {
-          "datasource": {
-            "type": "prometheus",
-            "uid": "${datasource}"
-          },
-          "expr": "sum(rate(app_http_server_request_duration_seconds_count{service_name=~\"$service\"}[$__rate_interval])) by (http_route)",
-          "legendFormat": "{{http_route}}",
-          "refId": "A"
-        }
-      ],
-      "title": "Request Rate by Route",
-      "type": "timeseries"
-    },
-    {
-      "datasource": {
-        "type": "prometheus",
-        "uid": "${datasource}"
-      },
-      "fieldConfig": {
-        "defaults": {
-          "color": {
-            "mode": "palette-classic"
-          },
-          "custom": {
-            "axisBorderShow": false,
-            "axisCenteredZero": false,
-            "axisColorMode": "text",
-            "axisLabel": "",
-            "axisPlacement": "auto",
-            "barAlignment": 0,
-            "drawStyle": "line",
-            "fillOpacity": 10,
-            "gradientMode": "none",
-            "hideFrom": {
-              "legend": false,
-              "tooltip": false,
-              "viz": false
-            },
-            "insertNulls": false,
-            "lineInterpolation": "smooth",
-            "lineWidth": 1,
-            "pointSize": 5,
-            "scaleDistribution": {
-              "type": "linear"
-            },
-            "showPoints": "never",
-            "spanNulls": false,
-            "stacking": {
-              "group": "A",
-              "mode": "none"
-            },
-            "thresholdsStyle": {
-              "mode": "off"
-            }
-          },
-          "mappings": [],
-          "thresholds": {
-            "mode": "absolute",
-            "steps": [
-              {
-                "color": "green",
-                "value": null
-              }
-            ]
-          },
-          "unit": "reqps"
-        },
-        "overrides": []
-      },
-      "gridPos": {
-        "h": 8,
-        "w": 12,
-        "x": 12,
-        "y": 6
-      },
-      "id": 8,
-      "options": {
-        "legend": {
-          "calcs": ["mean", "max"],
-          "displayMode": "table",
-          "placement": "bottom",
-          "showLegend": true
-        },
-        "tooltip": {
-          "mode": "multi",
-          "sort": "desc"
-        }
-      },
-      "targets": [
-        {
-          "datasource": {
-            "type": "prometheus",
-            "uid": "${datasource}"
-          },
-          "expr": "sum(rate(app_http_server_request_duration_seconds_count{service_name=~\"$service\"}[$__rate_interval])) by (http_status_code)",
-          "legendFormat": "{{http_status_code}}",
-          "refId": "A"
-        }
-      ],
-      "title": "Request Rate by Status Code",
-      "type": "timeseries"
-    },
-    {
-      "collapsed": false,
-      "gridPos": {
-        "h": 1,
-        "w": 24,
-        "x": 0,
-        "y": 14
-      },
-      "id": 9,
-      "panels": [],
-      "title": "Latency",
-      "type": "row"
-    },
-    {
-      "datasource": {
-        "type": "prometheus",
-        "uid": "${datasource}"
-      },
-      "fieldConfig": {
-        "defaults": {
-          "color": {
-            "mode": "palette-classic"
-          },
-          "custom": {
-            "axisBorderShow": false,
-            "axisCenteredZero": false,
-            "axisColorMode": "text",
-            "axisLabel": "",
-            "axisPlacement": "auto",
-            "barAlignment": 0,
-            "drawStyle": "line",
-            "fillOpacity": 10,
-            "gradientMode": "none",
-            "hideFrom": {
-              "legend": false,
-              "tooltip": false,
-              "viz": false
-            },
-            "insertNulls": false,
-            "lineInterpolation": "smooth",
-            "lineWidth": 1,
-            "pointSize": 5,
-            "scaleDistribution": {
-              "type": "linear"
-            },
-            "showPoints": "never",
-            "spanNulls": false,
-            "stacking": {
-              "group": "A",
-              "mode": "none"
-            },
-            "thresholdsStyle": {
-              "mode": "line+area"
-            }
-          },
-          "mappings": [],
-          "thresholds": {
-            "mode": "absolute",
-            "steps": [
-              {
-                "color": "transparent",
-                "value": null
-              },
-              {
-                "color": "red",
-                "value": 1000
-              }
-            ]
-          },
-          "unit": "ms"
-        },
-        "overrides": []
-      },
-      "gridPos": {
-        "h": 8,
-        "w": 24,
-        "x": 0,
-        "y": 15
-      },
-      "id": 10,
-      "options": {
-        "legend": {
-          "calcs": ["mean", "max"],
-          "displayMode": "table",
-          "placement": "right",
-          "showLegend": true
-        },
-        "tooltip": {
-          "mode": "multi",
-          "sort": "desc"
-        }
-      },
-      "targets": [
-        {
-          "datasource": {
-            "type": "prometheus",
-            "uid": "${datasource}"
-          },
-          "expr": "histogram_quantile(0.50, sum(rate(app_http_server_request_duration_seconds_bucket{service_name=~\"$service\"}[$__rate_interval])) by (le)) * 1000",
-          "legendFormat": "p50",
-          "refId": "A"
-        },
-        {
-          "datasource": {
-            "type": "prometheus",
-            "uid": "${datasource}"
-          },
-          "expr": "histogram_quantile(0.90, sum(rate(app_http_server_request_duration_seconds_bucket{service_name=~\"$service\"}[$__rate_interval])) by (le)) * 1000",
-          "legendFormat": "p90",
-          "refId": "B"
-        },
-        {
-          "datasource": {
-            "type": "prometheus",
-            "uid": "${datasource}"
-          },
-          "expr": "histogram_quantile(0.95, sum(rate(app_http_server_request_duration_seconds_bucket{service_name=~\"$service\"}[$__rate_interval])) by (le)) * 1000",
-          "legendFormat": "p95",
-          "refId": "C"
-        },
-        {
-          "datasource": {
-            "type": "prometheus",
-            "uid": "${datasource}"
-          },
-          "expr": "histogram_quantile(0.99, sum(rate(app_http_server_request_duration_seconds_bucket{service_name=~\"$service\"}[$__rate_interval])) by (le)) * 1000",
-          "legendFormat": "p99",
-          "refId": "D"
-        }
-      ],
-      "title": "Latency Percentiles",
-      "type": "timeseries"
-    },
-    {
-      "collapsed": false,
-      "gridPos": {
-        "h": 1,
-        "w": 24,
-        "x": 0,
-        "y": 23
-      },
-      "id": 11,
-      "panels": [],
-      "title": "Errors",
-      "type": "row"
-    },
-    {
-      "datasource": {
-        "type": "prometheus",
-        "uid": "${datasource}"
-      },
-      "fieldConfig": {
-        "defaults": {
-          "color": {
-            "mode": "palette-classic"
-          },
-          "custom": {
-            "axisBorderShow": false,
-            "axisCenteredZero": false,
-            "axisColorMode": "text",
-            "axisLabel": "",
-            "axisPlacement": "auto",
-            "barAlignment": 0,
-            "drawStyle": "line",
-            "fillOpacity": 30,
-            "gradientMode": "none",
-            "hideFrom": {
-              "legend": false,
-              "tooltip": false,
-              "viz": false
-            },
-            "insertNulls": false,
-            "lineInterpolation": "smooth",
-            "lineWidth": 1,
-            "pointSize": 5,
-            "scaleDistribution": {
-              "type": "linear"
-            },
-            "showPoints": "never",
-            "spanNulls": false,
-            "stacking": {
-              "group": "A",
-              "mode": "normal"
-            },
-            "thresholdsStyle": {
-              "mode": "off"
-            }
-          },
-          "mappings": [],
-          "thresholds": {
-            "mode": "absolute",
-            "steps": [
-              {
-                "color": "green",
-                "value": null
-              }
-            ]
-          },
-          "unit": "reqps"
-        },
-        "overrides": [
-          {
-            "matcher": {
-              "id": "byRegexp",
-              "options": "5.."
-            },
-            "properties": [
-              {
-                "id": "color",
-                "value": {
-                  "fixedColor": "red",
-                  "mode": "fixed"
-                }
-              }
-            ]
-          },
-          {
-            "matcher": {
-              "id": "byRegexp",
-              "options": "4.."
-            },
-            "properties": [
-              {
-                "id": "color",
-                "value": {
-                  "fixedColor": "orange",
-                  "mode": "fixed"
-                }
-              }
-            ]
-          }
-        ]
-      },
-      "gridPos": {
-        "h": 8,
-        "w": 24,
-        "x": 0,
-        "y": 24
-      },
-      "id": 12,
-      "options": {
-        "legend": {
-          "calcs": ["sum"],
-          "displayMode": "table",
-          "placement": "right",
-          "showLegend": true
-        },
-        "tooltip": {
-          "mode": "multi",
-          "sort": "desc"
-        }
-      },
-      "targets": [
-        {
-          "datasource": {
-            "type": "prometheus",
-            "uid": "${datasource}"
-          },
-          "expr": "sum(rate(app_http_server_request_duration_seconds_count{service_name=~\"$service\", http_status_code=~\"4..|5..\"}[$__rate_interval])) by (http_status_code, http_route)",
-          "legendFormat": "{{http_status_code}} {{http_route}}",
-          "refId": "A"
-        }
-      ],
-      "title": "Error Requests (4xx/5xx)",
-      "type": "timeseries"
     }
   ],
-  "refresh": "10s",
+  "refresh": "30s",
   "schemaVersion": 39,
-  "tags": ["api", "red", "overview"],
+  "tags": ["api", "graphql", "red", "monitoring"],
   "templating": {
     "list": [
       {
@@ -774,9 +1856,35 @@
         "type": "datasource"
       },
       {
-        "allValue": ".*",
         "current": {
-          "selected": false,
+          "selected": true,
+          "text": "appname-api",
+          "value": "appname-api"
+        },
+        "datasource": {
+          "type": "prometheus",
+          "uid": "${datasource}"
+        },
+        "definition": "label_values(app_calls_total, service_name)",
+        "hide": 0,
+        "includeAll": false,
+        "label": "Service",
+        "multi": false,
+        "name": "service",
+        "options": [],
+        "query": {
+          "query": "label_values(app_calls_total, service_name)",
+          "refId": "PrometheusVariableQueryEditor-VariableQuery"
+        },
+        "refresh": 2,
+        "regex": "",
+        "skipUrlSync": false,
+        "sort": 1,
+        "type": "query"
+      },
+      {
+        "current": {
+          "selected": true,
           "text": "All",
           "value": "$__all"
         },
@@ -784,16 +1892,16 @@
           "type": "prometheus",
           "uid": "${datasource}"
         },
-        "definition": "label_values(app_http_server_request_duration_seconds_count, service_name)",
+        "definition": "label_values(app_calls_total{service_name=~\"$service\", graphql_operation_name!=\"\"}, graphql_operation_name)",
         "hide": 0,
         "includeAll": true,
-        "label": "Service",
-        "multi": false,
-        "name": "service",
+        "label": "Operation",
+        "multi": true,
+        "name": "operation",
         "options": [],
         "query": {
-          "query": "label_values(app_http_server_request_duration_seconds_count, service_name)",
-          "refId": "StandardVariableQuery"
+          "query": "label_values(app_calls_total{service_name=~\"$service\", graphql_operation_name!=\"\"}, graphql_operation_name)",
+          "refId": "PrometheusVariableQueryEditor-VariableQuery"
         },
         "refresh": 2,
         "regex": "",
@@ -809,9 +1917,8 @@
   },
   "timepicker": {},
   "timezone": "",
-  "title": "API Overview (RED)",
+  "title": "API Overview (GraphQL RED)",
   "uid": "api-overview",
-  "version": 1,
+  "version": 2,
   "weekStart": ""
 }
-

@@ -17,6 +17,7 @@ type VitalsPayload = {
   route?: string;
   device?: string;
   connection?: string;
+  renderType?: 'ssr' | 'csr';
 };
 
 // Create meters for web vitals
@@ -64,6 +65,11 @@ export async function POST(req: Request) {
         });
       }
 
+      // Determine environment
+      const environment = process.env.NODE_ENV === 'production' 
+        ? (process.env.NEXT_PUBLIC_APP_ENV || 'production')
+        : 'development';
+
       // Record metric to OTel
       const attributes = {
         'web.vital.name': m.name,
@@ -72,6 +78,8 @@ export async function POST(req: Request) {
         'web.vital.device': m.device || 'unknown',
         'web.vital.connection': m.connection || 'unknown',
         'web.vital.nav_type': m.navType || 'unknown',
+        'web.vital.environment': environment,
+        'web.vital.render_type': m.renderType || 'unknown',
       };
 
       switch (m.name) {

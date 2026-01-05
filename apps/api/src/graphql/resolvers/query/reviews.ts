@@ -19,19 +19,39 @@ const REVIEW_INCLUDE = {
 
 /**
  * Query: Get reviews for an event
+ *
+ * Visibility rules:
+ * - ACTIVE reviews: visible to everyone
+ * - DELETED reviews: visible to admin/moderator (content hidden for others)
+ * - HIDDEN reviews: visible to admin/moderator/event owner (content hidden for others)
+ * - Hidden has priority over deleted
  */
 export const reviewsQuery: QueryResolvers['reviews'] = resolverWithMetrics(
   'Query',
   'reviews',
-  async (_p, args) => {
+  async (_p, args, { user }) => {
     const { eventId, limit, offset, rating } = args;
 
     const take = Math.max(1, Math.min(limit ?? 20, 100));
     const skip = Math.max(0, offset ?? 0);
 
+    // Check if viewer is event owner or moderator
+    let isEventOwnerOrMod = false;
+    if (user?.id) {
+      const membership = await prisma.eventMember.findUnique({
+        where: {
+          eventId_userId: { eventId, userId: user.id },
+        },
+        select: { role: true, status: true },
+      });
+      isEventOwnerOrMod =
+        membership?.status === 'JOINED' &&
+        (membership.role === 'OWNER' || membership.role === 'MODERATOR');
+    }
+
     const where: Prisma.ReviewWhereInput = {
       eventId,
-      deletedAt: null,
+      deletedAt: null, // Public users don't see deleted reviews at all
     };
 
     if (rating !== undefined && rating !== null) {
@@ -48,8 +68,17 @@ export const reviewsQuery: QueryResolvers['reviews'] = resolverWithMetrics(
       include: REVIEW_INCLUDE,
     });
 
+    // Map reviews with viewer context
+    const viewerContext = {
+      viewerId: user?.id,
+      viewerRole: user?.role,
+      isEventOwnerOrMod,
+    };
+
     return {
-      items: reviews.map((r) => mapReview(r as unknown as ReviewWithGraph)),
+      items: reviews.map((r) =>
+        mapReview(r as unknown as ReviewWithGraph, undefined, viewerContext)
+      ),
       pageInfo: {
         total,
         limit: take,
@@ -63,11 +92,13 @@ export const reviewsQuery: QueryResolvers['reviews'] = resolverWithMetrics(
 
 /**
  * Query: Get a single review
+ *
+ * Visibility rules apply same as for reviews query
  */
 export const reviewQuery: QueryResolvers['review'] = resolverWithMetrics(
   'Query',
   'review',
-  async (_p, { id }) => {
+  async (_p, { id }, { user }) => {
     const review = await prisma.review.findUnique({
       where: { id },
       include: REVIEW_INCLUDE,
@@ -77,7 +108,32 @@ export const reviewQuery: QueryResolvers['review'] = resolverWithMetrics(
       return null;
     }
 
-    return mapReview(review as unknown as ReviewWithGraph);
+    // Check if viewer is event owner or moderator
+    let isEventOwnerOrMod = false;
+    if (user?.id) {
+      const membership = await prisma.eventMember.findUnique({
+        where: {
+          eventId_userId: { eventId: review.eventId, userId: user.id },
+        },
+        select: { role: true, status: true },
+      });
+      isEventOwnerOrMod =
+        membership?.status === 'JOINED' &&
+        (membership.role === 'OWNER' || membership.role === 'MODERATOR');
+    }
+
+    // Map review with viewer context
+    const viewerContext = {
+      viewerId: user?.id,
+      viewerRole: user?.role,
+      isEventOwnerOrMod,
+    };
+
+    return mapReview(
+      review as unknown as ReviewWithGraph,
+      undefined,
+      viewerContext
+    );
   }
 );
 
@@ -87,7 +143,7 @@ export const reviewQuery: QueryResolvers['review'] = resolverWithMetrics(
 export const reviewStatsQuery: QueryResolvers['reviewStats'] =
   resolverWithMetrics('Query', 'reviewStats', async (_p, { eventId }) => {
     const queryStart = Date.now();
-    
+
     const reviews = await prisma.review.findMany({
       where: {
         eventId,
@@ -121,7 +177,10 @@ export const reviewStatsQuery: QueryResolvers['reviewStats'] =
     const averageRating = sum / totalCount;
 
     // Track derivation stats
-    trackReviewStats(eventId, dbTime, { count: totalCount, avgRating: averageRating });
+    trackReviewStats(eventId, dbTime, {
+      count: totalCount,
+      avgRating: averageRating,
+    });
 
     // Count distribution
     const distribution: Record<number, number> = {
@@ -173,6 +232,17 @@ export const myReviewQuery: QueryResolvers['myReview'] = resolverWithMetrics(
       return null;
     }
 
-    return mapReview(review as unknown as ReviewWithGraph);
+    // Author sees their own review (even if hidden by moderators)
+    const viewerContext = {
+      viewerId: userId,
+      viewerRole: ctx.user?.role,
+      isEventOwnerOrMod: false, // Not relevant for author's own review
+    };
+
+    return mapReview(
+      review as unknown as ReviewWithGraph,
+      undefined,
+      viewerContext
+    );
   }
 );

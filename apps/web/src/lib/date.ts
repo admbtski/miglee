@@ -22,24 +22,27 @@ import {
 export type DateLocale = 'pl' | 'en' | 'de';
 
 // Relative time translations
-const RELATIVE_TIME_TRANSLATIONS: Record<DateLocale, {
-  seconds: string;
-  minute: string;
-  minutes: string;
-  hour: string;
-  hours: string;
-  day: string;
-  days: string;
-  week: string;
-  weeks: string;
-  month: string;
-  months: string;
-  year: string;
-  years: string;
-  ago: string;
-  inFuture: string;
-  justNow: string;
-}> = {
+const RELATIVE_TIME_TRANSLATIONS: Record<
+  DateLocale,
+  {
+    seconds: string;
+    minute: string;
+    minutes: string;
+    hour: string;
+    hours: string;
+    day: string;
+    days: string;
+    week: string;
+    weeks: string;
+    month: string;
+    months: string;
+    year: string;
+    years: string;
+    ago: string;
+    inFuture: string;
+    justNow: string;
+  }
+> = {
   en: {
     seconds: 'seconds',
     minute: 'minute',
@@ -98,7 +101,35 @@ const RELATIVE_TIME_TRANSLATIONS: Record<DateLocale, {
 
 /**
  * Format a date with the given format string
- * Uses date-fns compatible format tokens
+ * Converts date-fns format tokens to Tempo tokens and uses @formkit/tempo
+ *
+ * Based on Tempo documentation: https://tempo.formkit.com/
+ *
+ * Tempo token reference:
+ * - YYYY = 4 digit year (2026)
+ * - YY = 2 digit year (26)
+ * - MMMM = full month name (January, stycznia)
+ * - MMM = short month name (Jan, sty)
+ * - MM = month with zero (01-12)
+ * - M = month without zero (1-12)
+ * - DD = day of month with zero (01-31)
+ * - D = day of month without zero (1-31)
+ * - dddd = full day name (Sunday, niedziela)
+ * - ddd = short day name (Sun, ndz)
+ * - d = single letter day (S, N)
+ * - HH = 24h hour with zero (00-23)
+ * - H = 24h hour without zero (0-23)
+ * - hh = 12h hour with zero (01-12)
+ * - h = 12h hour without zero (1-12)
+ * - mm = minute with zero (00-59)
+ * - m = minute without zero (0-59)
+ * - ss = second with zero (00-59)
+
+ * - SSS = milliseconds (000-999)
+ * - a = am/pm lowercase
+ * - A = AM/PM uppercase
+ * - Z = timezone offset (+08:00)
+ * - ZZ = timezone offset (+0800)
  */
 export function format(
   date: Date | string | number,
@@ -106,7 +137,7 @@ export function format(
   options?: { locale?: DateLocale | { code?: string } }
 ): string {
   const d = date instanceof Date ? date : new Date(date);
-  
+
   // Extract locale code
   let locale: string = 'en';
   if (options?.locale) {
@@ -117,8 +148,31 @@ export function format(
     }
   }
 
-  // Tempo uses similar format tokens to date-fns
-  return tempoFormat(d, formatStr, locale);
+  // Convert date-fns tokens to Tempo tokens
+  // CRITICAL: Order matters - replace longer patterns first to avoid conflicts!
+  // We need to be careful because date-fns 'd' means day of month,
+  // but Tempo 'd' means single letter day name
+  let tempoFormatStr = formatStr
+    // Year (yyyy before yy to avoid double replacement)
+    .replace(/yyyy/g, 'YYYY')
+    .replace(/yy/g, 'YY')
+    // Month names (MMMM before MMM before MM before M)
+    .replace(/MMMM/g, 'MMMM') // same in both
+    .replace(/MMM/g, 'MMM') // same in both
+    .replace(/MM/g, 'MM') // same in both
+    .replace(/M/g, 'M') // same in both
+    // Day of month (dd before d, using word boundaries to avoid conflicts)
+    // In date-fns: dd = day with zero (01-31), d = day without zero (1-31)
+    // In Tempo: DD = day with zero (01-31), D = day without zero (1-31)
+    .replace(/dd/g, 'DD')
+    .replace(/\bd\b/g, 'D'); // Only replace standalone 'd' (not part of ddd/dddd)
+  // Hours (HH/H, hh/h are the same)
+  // Minutes (mm/m are the same)
+  // Seconds (ss/s are the same)
+  // AM/PM (a/A are the same)
+  // Note: All other tokens are identical between date-fns and Tempo
+
+  return tempoFormat(d, tempoFormatStr, locale);
 }
 
 /**
@@ -130,7 +184,7 @@ export function formatDistanceToNow(
 ): string {
   const d = date instanceof Date ? date : new Date(date);
   const now = new Date();
-  
+
   // Extract locale code
   let localeCode: DateLocale = 'en';
   if (options?.locale) {
@@ -141,17 +195,18 @@ export function formatDistanceToNow(
     }
   }
 
-  const t = RELATIVE_TIME_TRANSLATIONS[localeCode] || RELATIVE_TIME_TRANSLATIONS.en;
+  const t =
+    RELATIVE_TIME_TRANSLATIONS[localeCode] || RELATIVE_TIME_TRANSLATIONS.en;
   const addSuffix = options?.addSuffix !== false;
-  
+
   const isPastDate = d.getTime() < now.getTime();
   const seconds = Math.abs(diffSeconds(d, now));
   const minutes = Math.abs(diffMinutes(d, now));
   const hours = Math.abs(diffHours(d, now));
   const days = Math.abs(diffDays(d, now));
-  
+
   let result: string;
-  
+
   if (seconds < 60) {
     result = t.justNow;
     return result;

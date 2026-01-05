@@ -25,7 +25,7 @@ export function useTags(query: string, initial?: TagOption[]) {
   );
 
   const optionsFromApi: TagOption[] = useMemo(() => {
-    const tags = data?.tags ?? [];
+    const tags = data?.tags?.items ?? [];
     return tags.map((t) => ({
       id: t.id,
       slug: t.slug,

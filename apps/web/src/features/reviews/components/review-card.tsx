@@ -2,7 +2,15 @@
 
 import { format, pl } from '@/lib/date';
 import Link from 'next/link';
-import { Star, Trash2, Edit2, Flag, Shield, EyeOff } from 'lucide-react';
+import {
+  Star,
+  Trash2,
+  Edit2,
+  Flag,
+  Shield,
+  EyeOff,
+  MoreVertical,
+} from 'lucide-react';
 import { buildAvatarUrl } from '@/lib/media/url';
 import { Avatar } from '@/components/ui/avatar';
 
@@ -57,6 +65,9 @@ export function ReviewCard({
   const isHidden = Boolean(review.hiddenAt);
   const isRemovedFromView = isDeleted || isHidden;
 
+  // Content is null when review is hidden/deleted and viewer cannot see it
+  const contentVisible = review.content !== null;
+
   // Permissions matrix (must match backend resolver rules):
   // - Edit: ONLY Review Author (admins/moderators CANNOT edit)
   // - Delete: App Admin, App Moderator, or Review Author (Event Owner/Mod CANNOT delete)
@@ -72,15 +83,21 @@ export function ReviewCard({
     (isAppAdmin || isAppModerator || isEventOwnerOrMod) && isRemovedFromView;
 
   return (
-    <div className="p-4 border rounded-lg border-zinc-200 bg-white dark:border-zinc-800 dark:bg-zinc-950">
-      {/* Deleted/Hidden Review Placeholder */}
-      {isRemovedFromView && !showModerationBadge ? (
+    <div className="p-4 bg-white rounded-lg shadow-sm group dark:bg-zinc-900">
+      {/* Deleted/Hidden Review Placeholder (for users who cannot see content) */}
+      {!contentVisible ? (
         <div className="flex items-center gap-3 py-6 text-sm text-zinc-500 dark:text-zinc-400">
           <EyeOff className="w-4 h-4" />
           <span className="italic">
-            {isDeleted
-              ? 'Ta recenzja została usunięta'
-              : 'Ta recenzja została ukryta'}
+            {isHidden
+              ? isAuthor
+                ? 'Twoja recenzja została ukryta przez moderację'
+                : 'Ta recenzja została ukryta przez moderację'
+              : isDeleted
+                ? isAuthor
+                  ? 'Usunąłeś swoją recenzję'
+                  : 'Ta recenzja została usunięta przez autora'
+                : 'Ta recenzja jest niedostępna'}
           </span>
         </div>
       ) : (
@@ -100,118 +117,120 @@ export function ReviewCard({
             </div>
           )}
 
-          <div className="flex items-start justify-between">
-            <div className="flex items-start flex-1 gap-3">
-              {/* Avatar */}
-              <Link href={`/u/${review.author.name}`} className="flex-shrink-0">
-                {review.author.avatarKey ? (
-                  <Avatar
-                    url={buildAvatarUrl(review.author.avatarKey, 'md') || ''}
-                    blurhash={review.author.avatarBlurhash}
-                    alt={review.author.name}
-                    size={48}
-                    className="transition-opacity rounded-full hover:opacity-80"
-                  />
-                ) : (
-                  <div className="flex items-center justify-center w-10 h-10 transition-opacity rounded-full bg-zinc-200 hover:opacity-80 dark:bg-zinc-700">
-                    <span className="text-sm font-medium text-zinc-600 dark:text-zinc-300">
-                      {(
-                        (review.author as any).profile?.displayName ||
-                        review.author.name
-                      )
-                        .charAt(0)
-                        .toUpperCase()}
-                    </span>
-                  </div>
-                )}
-              </Link>
-
-              {/* Content */}
-              <div className="flex-1 min-w-0">
-                <div className="flex items-center flex-wrap gap-2">
-                  <Link
-                    href={`/u/${review.author.name}`}
-                    className="text-sm font-medium transition-colors text-zinc-900 hover:text-blue-600 dark:text-zinc-100 dark:hover:text-blue-400"
-                  >
-                    {(review.author as any).profile?.displayName ||
-                      review.author.name}
-                  </Link>
-                  <div className="flex items-center">
-                    {[...Array(5)].map((_, i) => (
-                      <Star
-                        key={i}
-                        className={`h-4 w-4 ${
-                          i < review.rating
-                            ? 'fill-yellow-400 text-yellow-400'
-                            : 'text-zinc-300 dark:text-zinc-600'
-                        }`}
-                      />
-                    ))}
-                  </div>
-                </div>
+          {/* Author & Actions */}
+          <div className="flex items-start justify-between mb-2">
+            <div className="flex items-center gap-3">
+              {review.author.avatarKey && (
                 <Link
                   href={`/u/${review.author.name}`}
-                  className="text-xs transition-colors text-zinc-600 hover:text-blue-600 dark:text-zinc-400 dark:hover:text-blue-400"
+                  className="flex-shrink-0"
                 >
-                  @{review.author.name}
+                  <Avatar
+                    url={buildAvatarUrl(review.author.avatarKey, 'xs')}
+                    blurhash={review.author.avatarBlurhash}
+                    alt={
+                      (review.author as any).profile?.displayName ||
+                      review.author.name
+                    }
+                    size={32}
+                    className="transition-opacity rounded-full hover:opacity-80"
+                  />
+                </Link>
+              )}
+              <div className="min-w-0">
+                <Link
+                  href={`/u/${review.author.name}`}
+                  className="text-sm font-medium transition-colors text-zinc-900 hover:text-blue-600 dark:text-zinc-100 dark:hover:text-blue-400"
+                >
+                  {(review.author as any)?.profile?.displayName ||
+                    review.author.name ||
+                    'N/A'}
+                </Link>
+                <Link
+                  href={`/u/${review.author.name}`}
+                  className="block text-xs transition-colors text-zinc-600 hover:text-blue-600 dark:text-zinc-400 dark:hover:text-blue-400"
+                >
+                  @{review.author.name || 'N/A'}
                 </Link>
                 <p className="text-xs text-zinc-600 dark:text-zinc-400">
                   {format(new Date(review.createdAt), 'dd MMM yyyy, HH:mm', {
                     locale: pl,
                   })}
                 </p>
-                {review.content && (
-                  <p className="mt-2 text-sm whitespace-pre-wrap text-zinc-700 dark:text-zinc-300">
-                    {review.content}
-                  </p>
-                )}
               </div>
             </div>
 
-            {/* Actions */}
             {currentUserId && (
-              <div className="flex items-center gap-2 ml-2">
-                {canEdit && onEdit && (
-                  <button
-                    onClick={() => onEdit(review.id)}
-                    className="rounded-lg p-1.5 text-zinc-600 hover:bg-zinc-100 hover:text-zinc-900 dark:text-zinc-400 dark:hover:bg-zinc-800 dark:hover:text-zinc-100"
-                    title="Edytuj recenzję"
-                  >
-                    <Edit2 className="w-4 h-4" />
+              <div className="relative transition-opacity opacity-0 group-hover:opacity-100">
+                <div className="relative group/menu">
+                  <button className="p-1 rounded hover:bg-zinc-100 dark:hover:bg-zinc-800">
+                    <MoreVertical className="w-4 h-4 text-zinc-600 dark:text-zinc-400" />
                   </button>
-                )}
-                {canDelete && onDelete && (
-                  <button
-                    onClick={() => onDelete(review.id)}
-                    className="rounded-lg p-1.5 text-red-600 hover:bg-red-50 hover:text-red-700 dark:text-red-400 dark:hover:bg-red-950/30 dark:hover:text-red-300"
-                    title={
-                      isAuthor ? 'Usuń recenzję' : 'Usuń recenzję (moderacja)'
-                    }
-                  >
-                    <Trash2 className="w-4 h-4" />
-                  </button>
-                )}
-                {canHide && onHide && (
-                  <button
-                    onClick={() => onHide(review.id)}
-                    className="rounded-lg p-1.5 text-amber-600 hover:bg-amber-50 hover:text-amber-700 dark:text-amber-400 dark:hover:bg-amber-950/30 dark:hover:text-amber-300"
-                    title="Ukryj recenzję"
-                  >
-                    <Shield className="w-4 h-4" />
-                  </button>
-                )}
-                {canReport && onReport && (
-                  <button
-                    onClick={() => onReport(review.id, review.author.name)}
-                    className="rounded-lg p-1.5 text-zinc-600 hover:bg-zinc-100 hover:text-zinc-900 dark:text-zinc-400 dark:hover:bg-zinc-800 dark:hover:text-zinc-100"
-                    title="Zgłoś recenzję"
-                  >
-                    <Flag className="w-4 h-4" />
-                  </button>
-                )}
+                  <div className="absolute right-0 z-10 w-48 py-1 mt-1 transition-transform origin-top-right scale-0 bg-white rounded-md shadow-lg ring-1 ring-zinc-200 group-hover/menu:scale-100 dark:bg-zinc-800 dark:ring-zinc-700">
+                    {canEdit && onEdit && (
+                      <button
+                        onClick={() => onEdit(review.id)}
+                        className="flex items-center w-full gap-2 px-4 py-2 text-sm text-zinc-700 hover:bg-zinc-100 dark:text-zinc-300 dark:hover:bg-zinc-700"
+                      >
+                        <Edit2 className="w-4 h-4" />
+                        Edytuj
+                      </button>
+                    )}
+                    {canDelete && onDelete && (
+                      <button
+                        onClick={() => onDelete(review.id)}
+                        className="flex items-center w-full gap-2 px-4 py-2 text-sm text-red-600 hover:bg-zinc-100 dark:text-red-400 dark:hover:bg-zinc-700"
+                      >
+                        <Trash2 className="w-4 h-4" />
+                        {isAuthor ? 'Usuń' : 'Usuń (moderacja)'}
+                      </button>
+                    )}
+                    {canHide && onHide && (
+                      <button
+                        onClick={() => onHide(review.id)}
+                        className="flex items-center w-full gap-2 px-4 py-2 text-sm text-amber-600 hover:bg-zinc-100 dark:text-amber-400 dark:hover:bg-zinc-700"
+                      >
+                        <Shield className="w-4 h-4" />
+                        Ukryj recenzję
+                      </button>
+                    )}
+                    {canReport && onReport && (
+                      <button
+                        onClick={() =>
+                          onReport(review.id, review.author.name || 'N/A')
+                        }
+                        className="flex items-center w-full gap-2 px-4 py-2 text-sm text-zinc-700 hover:bg-zinc-100 dark:text-zinc-300 dark:hover:bg-zinc-700"
+                      >
+                        <Flag className="w-4 h-4" />
+                        Zgłoś
+                      </button>
+                    )}
+                  </div>
+                </div>
               </div>
             )}
           </div>
+
+          {/* Rating */}
+          <div className="flex items-center gap-1 mb-2">
+            {[...Array(5)].map((_, i) => (
+              <Star
+                key={i}
+                className={`h-4 w-4 ${
+                  i < review.rating
+                    ? 'fill-yellow-400 text-yellow-400'
+                    : 'text-zinc-300 dark:text-zinc-600'
+                }`}
+              />
+            ))}
+          </div>
+
+          {/* Content */}
+          {review.content && (
+            <p className="text-sm text-zinc-700 dark:text-zinc-300">
+              {review.content}
+            </p>
+          )}
         </>
       )}
     </div>

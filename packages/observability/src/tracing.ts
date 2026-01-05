@@ -12,16 +12,30 @@ import { NodeSDK } from '@opentelemetry/sdk-node';
 import { getNodeAutoInstrumentations } from '@opentelemetry/auto-instrumentations-node';
 import { OTLPTraceExporter } from '@opentelemetry/exporter-trace-otlp-http';
 import { Resource } from '@opentelemetry/resources';
-import { SEMRESATTRS_SERVICE_NAME, SEMRESATTRS_SERVICE_VERSION } from '@opentelemetry/semantic-conventions';
-import { BatchSpanProcessor, ConsoleSpanExporter, SpanProcessor } from '@opentelemetry/sdk-trace-base';
-import { TraceIdRatioBasedSampler, ParentBasedSampler } from '@opentelemetry/sdk-trace-base';
+import {
+  SEMRESATTRS_SERVICE_NAME,
+  SEMRESATTRS_SERVICE_VERSION,
+} from '@opentelemetry/semantic-conventions';
+import {
+  BatchSpanProcessor,
+  ConsoleSpanExporter,
+  SpanProcessor,
+} from '@opentelemetry/sdk-trace-base';
+import {
+  TraceIdRatioBasedSampler,
+  ParentBasedSampler,
+} from '@opentelemetry/sdk-trace-base';
 import { containerDetector as _containerDetector } from '@opentelemetry/resource-detector-container';
 import { FastifyInstrumentation } from '@opentelemetry/instrumentation-fastify';
 import { HttpInstrumentation } from '@opentelemetry/instrumentation-http';
 import { RedisInstrumentation as Redis4Instrumentation } from '@opentelemetry/instrumentation-redis-4';
 import { PinoInstrumentation } from '@opentelemetry/instrumentation-pino';
 
-import { getObservabilityConfig, validateConfig, getResourceAttributes } from './config';
+import {
+  getObservabilityConfig,
+  validateConfig,
+  getResourceAttributes,
+} from './config.js';
 
 let sdk: NodeSDK | null = null;
 
@@ -32,10 +46,10 @@ let sdk: NodeSDK | null = null;
  */
 export async function initTracing(): Promise<NodeSDK | null> {
   const config = getObservabilityConfig();
-  
+
   // Validate config (throws in production if misconfigured)
   validateConfig(config);
-  
+
   // Skip if tracing is disabled
   if (!config.enableTracing) {
     if (config.debug) {
@@ -43,16 +57,16 @@ export async function initTracing(): Promise<NodeSDK | null> {
     }
     return null;
   }
-  
+
   // Skip if no OTLP endpoint (development without collector)
   if (!config.otlpEndpoint) {
     console.warn(
       '[Observability] OTLP endpoint not configured. ' +
-      'Run "pnpm obs:up" to start local observability stack.'
+        'Run "pnpm obs:up" to start local observability stack.'
     );
     return null;
   }
-  
+
   if (config.debug) {
     console.log('[Observability] Initializing tracing...', {
       serviceName: config.serviceName,
@@ -61,14 +75,14 @@ export async function initTracing(): Promise<NodeSDK | null> {
       sampleRate: config.traceSampleRate,
     });
   }
-  
+
   // Resource with service info + K8s attributes
   const resource = new Resource({
     [SEMRESATTRS_SERVICE_NAME]: config.serviceName,
     [SEMRESATTRS_SERVICE_VERSION]: config.serviceVersion,
     ...getResourceAttributes(config),
   });
-  
+
   // OTLP exporter (HTTP)
   const traceExporter = new OTLPTraceExporter({
     url: `${config.otlpEndpoint}/v1/traces`,
@@ -76,7 +90,7 @@ export async function initTracing(): Promise<NodeSDK | null> {
     // Timeout for export
     timeoutMillis: 10000,
   });
-  
+
   // Span processors
   const spanProcessors: SpanProcessor[] = [
     // Batch processor for production efficiency
@@ -87,7 +101,7 @@ export async function initTracing(): Promise<NodeSDK | null> {
       exportTimeoutMillis: 30000,
     }),
   ];
-  
+
   // Add console exporter in debug mode
   if (config.debug) {
     spanProcessors.push(
@@ -97,12 +111,12 @@ export async function initTracing(): Promise<NodeSDK | null> {
       })
     );
   }
-  
+
   // Sampler: parent-based with ratio
   const sampler = new ParentBasedSampler({
     root: new TraceIdRatioBasedSampler(config.traceSampleRate),
   });
-  
+
   // SDK initialization
   sdk = new NodeSDK({
     resource,
@@ -114,24 +128,33 @@ export async function initTracing(): Promise<NodeSDK | null> {
         ignoreIncomingRequestHook: (req) => {
           // Skip health check endpoints
           const url = req.url || '';
-          return url.includes('/health') || url.includes('/_next/') || url.includes('/favicon');
+          return (
+            url.includes('/health') ||
+            url.includes('/_next/') ||
+            url.includes('/favicon')
+          );
         },
         requestHook: (span, request) => {
           // Add custom attributes
-          span.setAttribute('http.client_ip', request.socket?.remoteAddress || 'unknown');
+          span.setAttribute(
+            'http.client_ip',
+            request.socket?.remoteAddress || 'unknown'
+          );
         },
       }),
-      
+
       // Fastify instrumentation
       new FastifyInstrumentation({
         requestHook: (span, info) => {
           // Add route name as span name
           if (info.request.routeOptions?.url) {
-            span.updateName(`HTTP ${info.request.method} ${info.request.routeOptions.url}`);
+            span.updateName(
+              `HTTP ${info.request.method} ${info.request.routeOptions.url}`
+            );
           }
         },
       }),
-      
+
       // Pino instrumentation (inject trace context into logs)
       new PinoInstrumentation({
         logHook: (_span, _record) => {
@@ -139,7 +162,7 @@ export async function initTracing(): Promise<NodeSDK | null> {
           // Already handled by instrumentation, but we can customize here
         },
       }),
-      
+
       // Redis instrumentation (ioredis v4+)
       new Redis4Instrumentation({
         dbStatementSerializer: (cmdName, cmdArgs) => {
@@ -150,7 +173,7 @@ export async function initTracing(): Promise<NodeSDK | null> {
           return `${cmdName} ${cmdArgs.slice(0, 2).join(' ')}`;
         },
       }),
-      
+
       // Auto-instrumentations for common libraries
       // Includes: dns, net, pg (postgres), undici (fetch), etc.
       getNodeAutoInstrumentations({
@@ -163,15 +186,15 @@ export async function initTracing(): Promise<NodeSDK | null> {
       }),
     ],
   });
-  
+
   // Start SDK
   try {
     await sdk.start();
-    
+
     if (config.debug) {
       console.log('[Observability] ✅ Tracing initialized successfully');
     }
-    
+
     // Graceful shutdown
     process.on('SIGTERM', async () => {
       try {
@@ -181,7 +204,7 @@ export async function initTracing(): Promise<NodeSDK | null> {
         console.error('[Observability] Error shutting down tracing', error);
       }
     });
-    
+
     return sdk;
   } catch (error) {
     console.error('[Observability] Failed to initialize tracing:', error);
@@ -206,4 +229,3 @@ export async function shutdownTracing(): Promise<void> {
 export function getSDK(): NodeSDK | null {
   return sdk;
 }
-

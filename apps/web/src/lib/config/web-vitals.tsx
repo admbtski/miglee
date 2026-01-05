@@ -8,6 +8,7 @@ import {
   getDeviceType,
   getCurrentRoute,
   getConnectionType,
+  getRenderType,
 } from '@appname/observability/browser';
 
 function send(metric: Metric) {
@@ -16,6 +17,7 @@ function send(metric: Metric) {
   const route = getCurrentRoute();
   const device = getDeviceType();
   const connection = getConnectionType();
+  const renderType = getRenderType();
 
   const payload = JSON.stringify({
     id: metric.id,
@@ -31,6 +33,7 @@ function send(metric: Metric) {
     route,
     device,
     connection,
+    renderType,
   });
 
   const url = '/api/vitals';

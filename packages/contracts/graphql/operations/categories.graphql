@@ -4,13 +4,22 @@
 # QUERIES
 # ============================================
 
-query GetCategories($query: String, $limit: Int) {
-  categories(query: $query, limit: $limit) {
-    id
-    slug
-    names
-    createdAt
-    updatedAt
+query GetCategories($query: String, $limit: Int, $offset: Int) {
+  categories(query: $query, limit: $limit, offset: $offset) {
+    items {
+      id
+      slug
+      names
+      createdAt
+      updatedAt
+    }
+    pageInfo {
+      total
+      limit
+      offset
+      hasNext
+      hasPrev
+    }
   }
 }
 

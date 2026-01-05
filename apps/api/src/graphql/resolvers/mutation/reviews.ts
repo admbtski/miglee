@@ -193,7 +193,13 @@ export const createReviewMutation: MutationResolvers['createReview'] =
         });
       }
 
-      return mapReview(review);
+      // Author sees their new review (always active at creation)
+      const viewerContext = {
+        viewerId: userId,
+        viewerRole: ctx.user?.role,
+        isEventOwnerOrMod: false, // Not relevant for newly created review
+      };
+      return mapReview(review, undefined, viewerContext);
     }
   );
 
@@ -290,7 +296,13 @@ export const updateReviewMutation: MutationResolvers['updateReview'] =
         severity: 2,
       });
 
-      return mapReview(updated);
+      // Author sees their updated review
+      const viewerContext = {
+        viewerId: userId,
+        viewerRole: ctx.user?.role,
+        isEventOwnerOrMod: false, // Not relevant for author's own review
+      };
+      return mapReview(updated, undefined, viewerContext);
     }
   );
 

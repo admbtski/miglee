@@ -1,4 +1,3 @@
-// apps/web/src/hooks/tags.tsx
 import {
   GetTagsDocument,
   GetTagsQuery,
@@ -9,7 +8,7 @@ import { QueryKey, useQuery, UseQueryOptions } from '@tanstack/react-query';
 import { tagsKeys } from './tags-query-keys';
 
 export function buildGetTagsOptions(
-  variables?: GetTagsQueryVariables,
+  variables: GetTagsQueryVariables = {},
   options?: Omit<
     UseQueryOptions<GetTagsQuery, Error, GetTagsQuery, QueryKey>,
     'queryKey' | 'queryFn'
@@ -18,22 +17,22 @@ export function buildGetTagsOptions(
   return {
     queryKey: tagsKeys.list(variables) as unknown as QueryKey,
     queryFn: async () =>
-      variables
-        ? gqlClient.request<GetTagsQuery, GetTagsQueryVariables>(
-            GetTagsDocument,
-            variables
-          )
-        : gqlClient.request<GetTagsQuery>(GetTagsDocument),
-    ...(options ?? {}),
+      gqlClient.request<GetTagsQuery, GetTagsQueryVariables>(
+        GetTagsDocument,
+        variables
+      ),
+    ...options,
   };
 }
 
 export function useGetTagsQuery(
-  variables?: GetTagsQueryVariables,
+  variables: GetTagsQueryVariables = {},
   options?: Omit<
     UseQueryOptions<GetTagsQuery, Error, GetTagsQuery, QueryKey>,
     'queryKey' | 'queryFn'
   >
 ) {
-  return useQuery(buildGetTagsOptions(variables, options));
+  return useQuery<GetTagsQuery, Error, GetTagsQuery, QueryKey>(
+    buildGetTagsOptions(variables, options)
+  );
 }

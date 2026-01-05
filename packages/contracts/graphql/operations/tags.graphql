@@ -4,13 +4,22 @@
 # QUERIES
 # ============================================
 
-query GetTags($query: String, $limit: Int) {
-  tags(query: $query, limit: $limit) {
-    id
-    slug
-    label
-    createdAt
-    updatedAt
+query GetTags($query: String, $limit: Int, $offset: Int) {
+  tags(query: $query, limit: $limit, offset: $offset) {
+    items {
+      id
+      slug
+      label
+      createdAt
+      updatedAt
+    }
+    pageInfo {
+      total
+      limit
+      offset
+      hasNext
+      hasPrev
+    }
   }
 }
 

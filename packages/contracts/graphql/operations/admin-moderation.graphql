@@ -58,11 +58,22 @@ query AdminReviews(
       createdAt
       updatedAt
       deletedAt
+      deletedById
+      hiddenAt
+      hiddenById
       author {
         id
         name
         avatarKey
         avatarBlurhash
+      }
+      deletedBy {
+        id
+        name
+      }
+      hiddenBy {
+        id
+        name
       }
       event {
         id

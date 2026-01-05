@@ -63,6 +63,16 @@ type UserEventsResult {
   total: Int!
 }
 
+type CategoriesResult {
+  items: [Category!]!
+  pageInfo: PageInfo!
+}
+
+type TagsResult {
+  items: [Tag!]!
+  pageInfo: PageInfo!
+}
+
 type UserReviewsResult {
   items: [Review!]!
   total: Int!
@@ -1345,7 +1355,7 @@ type Comment {
   authorId: ID!
   threadId: ID!
   parentId: ID
-  content: String!
+  content: String # Nullable - hidden/deleted comments have null content for non-moderators
   createdAt: DateTime!
   updatedAt: DateTime!
   deletedAt: DateTime
@@ -2126,13 +2136,13 @@ type Query {
   eventSponsorship(eventId: ID!): EventSponsorship
 
   categoriesBySlugs(slugs: [String!]!, limit: Int): [Category!]!
-  categories(query: String, limit: Int = 50): [Category!]!
+  categories(query: String, limit: Int = 50, offset: Int = 0): CategoriesResult!
   category(id: ID, slug: String): Category
   checkCategorySlugAvailable(slug: String!): Boolean!
   getCategoryUsageCount(slug: String!): Int!
 
   tagsBySlugs(slugs: [String!]!, limit: Int): [Tag!]!
-  tags(query: String, limit: Int = 50): [Tag!]!
+  tags(query: String, limit: Int = 50, offset: Int = 0): TagsResult!
   tag(id: ID, slug: String): Tag
   checkTagSlugAvailable(slug: String!): Boolean!
   getTagUsageCount(slug: String!): Int!

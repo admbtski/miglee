@@ -30,6 +30,7 @@ const navigation = [
     name: 'Użytkownicy',
     href: '/admin/users',
     icon: Users,
+    badge: 'partially',
   },
   {
     name: 'Wydarzenia',
@@ -52,6 +53,7 @@ const navigation = [
     name: 'Recenzje',
     href: '/admin/reviews',
     icon: Star,
+    badge: 'ready',
   },
   {
     name: 'Kategorie',
@@ -69,6 +71,7 @@ const navigation = [
     name: 'Powiadomienia',
     href: '/admin/notifications',
     icon: Bell,
+    badge: 'ready',
   },
   {
     name: 'Sponsoring',

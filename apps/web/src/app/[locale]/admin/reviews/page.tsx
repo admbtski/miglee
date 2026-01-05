@@ -2,26 +2,33 @@
 
 import { format, pl } from '@/lib/date';
 import { useState } from 'react';
-import {
-  useAdminReviews,
-  useAdminDeleteReview,
-} from '@/features/admin';
+import { useAdminReviews, useAdminDeleteReview } from '@/features/admin';
 import { useHideReview, useUnhideReview } from '@/features/reviews';
-import { Trash2, Star, Eye, EyeOff } from 'lucide-react';
+import { Trash2, Star, Eye, EyeOff, Search, ExternalLink } from 'lucide-react';
 import { NoticeModal } from '@/components/ui/notice-modal';
+import { Pagination } from '@/components/ui/pagination';
+import Link from 'next/link';
+import { useLocalePath } from '@/hooks/use-locale-path';
+
+const LIMIT = 100;
 
 export default function ReviewsPage() {
   const [eventId, setEventId] = useState('');
   const [userId, setUserId] = useState('');
   const [minRating, setMinRating] = useState<number | undefined>();
+  const [page, setPage] = useState(1);
   const [deleteModalOpen, setDeleteModalOpen] = useState(false);
   const [selectedReviewId, setSelectedReviewId] = useState<string | null>(null);
+  const { localePath } = useLocalePath();
+
+  const offset = (page - 1) * LIMIT;
 
   const { data, isLoading, refetch } = useAdminReviews({
     eventId: eventId || undefined,
     userId: userId || undefined,
     rating: minRating,
-    limit: 100,
+    limit: LIMIT,
+    offset,
   });
 
   const deleteMutation = useAdminDeleteReview();
@@ -30,6 +37,23 @@ export default function ReviewsPage() {
 
   const reviews = data?.adminReviews?.items ?? [];
   const total = data?.adminReviews?.pageInfo?.total ?? 0;
+  const totalPages = Math.ceil(total / LIMIT);
+
+  // Reset to page 1 when filters change
+  const handleEventIdChange = (value: string) => {
+    setEventId(value);
+    setPage(1);
+  };
+
+  const handleUserIdChange = (value: string) => {
+    setUserId(value);
+    setPage(1);
+  };
+
+  const handleRatingChange = (value: string) => {
+    setMinRating(value ? Number(value) : undefined);
+    setPage(1);
+  };
 
   const handleDeleteReview = async () => {
     if (!selectedReviewId) return;
@@ -87,25 +111,31 @@ export default function ReviewsPage() {
             <label className="mb-2 block text-sm font-medium text-zinc-700 dark:text-zinc-300">
               ID wydarzenia (opcjonalnie)
             </label>
-            <input
-              type="text"
-              value={eventId}
-              onChange={(e) => setEventId(e.target.value)}
-              placeholder="Filtruj po ID wydarzenia..."
-              className="w-full rounded-lg border border-zinc-300 px-4 py-2 text-sm focus:border-blue-500 focus:outline-none focus:ring-2 focus:ring-blue-500 dark:border-zinc-700 dark:bg-zinc-900 dark:text-zinc-100"
-            />
+            <div className="relative">
+              <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-zinc-400" />
+              <input
+                type="text"
+                value={eventId}
+                onChange={(e) => handleEventIdChange(e.target.value)}
+                placeholder="Filtruj po ID wydarzenia..."
+                className="w-full rounded-lg border border-zinc-300 py-2 pl-10 pr-4 text-sm focus:border-blue-500 focus:outline-none focus:ring-2 focus:ring-blue-500 dark:border-zinc-700 dark:bg-zinc-900 dark:text-zinc-100"
+              />
+            </div>
           </div>
           <div>
             <label className="mb-2 block text-sm font-medium text-zinc-700 dark:text-zinc-300">
               ID użytkownika (opcjonalnie)
             </label>
-            <input
-              type="text"
-              value={userId}
-              onChange={(e) => setUserId(e.target.value)}
-              placeholder="Filtruj po ID użytkownika..."
-              className="w-full rounded-lg border border-zinc-300 px-4 py-2 text-sm focus:border-blue-500 focus:outline-none focus:ring-2 focus:ring-blue-500 dark:border-zinc-700 dark:bg-zinc-900 dark:text-zinc-100"
-            />
+            <div className="relative">
+              <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-zinc-400" />
+              <input
+                type="text"
+                value={userId}
+                onChange={(e) => handleUserIdChange(e.target.value)}
+                placeholder="Filtruj po ID użytkownika..."
+                className="w-full rounded-lg border border-zinc-300 py-2 pl-10 pr-4 text-sm focus:border-blue-500 focus:outline-none focus:ring-2 focus:ring-blue-500 dark:border-zinc-700 dark:bg-zinc-900 dark:text-zinc-100"
+              />
+            </div>
           </div>
           <div>
             <label className="mb-2 block text-sm font-medium text-zinc-700 dark:text-zinc-300">
@@ -113,11 +143,7 @@ export default function ReviewsPage() {
             </label>
             <select
               value={minRating || ''}
-              onChange={(e) =>
-                setMinRating(
-                  e.target.value ? Number(e.target.value) : undefined
-                )
-              }
+              onChange={(e) => handleRatingChange(e.target.value)}
               className="w-full rounded-lg border border-zinc-300 px-3 py-2 text-sm focus:border-blue-500 focus:outline-none focus:ring-2 focus:ring-blue-500 dark:border-zinc-700 dark:bg-zinc-900 dark:text-zinc-100"
             >
               <option value="">Wszystkie</option>
@@ -194,8 +220,23 @@ export default function ReviewsPage() {
                     <td className="whitespace-nowrap px-6 py-4 text-sm text-zinc-900 dark:text-zinc-100">
                       {review.author?.name || 'N/A'}
                     </td>
-                    <td className="max-w-xs truncate px-6 py-4 text-sm text-zinc-700 dark:text-zinc-300">
-                      {review.event?.title || 'N/A'}
+                    <td className="max-w-xs px-6 py-4 text-sm">
+                      {review.event?.id ? (
+                        <Link
+                          href={localePath(`/e/${review.event.id}`)}
+                          className="inline-flex items-center gap-1 text-blue-600 hover:text-blue-900 hover:underline dark:text-blue-400 dark:hover:text-blue-300"
+                          title="Przejdź do wydarzenia"
+                          target="_blank"
+                          rel="noopener noreferrer"
+                        >
+                          <span className="truncate">{review.event.title}</span>
+                          <ExternalLink className="h-3 w-3 flex-shrink-0" />
+                        </Link>
+                      ) : (
+                        <span className="text-zinc-700 dark:text-zinc-300">
+                          N/A
+                        </span>
+                      )}
                     </td>
                     <td className="whitespace-nowrap px-6 py-4 text-sm">
                       <div className="flex items-center gap-1">
@@ -234,17 +275,6 @@ export default function ReviewsPage() {
                     </td>
                     <td className="whitespace-nowrap px-6 py-4 text-right text-sm">
                       <div className="flex items-center justify-end gap-2">
-                        {review.event?.id && (
-                          <a
-                            href={`/event/${review.event.id}`}
-                            target="_blank"
-                            rel="noopener noreferrer"
-                            className="inline-flex items-center gap-1 text-blue-600 hover:text-blue-900 dark:text-blue-400 dark:hover:text-blue-300"
-                            title="Zobacz wydarzenie"
-                          >
-                            <Eye className="h-4 w-4" />
-                          </a>
-                        )}
                         {!review.deletedAt && (
                           <>
                             {review.hiddenAt ? (
@@ -256,6 +286,7 @@ export default function ReviewsPage() {
                                 title="Przywróć recenzję"
                               >
                                 <Eye className="h-4 w-4" />
+                                Przywróć
                               </button>
                             ) : (
                               <button
@@ -266,6 +297,7 @@ export default function ReviewsPage() {
                                 title="Ukryj recenzję"
                               >
                                 <EyeOff className="h-4 w-4" />
+                                Ukryj
                               </button>
                             )}
                             <button
@@ -275,6 +307,7 @@ export default function ReviewsPage() {
                               title="Usuń na zawsze"
                             >
                               <Trash2 className="h-4 w-4" />
+                              Usuń
                             </button>
                           </>
                         )}
@@ -286,6 +319,18 @@ export default function ReviewsPage() {
             </table>
           </div>
         )}
+
+        {/* Pagination */}
+        {!isLoading && reviews.length > 0 && (
+          <Pagination
+            currentPage={page}
+            totalPages={totalPages}
+            onPageChange={setPage}
+            totalItems={total}
+            itemsPerPage={LIMIT}
+            itemsOnCurrentPage={reviews.length}
+          />
+        )}
       </div>
 
       {/* Delete Modal */}
@@ -296,7 +341,9 @@ export default function ReviewsPage() {
         size="sm"
         title="Usuń recenzję"
         subtitle="Czy na pewno chcesz usunąć tę recenzję? Ta akcja jest nieodwracalna."
-        primaryLabel={deleteMutation.isPending ? 'Usuwanie...' : 'Usuń'}
+        primaryLabel={
+          deleteMutation.isPending ? 'Usuwanie...' : 'Usuń na zawsze'
+        }
         secondaryLabel="Anuluj"
         onPrimary={handleDeleteReview}
         onSecondary={() => setDeleteModalOpen(false)}

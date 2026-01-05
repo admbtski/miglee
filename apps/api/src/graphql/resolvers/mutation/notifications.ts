@@ -37,14 +37,6 @@ export const NOTIFICATION_INCLUDE = {
   },
 } satisfies Prisma.NotificationInclude;
 
-/**
- * addNotification(recipientId, kind, title, body, data, entityType, entityId)
- * - Wymaga zalogowanego usera.
- * - Domyślnie pozwalamy wysyłać TYLKO do siebie (recipientId === user.id).
- * - Publikuje:
- *    - NOTIFICATION_ADDED:<recipientId> (z pełnym payloadem)
- *    - NOTIFICATION_BADGE:<recipientId> (dla odświeżenia badge’a)
- */
 export const addNotificationMutation: MutationResolvers['addNotification'] =
   resolverWithMetrics(
     'Mutation',
@@ -67,7 +59,6 @@ export const addNotificationMutation: MutationResolvers['addNotification'] =
         );
       }
 
-      // Jeśli wskazujesz EVENT – ustaw także eventId (ułatwia zapytania)
       const isEvent =
         (entityType ?? NotificationEntity.OTHER) === NotificationEntity.EVENT;
       const safeEventId =
@@ -85,19 +76,16 @@ export const addNotificationMutation: MutationResolvers['addNotification'] =
           entityId: entityId ?? null,
           recipientId,
           actorId: user.id,
-          eventId: safeEventId, // jeżeli to EVENT — powiąż
-          // dedupeKey opcjonalny — jeśli chcesz, rozszerz schema/mutation o pole dedupeKey
+          eventId: safeEventId,
         },
         include: NOTIFICATION_INCLUDE,
       });
 
-      // Realtime: lista
       await pubsub?.publish({
         topic: `NOTIFICATION_ADDED:${created.recipientId}`,
         payload: { notificationAdded: mapNotification(created) },
       });
 
-      // Realtime: badge (nowy wpis jest nieprzeczytany)
       await pubsub?.publish({
         topic: `NOTIFICATION_BADGE:${created.recipientId}`,
         payload: {
@@ -118,12 +106,6 @@ export const addNotificationMutation: MutationResolvers['addNotification'] =
     }
   );
 
-/**
- * deleteNotification(id)
- * - Tylko właściciel (recipient).
- * - Zwraca true/false; false dla braku rekordu (idempotent).
- * - Jeżeli rekord był NIEPRZECZYTANY → publikuje NOTIFICATION_BADGE dla przeliczenia licznika.
- */
 export const deleteNotificationMutation: MutationResolvers['deleteNotification'] =
   resolverWithMetrics(
     'Mutation',
@@ -136,12 +118,12 @@ export const deleteNotificationMutation: MutationResolvers['deleteNotification']
       }
 
       try {
-        const notif = await prisma.notification.findUnique({ where: { id } });
-        // SELF or ADMIN_ONLY
-        const isOwner = notif && notif.recipientId === user.id;
-        const isAdmin = user.role === Role.Admin;
-        if (!notif || (!isOwner && !isAdmin)) {
-          // 404 + brak dostępu bez ujawniania cudzych rekordów
+        const notification = await prisma.notification.findUnique({
+          where: { id },
+        });
+
+        const isOwner = notification && notification.recipientId === user.id;
+        if (!notification || !isOwner) {
           throw new GraphQLError('Notification not found or access denied.', {
             extensions: { code: 'NOT_FOUND' },
           });
@@ -162,12 +144,6 @@ export const deleteNotificationMutation: MutationResolvers['deleteNotification']
     }
   );
 
-/**
- * markNotificationRead(id)
- * - Oznacza pojedynczą notyfikację jako przeczytaną (readAt = now).
- * - Tylko właściciel (recipient).
- * - Publikuje NOTIFICATION_BADGE (licznik mógł się zmienić).
- */
 export const markNotificationReadMutation: MutationResolvers['markNotificationRead'] =
   resolverWithMetrics(
     'Mutation',
@@ -179,18 +155,19 @@ export const markNotificationReadMutation: MutationResolvers['markNotificationRe
         });
       }
 
-      const notif = await prisma.notification.findUnique({ where: { id } });
-      // SELF or ADMIN_ONLY
-      const isOwner = notif && notif.recipientId === user.id;
-      const isAdmin = user.role === Role.Admin;
-      if (!notif || (!isOwner && !isAdmin)) {
+      const notification = await prisma.notification.findUnique({
+        where: { id },
+      });
+
+      const isOwner = notification && notification.recipientId === user.id;
+      if (!notification || !isOwner) {
         throw new GraphQLError('Notification not found or access denied.', {
           extensions: { code: 'NOT_FOUND' },
         });
       }
 
       // Idempotent: if already read, don't change anything but return true
-      if (notif.readAt) return true;
+      if (notification.readAt) return true;
 
       try {
         await prisma.notification.update({
@@ -208,7 +185,6 @@ export const markNotificationReadMutation: MutationResolvers['markNotificationRe
 
         return true;
       } catch (e: unknown) {
-        // Gdyby rekord zniknął pomiędzy find a update
         if (
           e instanceof Prisma.PrismaClientKnownRequestError &&
           e.code === 'P2025'
@@ -220,12 +196,6 @@ export const markNotificationReadMutation: MutationResolvers['markNotificationRe
     }
   );
 
-/**
- * markAllNotificationsRead(recipientId)
- * - Wymusza recipientId === zalogowany user.
- * - Zwraca liczbę zaktualizowanych rekordów.
- * - Publikuje NOTIFICATION_BADGE (na pewno licznik się zmienił lub powinien zostać odświeżony).
- */
 export const markAllNotificationsReadMutation: MutationResolvers['markAllNotificationsRead'] =
   resolverWithMetrics(
     'Mutation',
@@ -236,9 +206,8 @@ export const markAllNotificationsReadMutation: MutationResolvers['markAllNotific
           extensions: { code: 'UNAUTHENTICATED' },
         });
       }
-      // SELF or ADMIN_ONLY
-      const isAdmin = user.role === Role.Admin;
-      if (recipientId !== user.id && !isAdmin) {
+
+      if (recipientId !== user.id) {
         throw new GraphQLError(
           'Cannot mark notifications read for another user.',
           {
