@@ -34,6 +34,10 @@
     "./browser": {
       "import": "./src/browser.ts",
       "types": "./src/browser.ts"
+    },
+    "./web-vitals-utils": {
+      "import": "./src/web-vitals-utils.ts",
+      "types": "./src/web-vitals-utils.ts"
     }
   },
   "scripts": {

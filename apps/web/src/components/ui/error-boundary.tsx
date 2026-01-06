@@ -2,6 +2,7 @@
 
 import { Component, type ReactNode } from 'react';
 import { getCurrentTraceId, getCurrentSpanId } from '@appname/observability/browser';
+import { reportFailedTransition } from '@/lib/observability/route-transitions';
 
 /**
  * Error boundary props
@@ -18,6 +19,8 @@ interface ErrorBoundaryProps {
 interface ErrorBoundaryState {
   hasError: boolean;
   error: Error | null;
+  previousRoute: string | null;
+  currentRoute: string | null;
 }
 
 /**
@@ -30,11 +33,29 @@ export class ErrorBoundary extends Component<
 > {
   constructor(props: ErrorBoundaryProps) {
     super(props);
-    this.state = { hasError: false, error: null };
+    this.state = { 
+      hasError: false, 
+      error: null,
+      previousRoute: null,
+      currentRoute: typeof window !== 'undefined' ? window.location.pathname : null,
+    };
   }
 
-  static getDerivedStateFromError(error: Error): ErrorBoundaryState {
+  static getDerivedStateFromError(error: Error): Partial<ErrorBoundaryState> {
     return { hasError: true, error };
+  }
+
+  override componentDidUpdate(): void {
+    // Track route changes
+    if (typeof window !== 'undefined') {
+      const newRoute = window.location.pathname;
+      if (newRoute !== this.state.currentRoute && !this.state.hasError) {
+        this.setState({
+          previousRoute: this.state.currentRoute,
+          currentRoute: newRoute,
+        });
+      }
+    }
   }
 
   override componentDidCatch(error: Error, errorInfo: React.ErrorInfo): void {
@@ -42,14 +63,27 @@ export class ErrorBoundary extends Component<
     const traceId = getCurrentTraceId();
     const spanId = getCurrentSpanId();
 
+    // Get current route
+    const currentRoute = typeof window !== 'undefined' ? window.location.pathname : 'unknown';
+
     // Log error to monitoring service with trace context
     console.error('ErrorBoundary caught an error:', {
       error,
       errorInfo,
       traceId,
       spanId,
-      route: typeof window !== 'undefined' ? window.location.pathname : 'unknown',
+      route: currentRoute,
+      previousRoute: this.state.previousRoute,
     });
+
+    // Report failed route transition if we have route context
+    if (this.state.previousRoute && this.state.currentRoute) {
+      reportFailedTransition({
+        from_path: this.state.previousRoute,
+        to_path: this.state.currentRoute,
+        error,
+      });
+    }
 
     // Call optional error handler
     this.props.onError?.(error, errorInfo);
@@ -59,12 +93,17 @@ export class ErrorBoundary extends Component<
     // Sentry.captureException(error, {
     //   contexts: {
     //     trace: { trace_id: traceId, span_id: spanId },
+    //     route: { from: previousRoute, to: currentRoute },
     //   },
     // });
   }
 
   reset = (): void => {
-    this.setState({ hasError: false, error: null });
+    this.setState({ 
+      hasError: false, 
+      error: null,
+      // Keep route tracking intact after reset
+    });
   };
 
   override render(): ReactNode {

@@ -12,10 +12,26 @@
         "iconColor": "rgba(0, 211, 255, 1)",
         "name": "Annotations & Alerts",
         "type": "dashboard"
+      },
+      {
+        "datasource": {
+          "type": "prometheus",
+          "uid": "prometheus"
+        },
+        "enable": true,
+        "expr": "changes(app_web_vitals_lcp_milliseconds_count[1m]) > 0",
+        "hide": false,
+        "iconColor": "blue",
+        "name": "Deploys",
+        "step": "1m",
+        "tagKeys": "version",
+        "textFormat": "Deploy",
+        "titleFormat": "Deployment",
+        "useValueForTime": true
       }
     ]
   },
-  "description": "Comprehensive Web Vitals Dashboard - Core Web Vitals (LCP, CLS, INP) + Additional Metrics (FCP, TTFB) with detailed breakdowns",
+  "description": "Production-grade Core Web Vitals Dashboard - LCP, CLS, INP with percentiles, segmentation, and alerting",
   "editable": true,
   "fiscalYearStartMonth": 0,
   "graphTooltip": 1,
@@ -31,16 +47,17 @@
         "x": 0,
         "y": 0
       },
-      "id": 1,
+      "id": 100,
       "panels": [],
-      "title": "\ud83d\udcca Core Web Vitals Overview (Google's Key Metrics)",
+      "title": "🎯 Core Web Vitals - Key Metrics (p75 - Google Ranking Signal)",
       "type": "row"
     },
     {
       "datasource": {
         "type": "prometheus",
-        "uid": "${datasource}"
+        "uid": "prometheus"
       },
+      "description": "75th percentile of Largest Contentful Paint. Target: ≤2.5s (Good), 2.5-4s (Needs Improvement), >4s (Poor)",
       "fieldConfig": {
         "defaults": {
           "color": {
@@ -70,47 +87,46 @@
       },
       "gridPos": {
         "h": 6,
-        "w": 4,
+        "w": 8,
         "x": 0,
         "y": 1
       },
-      "id": 2,
+      "id": 101,
       "options": {
         "colorMode": "value",
         "graphMode": "area",
         "justifyMode": "auto",
         "orientation": "auto",
         "reduceOptions": {
-          "calcs": [
-            "lastNotNull"
-          ],
-          "fields": "",
-          "values": false
+          "values": false,
+          "calcs": ["lastNotNull"],
+          "fields": ""
         },
-        "textMode": "auto",
-        "wideLayout": true
+        "textMode": "auto"
       },
-      "pluginVersion": "11.0.0",
+      "pluginVersion": "10.0.0",
       "targets": [
         {
           "datasource": {
             "type": "prometheus",
-            "uid": "${datasource}"
+            "uid": "prometheus"
           },
-          "expr": "histogram_quantile(0.75, sum(rate(app_web_vitals_lcp_milliseconds_bucket{web_vital_route=~\"$route\"}[$__rate_interval])) by (le))",
+          "editorMode": "code",
+          "expr": "histogram_quantile(0.75, sum(rate(app_web_vitals_lcp_milliseconds_bucket{web_vital_route_template=~\"$route\", web_vital_device=~\"$device\"}[5m])) by (le))",
           "legendFormat": "LCP p75",
+          "range": true,
           "refId": "A"
         }
       ],
-      "title": "LCP (p75)",
-      "description": "Largest Contentful Paint - Measures loading performance\n\nGood: <2.5s | Needs Improvement: 2.5-4s | Poor: >4s",
+      "title": "LCP (p75) - Largest Contentful Paint",
       "type": "stat"
     },
     {
       "datasource": {
         "type": "prometheus",
-        "uid": "${datasource}"
+        "uid": "prometheus"
       },
+      "description": "75th percentile of Interaction to Next Paint (replaces FID). Target: ≤200ms (Good), 200-500ms (Needs Improvement), >500ms (Poor)",
       "fieldConfig": {
         "defaults": {
           "color": {
@@ -140,47 +156,46 @@
       },
       "gridPos": {
         "h": 6,
-        "w": 4,
-        "x": 4,
+        "w": 8,
+        "x": 8,
         "y": 1
       },
-      "id": 3,
+      "id": 102,
       "options": {
         "colorMode": "value",
         "graphMode": "area",
         "justifyMode": "auto",
         "orientation": "auto",
         "reduceOptions": {
-          "calcs": [
-            "lastNotNull"
-          ],
-          "fields": "",
-          "values": false
+          "values": false,
+          "calcs": ["lastNotNull"],
+          "fields": ""
         },
-        "textMode": "auto",
-        "wideLayout": true
+        "textMode": "auto"
       },
-      "pluginVersion": "11.0.0",
+      "pluginVersion": "10.0.0",
       "targets": [
         {
           "datasource": {
             "type": "prometheus",
-            "uid": "${datasource}"
+            "uid": "prometheus"
           },
-          "expr": "histogram_quantile(0.75, sum(rate(app_web_vitals_inp_milliseconds_bucket{web_vital_route=~\"$route\"}[$__rate_interval])) by (le))",
+          "editorMode": "code",
+          "expr": "histogram_quantile(0.75, sum(rate(app_web_vitals_inp_milliseconds_bucket{web_vital_route_template=~\"$route\", web_vital_device=~\"$device\"}[5m])) by (le))",
           "legendFormat": "INP p75",
+          "range": true,
           "refId": "A"
         }
       ],
-      "title": "INP (p75)",
-      "description": "Interaction to Next Paint - Measures interactivity\n\nGood: <200ms | Needs Improvement: 200-500ms | Poor: >500ms",
+      "title": "INP (p75) - Interaction to Next Paint",
       "type": "stat"
     },
     {
       "datasource": {
         "type": "prometheus",
-        "uid": "${datasource}"
+        "uid": "prometheus"
       },
+      "description": "75th percentile of Cumulative Layout Shift. Target: ≤0.1 (Good), 0.1-0.25 (Needs Improvement), >0.25 (Poor)",
       "fieldConfig": {
         "defaults": {
           "color": {
@@ -211,242 +226,38 @@
       },
       "gridPos": {
         "h": 6,
-        "w": 4,
-        "x": 8,
-        "y": 1
-      },
-      "id": 4,
-      "options": {
-        "colorMode": "value",
-        "graphMode": "area",
-        "justifyMode": "auto",
-        "orientation": "auto",
-        "reduceOptions": {
-          "calcs": [
-            "lastNotNull"
-          ],
-          "fields": "",
-          "values": false
-        },
-        "textMode": "auto",
-        "wideLayout": true
-      },
-      "pluginVersion": "11.0.0",
-      "targets": [
-        {
-          "datasource": {
-            "type": "prometheus",
-            "uid": "${datasource}"
-          },
-          "expr": "histogram_quantile(0.75, sum(rate(app_web_vitals_cls_bucket{web_vital_route=~\"$route\"}[$__rate_interval])) by (le))",
-          "legendFormat": "CLS p75",
-          "refId": "A"
-        }
-      ],
-      "title": "CLS (p75)",
-      "description": "Cumulative Layout Shift - Measures visual stability\n\nGood: <0.1 | Needs Improvement: 0.1-0.25 | Poor: >0.25",
-      "type": "stat"
-    },
-    {
-      "datasource": {
-        "type": "prometheus",
-        "uid": "${datasource}"
-      },
-      "fieldConfig": {
-        "defaults": {
-          "color": {
-            "mode": "thresholds"
-          },
-          "mappings": [],
-          "thresholds": {
-            "mode": "absolute",
-            "steps": [
-              {
-                "color": "green",
-                "value": null
-              },
-              {
-                "color": "yellow",
-                "value": 1800
-              },
-              {
-                "color": "red",
-                "value": 3000
-              }
-            ]
-          },
-          "unit": "ms"
-        },
-        "overrides": []
-      },
-      "gridPos": {
-        "h": 6,
-        "w": 4,
-        "x": 12,
-        "y": 1
-      },
-      "id": 10,
-      "options": {
-        "colorMode": "value",
-        "graphMode": "area",
-        "justifyMode": "auto",
-        "orientation": "auto",
-        "reduceOptions": {
-          "calcs": [
-            "lastNotNull"
-          ],
-          "fields": "",
-          "values": false
-        },
-        "textMode": "auto",
-        "wideLayout": true
-      },
-      "pluginVersion": "11.0.0",
-      "targets": [
-        {
-          "datasource": {
-            "type": "prometheus",
-            "uid": "${datasource}"
-          },
-          "expr": "histogram_quantile(0.75, sum(rate(app_web_vitals_fcp_milliseconds_bucket{web_vital_route=~\"$route\"}[$__rate_interval])) by (le))",
-          "legendFormat": "FCP p75",
-          "refId": "A"
-        }
-      ],
-      "title": "FCP (p75)",
-      "description": "First Contentful Paint - First visual feedback\n\nGood: <1.8s | Needs Improvement: 1.8-3s | Poor: >3s",
-      "type": "stat"
-    },
-    {
-      "datasource": {
-        "type": "prometheus",
-        "uid": "${datasource}"
-      },
-      "fieldConfig": {
-        "defaults": {
-          "color": {
-            "mode": "thresholds"
-          },
-          "mappings": [],
-          "thresholds": {
-            "mode": "absolute",
-            "steps": [
-              {
-                "color": "green",
-                "value": null
-              },
-              {
-                "color": "yellow",
-                "value": 800
-              },
-              {
-                "color": "red",
-                "value": 1800
-              }
-            ]
-          },
-          "unit": "ms"
-        },
-        "overrides": []
-      },
-      "gridPos": {
-        "h": 6,
-        "w": 4,
+        "w": 8,
         "x": 16,
         "y": 1
       },
-      "id": 11,
+      "id": 103,
       "options": {
         "colorMode": "value",
         "graphMode": "area",
         "justifyMode": "auto",
         "orientation": "auto",
         "reduceOptions": {
-          "calcs": [
-            "lastNotNull"
-          ],
-          "fields": "",
-          "values": false
+          "values": false,
+          "calcs": ["lastNotNull"],
+          "fields": ""
         },
-        "textMode": "auto",
-        "wideLayout": true
+        "textMode": "auto"
       },
-      "pluginVersion": "11.0.0",
+      "pluginVersion": "10.0.0",
       "targets": [
         {
           "datasource": {
             "type": "prometheus",
-            "uid": "${datasource}"
+            "uid": "prometheus"
           },
-          "expr": "histogram_quantile(0.75, sum(rate(app_web_vitals_ttfb_milliseconds_bucket{web_vital_route=~\"$route\"}[$__rate_interval])) by (le))",
-          "legendFormat": "TTFB p75",
+          "editorMode": "code",
+          "expr": "histogram_quantile(0.75, sum(rate(app_web_vitals_cls_bucket{web_vital_route_template=~\"$route\", web_vital_device=~\"$device\"}[5m])) by (le))",
+          "legendFormat": "CLS p75",
+          "range": true,
           "refId": "A"
         }
       ],
-      "title": "TTFB (p75)",
-      "description": "Time to First Byte - Server response time\n\nGood: <800ms | Needs Improvement: 800-1800ms | Poor: >1800ms",
-      "type": "stat"
-    },
-    {
-      "datasource": {
-        "type": "prometheus",
-        "uid": "${datasource}"
-      },
-      "fieldConfig": {
-        "defaults": {
-          "color": {
-            "mode": "palette-classic"
-          },
-          "mappings": [],
-          "thresholds": {
-            "mode": "absolute",
-            "steps": [
-              {
-                "color": "green",
-                "value": null
-              }
-            ]
-          },
-          "unit": "short"
-        },
-        "overrides": []
-      },
-      "gridPos": {
-        "h": 6,
-        "w": 4,
-        "x": 20,
-        "y": 1
-      },
-      "id": 5,
-      "options": {
-        "colorMode": "value",
-        "graphMode": "area",
-        "justifyMode": "auto",
-        "orientation": "auto",
-        "reduceOptions": {
-          "calcs": [
-            "lastNotNull"
-          ],
-          "fields": "",
-          "values": false
-        },
-        "textMode": "auto",
-        "wideLayout": true
-      },
-      "pluginVersion": "11.0.0",
-      "targets": [
-        {
-          "datasource": {
-            "type": "prometheus",
-            "uid": "${datasource}"
-          },
-          "expr": "sum(rate(app_web_vitals_lcp_milliseconds_count{web_vital_route=~\"$route\"}[$__rate_interval])) * 60",
-          "legendFormat": "Samples/min",
-          "refId": "A"
-        }
-      ],
-      "title": "\ud83d\udcc8 Samples/min",
-      "description": "Number of web vitals samples received per minute",
+      "title": "CLS (p75) - Cumulative Layout Shift",
       "type": "stat"
     },
     {
@@ -457,16 +268,17 @@
         "x": 0,
         "y": 7
       },
-      "id": 20,
+      "id": 200,
       "panels": [],
-      "title": "\ud83c\udfaf Performance Score & User Experience Distribution",
+      "title": "📊 Quality Status Distribution (% Good / Needs Improvement / Poor)",
       "type": "row"
     },
     {
       "datasource": {
         "type": "prometheus",
-        "uid": "${datasource}"
+        "uid": "prometheus"
       },
+      "description": "Percentage of users experiencing Good LCP (≤2.5s)",
       "fieldConfig": {
         "defaults": {
           "color": {
@@ -497,48 +309,45 @@
         "overrides": []
       },
       "gridPos": {
-        "h": 8,
-        "w": 6,
+        "h": 6,
+        "w": 8,
         "x": 0,
         "y": 8
       },
-      "id": 21,
+      "id": 201,
       "options": {
-        "minVizHeight": 75,
-        "minVizWidth": 75,
         "orientation": "auto",
         "reduceOptions": {
-          "calcs": [
-            "lastNotNull"
-          ],
-          "fields": "",
-          "values": false
+          "values": false,
+          "calcs": ["lastNotNull"],
+          "fields": ""
         },
-        "showThresholdLabels": true,
-        "showThresholdMarkers": true,
-        "sizing": "auto"
+        "showThresholdLabels": false,
+        "showThresholdMarkers": true
       },
-      "pluginVersion": "11.0.0",
+      "pluginVersion": "10.0.0",
       "targets": [
         {
           "datasource": {
             "type": "prometheus",
-            "uid": "${datasource}"
+            "uid": "prometheus"
           },
-          "expr": "(\n  sum(rate(app_web_vitals_lcp_milliseconds_bucket{le=\"2500\",web_vital_route=~\"$route\"}[$__rate_interval])) / \n  sum(rate(app_web_vitals_lcp_milliseconds_count{web_vital_route=~\"$route\"}[$__rate_interval]))\n) * 100",
-          "legendFormat": "Good LCP %",
+          "editorMode": "code",
+          "expr": "100 * sum(rate(app_web_vitals_lcp_milliseconds_count{web_vital_rating=\"good\", web_vital_route_template=~\"$route\", web_vital_device=~\"$device\"}[5m])) / sum(rate(app_web_vitals_lcp_milliseconds_count{web_vital_route_template=~\"$route\", web_vital_device=~\"$device\"}[5m]))",
+          "legendFormat": "% Good",
+          "range": true,
           "refId": "A"
         }
       ],
-      "title": "LCP Score (% Good)",
-      "description": "Percentage of page loads with LCP < 2.5s\n\nTarget: >75% for good user experience",
+      "title": "LCP - % Good (≤2.5s)",
       "type": "gauge"
     },
     {
       "datasource": {
         "type": "prometheus",
-        "uid": "${datasource}"
+        "uid": "prometheus"
       },
+      "description": "Percentage of users experiencing Good INP (≤200ms)",
       "fieldConfig": {
         "defaults": {
           "color": {
@@ -569,48 +378,45 @@
         "overrides": []
       },
       "gridPos": {
-        "h": 8,
-        "w": 6,
-        "x": 6,
+        "h": 6,
+        "w": 8,
+        "x": 8,
         "y": 8
       },
-      "id": 22,
+      "id": 202,
       "options": {
-        "minVizHeight": 75,
-        "minVizWidth": 75,
         "orientation": "auto",
         "reduceOptions": {
-          "calcs": [
-            "lastNotNull"
-          ],
-          "fields": "",
-          "values": false
+          "values": false,
+          "calcs": ["lastNotNull"],
+          "fields": ""
         },
-        "showThresholdLabels": true,
-        "showThresholdMarkers": true,
-        "sizing": "auto"
+        "showThresholdLabels": false,
+        "showThresholdMarkers": true
       },
-      "pluginVersion": "11.0.0",
+      "pluginVersion": "10.0.0",
       "targets": [
         {
           "datasource": {
             "type": "prometheus",
-            "uid": "${datasource}"
+            "uid": "prometheus"
           },
-          "expr": "(\n  sum(rate(app_web_vitals_inp_milliseconds_bucket{le=\"200\",web_vital_route=~\"$route\"}[$__rate_interval])) / \n  sum(rate(app_web_vitals_inp_milliseconds_count{web_vital_route=~\"$route\"}[$__rate_interval]))\n) * 100",
-          "legendFormat": "Good INP %",
+          "editorMode": "code",
+          "expr": "100 * sum(rate(app_web_vitals_inp_milliseconds_count{web_vital_rating=\"good\", web_vital_route_template=~\"$route\", web_vital_device=~\"$device\"}[5m])) / sum(rate(app_web_vitals_inp_milliseconds_count{web_vital_route_template=~\"$route\", web_vital_device=~\"$device\"}[5m]))",
+          "legendFormat": "% Good",
+          "range": true,
           "refId": "A"
         }
       ],
-      "title": "INP Score (% Good)",
-      "description": "Percentage of interactions with INP < 200ms\n\nTarget: >75% for good user experience",
+      "title": "INP - % Good (≤200ms)",
       "type": "gauge"
     },
     {
       "datasource": {
         "type": "prometheus",
-        "uid": "${datasource}"
+        "uid": "prometheus"
       },
+      "description": "Percentage of users experiencing Good CLS (≤0.1)",
       "fieldConfig": {
         "defaults": {
           "color": {
@@ -641,48 +447,45 @@
         "overrides": []
       },
       "gridPos": {
-        "h": 8,
-        "w": 6,
-        "x": 12,
+        "h": 6,
+        "w": 8,
+        "x": 16,
         "y": 8
       },
-      "id": 23,
+      "id": 203,
       "options": {
-        "minVizHeight": 75,
-        "minVizWidth": 75,
         "orientation": "auto",
         "reduceOptions": {
-          "calcs": [
-            "lastNotNull"
-          ],
-          "fields": "",
-          "values": false
+          "values": false,
+          "calcs": ["lastNotNull"],
+          "fields": ""
         },
-        "showThresholdLabels": true,
-        "showThresholdMarkers": true,
-        "sizing": "auto"
+        "showThresholdLabels": false,
+        "showThresholdMarkers": true
       },
-      "pluginVersion": "11.0.0",
+      "pluginVersion": "10.0.0",
       "targets": [
         {
           "datasource": {
             "type": "prometheus",
-            "uid": "${datasource}"
+            "uid": "prometheus"
           },
-          "expr": "(\n  sum(rate(app_web_vitals_cls_bucket{le=\"0.1\",web_vital_route=~\"$route\"}[$__rate_interval])) / \n  sum(rate(app_web_vitals_cls_count{web_vital_route=~\"$route\"}[$__rate_interval]))\n) * 100",
-          "legendFormat": "Good CLS %",
+          "editorMode": "code",
+          "expr": "100 * sum(rate(app_web_vitals_cls_count{web_vital_rating=\"good\", web_vital_route_template=~\"$route\", web_vital_device=~\"$device\"}[5m])) / sum(rate(app_web_vitals_cls_count{web_vital_route_template=~\"$route\", web_vital_device=~\"$device\"}[5m]))",
+          "legendFormat": "% Good",
+          "range": true,
           "refId": "A"
         }
       ],
-      "title": "CLS Score (% Good)",
-      "description": "Percentage of page loads with CLS < 0.1\n\nTarget: >75% for good user experience",
+      "title": "CLS - % Good (≤0.1)",
       "type": "gauge"
     },
     {
       "datasource": {
         "type": "prometheus",
-        "uid": "${datasource}"
+        "uid": "prometheus"
       },
+      "description": "Distribution of LCP ratings: Good (green), Needs Improvement (yellow), Poor (red)",
       "fieldConfig": {
         "defaults": {
           "color": {
@@ -690,13 +493,12 @@
           },
           "custom": {
             "hideFrom": {
-              "legend": false,
               "tooltip": false,
-              "viz": false
+              "viz": false,
+              "legend": false
             }
           },
-          "mappings": [],
-          "unit": "short"
+          "mappings": []
         },
         "overrides": [
           {
@@ -748,69 +550,321 @@
       },
       "gridPos": {
         "h": 8,
-        "w": 6,
-        "x": 18,
-        "y": 8
+        "w": 8,
+        "x": 0,
+        "y": 14
       },
-      "id": 24,
+      "id": 204,
       "options": {
-        "displayLabels": [
-          "percent"
-        ],
         "legend": {
-          "displayMode": "table",
+          "displayMode": "list",
           "placement": "bottom",
           "showLegend": true,
-          "values": [
-            "value",
-            "percent"
-          ]
+          "values": ["value", "percent"]
         },
-        "pieType": "donut",
-        "reduceOptions": {
-          "calcs": [
-            "lastNotNull"
-          ],
-          "fields": "",
-          "values": false
-        },
+        "pieType": "pie",
         "tooltip": {
           "mode": "single",
           "sort": "none"
         }
       },
-      "pluginVersion": "11.0.0",
+      "pluginVersion": "10.0.0",
       "targets": [
         {
           "datasource": {
             "type": "prometheus",
-            "uid": "${datasource}"
+            "uid": "prometheus"
           },
-          "expr": "sum(rate(app_web_vitals_lcp_milliseconds_bucket{le=\"2500\",web_vital_route=~\"$route\"}[$__rate_interval]))",
+          "editorMode": "code",
+          "expr": "sum(rate(app_web_vitals_lcp_milliseconds_count{web_vital_rating=\"good\", web_vital_route_template=~\"$route\", web_vital_device=~\"$device\"}[5m]))",
           "legendFormat": "Good",
+          "range": true,
           "refId": "A"
         },
         {
           "datasource": {
             "type": "prometheus",
-            "uid": "${datasource}"
+            "uid": "prometheus"
           },
-          "expr": "sum(rate(app_web_vitals_lcp_milliseconds_bucket{le=\"4000\",web_vital_route=~\"$route\"}[$__rate_interval])) - sum(rate(app_web_vitals_lcp_milliseconds_bucket{le=\"2500\",web_vital_route=~\"$route\"}[$__rate_interval]))",
+          "editorMode": "code",
+          "expr": "sum(rate(app_web_vitals_lcp_milliseconds_count{web_vital_rating=\"needs-improvement\", web_vital_route_template=~\"$route\", web_vital_device=~\"$device\"}[5m]))",
+          "hide": false,
           "legendFormat": "Needs Improvement",
+          "range": true,
           "refId": "B"
         },
         {
           "datasource": {
             "type": "prometheus",
-            "uid": "${datasource}"
+            "uid": "prometheus"
           },
-          "expr": "sum(rate(app_web_vitals_lcp_milliseconds_count{web_vital_route=~\"$route\"}[$__rate_interval])) - sum(rate(app_web_vitals_lcp_milliseconds_bucket{le=\"4000\",web_vital_route=~\"$route\"}[$__rate_interval]))",
+          "editorMode": "code",
+          "expr": "sum(rate(app_web_vitals_lcp_milliseconds_count{web_vital_rating=\"poor\", web_vital_route_template=~\"$route\", web_vital_device=~\"$device\"}[5m]))",
+          "hide": false,
           "legendFormat": "Poor",
+          "range": true,
           "refId": "C"
         }
       ],
-      "title": "LCP Distribution",
-      "description": "Distribution of LCP scores across all page loads",
+      "title": "LCP - Rating Distribution",
+      "type": "piechart"
+    },
+    {
+      "datasource": {
+        "type": "prometheus",
+        "uid": "prometheus"
+      },
+      "description": "Distribution of INP ratings: Good (green), Needs Improvement (yellow), Poor (red)",
+      "fieldConfig": {
+        "defaults": {
+          "color": {
+            "mode": "palette-classic"
+          },
+          "custom": {
+            "hideFrom": {
+              "tooltip": false,
+              "viz": false,
+              "legend": false
+            }
+          },
+          "mappings": []
+        },
+        "overrides": [
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "Good"
+            },
+            "properties": [
+              {
+                "id": "color",
+                "value": {
+                  "fixedColor": "green",
+                  "mode": "fixed"
+                }
+              }
+            ]
+          },
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "Needs Improvement"
+            },
+            "properties": [
+              {
+                "id": "color",
+                "value": {
+                  "fixedColor": "yellow",
+                  "mode": "fixed"
+                }
+              }
+            ]
+          },
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "Poor"
+            },
+            "properties": [
+              {
+                "id": "color",
+                "value": {
+                  "fixedColor": "red",
+                  "mode": "fixed"
+                }
+              }
+            ]
+          }
+        ]
+      },
+      "gridPos": {
+        "h": 8,
+        "w": 8,
+        "x": 8,
+        "y": 14
+      },
+      "id": 205,
+      "options": {
+        "legend": {
+          "displayMode": "list",
+          "placement": "bottom",
+          "showLegend": true,
+          "values": ["value", "percent"]
+        },
+        "pieType": "pie",
+        "tooltip": {
+          "mode": "single",
+          "sort": "none"
+        }
+      },
+      "pluginVersion": "10.0.0",
+      "targets": [
+        {
+          "datasource": {
+            "type": "prometheus",
+            "uid": "prometheus"
+          },
+          "editorMode": "code",
+          "expr": "sum(rate(app_web_vitals_inp_milliseconds_count{web_vital_rating=\"good\", web_vital_route_template=~\"$route\", web_vital_device=~\"$device\"}[5m]))",
+          "legendFormat": "Good",
+          "range": true,
+          "refId": "A"
+        },
+        {
+          "datasource": {
+            "type": "prometheus",
+            "uid": "prometheus"
+          },
+          "editorMode": "code",
+          "expr": "sum(rate(app_web_vitals_inp_milliseconds_count{web_vital_rating=\"needs-improvement\", web_vital_route_template=~\"$route\", web_vital_device=~\"$device\"}[5m]))",
+          "hide": false,
+          "legendFormat": "Needs Improvement",
+          "range": true,
+          "refId": "B"
+        },
+        {
+          "datasource": {
+            "type": "prometheus",
+            "uid": "prometheus"
+          },
+          "editorMode": "code",
+          "expr": "sum(rate(app_web_vitals_inp_milliseconds_count{web_vital_rating=\"poor\", web_vital_route_template=~\"$route\", web_vital_device=~\"$device\"}[5m]))",
+          "hide": false,
+          "legendFormat": "Poor",
+          "range": true,
+          "refId": "C"
+        }
+      ],
+      "title": "INP - Rating Distribution",
+      "type": "piechart"
+    },
+    {
+      "datasource": {
+        "type": "prometheus",
+        "uid": "prometheus"
+      },
+      "description": "Distribution of CLS ratings: Good (green), Needs Improvement (yellow), Poor (red)",
+      "fieldConfig": {
+        "defaults": {
+          "color": {
+            "mode": "palette-classic"
+          },
+          "custom": {
+            "hideFrom": {
+              "tooltip": false,
+              "viz": false,
+              "legend": false
+            }
+          },
+          "mappings": []
+        },
+        "overrides": [
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "Good"
+            },
+            "properties": [
+              {
+                "id": "color",
+                "value": {
+                  "fixedColor": "green",
+                  "mode": "fixed"
+                }
+              }
+            ]
+          },
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "Needs Improvement"
+            },
+            "properties": [
+              {
+                "id": "color",
+                "value": {
+                  "fixedColor": "yellow",
+                  "mode": "fixed"
+                }
+              }
+            ]
+          },
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "Poor"
+            },
+            "properties": [
+              {
+                "id": "color",
+                "value": {
+                  "fixedColor": "red",
+                  "mode": "fixed"
+                }
+              }
+            ]
+          }
+        ]
+      },
+      "gridPos": {
+        "h": 8,
+        "w": 8,
+        "x": 16,
+        "y": 14
+      },
+      "id": 206,
+      "options": {
+        "legend": {
+          "displayMode": "list",
+          "placement": "bottom",
+          "showLegend": true,
+          "values": ["value", "percent"]
+        },
+        "pieType": "pie",
+        "tooltip": {
+          "mode": "single",
+          "sort": "none"
+        }
+      },
+      "pluginVersion": "10.0.0",
+      "targets": [
+        {
+          "datasource": {
+            "type": "prometheus",
+            "uid": "prometheus"
+          },
+          "editorMode": "code",
+          "expr": "sum(rate(app_web_vitals_cls_count{web_vital_rating=\"good\", web_vital_route_template=~\"$route\", web_vital_device=~\"$device\"}[5m]))",
+          "legendFormat": "Good",
+          "range": true,
+          "refId": "A"
+        },
+        {
+          "datasource": {
+            "type": "prometheus",
+            "uid": "prometheus"
+          },
+          "editorMode": "code",
+          "expr": "sum(rate(app_web_vitals_cls_count{web_vital_rating=\"needs-improvement\", web_vital_route_template=~\"$route\", web_vital_device=~\"$device\"}[5m]))",
+          "hide": false,
+          "legendFormat": "Needs Improvement",
+          "range": true,
+          "refId": "B"
+        },
+        {
+          "datasource": {
+            "type": "prometheus",
+            "uid": "prometheus"
+          },
+          "editorMode": "code",
+          "expr": "sum(rate(app_web_vitals_cls_count{web_vital_rating=\"poor\", web_vital_route_template=~\"$route\", web_vital_device=~\"$device\"}[5m]))",
+          "hide": false,
+          "legendFormat": "Poor",
+          "range": true,
+          "refId": "C"
+        }
+      ],
+      "title": "CLS - Rating Distribution",
       "type": "piechart"
     },
     {
@@ -819,53 +873,52 @@
         "h": 1,
         "w": 24,
         "x": 0,
-        "y": 16
+        "y": 22
       },
-      "id": 6,
+      "id": 300,
       "panels": [],
-      "title": "\ud83d\ude80 LCP - Largest Contentful Paint (Loading Performance)",
+      "title": "📈 Trends Over Time (p75 & % Good)",
       "type": "row"
     },
     {
       "datasource": {
         "type": "prometheus",
-        "uid": "${datasource}"
+        "uid": "prometheus"
       },
+      "description": "LCP p75 trend over time. Target: ≤2.5s",
       "fieldConfig": {
         "defaults": {
           "color": {
             "mode": "palette-classic"
           },
           "custom": {
-            "axisBorderShow": false,
             "axisCenteredZero": false,
             "axisColorMode": "text",
             "axisLabel": "",
             "axisPlacement": "auto",
             "barAlignment": 0,
             "drawStyle": "line",
-            "fillOpacity": 10,
+            "fillOpacity": 20,
             "gradientMode": "none",
             "hideFrom": {
-              "legend": false,
               "tooltip": false,
-              "viz": false
+              "viz": false,
+              "legend": false
             },
-            "insertNulls": false,
             "lineInterpolation": "smooth",
             "lineWidth": 2,
             "pointSize": 5,
             "scaleDistribution": {
               "type": "linear"
             },
-            "showPoints": "never",
+            "showPoints": "auto",
             "spanNulls": false,
             "stacking": {
               "group": "A",
               "mode": "none"
             },
             "thresholdsStyle": {
-              "mode": "line+area"
+              "mode": "line"
             }
           },
           "mappings": [],
@@ -873,7 +926,7 @@
             "mode": "absolute",
             "steps": [
               {
-                "color": "transparent",
+                "color": "green",
                 "value": null
               },
               {
@@ -892,382 +945,180 @@
       },
       "gridPos": {
         "h": 8,
-        "w": 18,
+        "w": 12,
         "x": 0,
-        "y": 17
+        "y": 23
       },
-      "id": 7,
+      "id": 301,
       "options": {
         "legend": {
-          "calcs": [
-            "mean",
-            "max",
-            "lastNotNull"
-          ],
+          "calcs": ["mean", "lastNotNull", "max"],
           "displayMode": "table",
-          "placement": "right",
-          "showLegend": true
-        },
-        "tooltip": {
-          "mode": "multi",
-          "sort": "desc"
-        }
-      },
-      "targets": [
-        {
-          "datasource": {
-            "type": "prometheus",
-            "uid": "${datasource}"
-          },
-          "expr": "histogram_quantile(0.50, sum(rate(app_web_vitals_lcp_milliseconds_bucket{web_vital_route=~\"$route\"}[$__rate_interval])) by (le))",
-          "legendFormat": "p50 (median)",
-          "refId": "A"
-        },
-        {
-          "datasource": {
-            "type": "prometheus",
-            "uid": "${datasource}"
-          },
-          "expr": "histogram_quantile(0.75, sum(rate(app_web_vitals_lcp_milliseconds_bucket{web_vital_route=~\"$route\"}[$__rate_interval])) by (le))",
-          "legendFormat": "p75 (recommended)",
-          "refId": "B"
-        },
-        {
-          "datasource": {
-            "type": "prometheus",
-            "uid": "${datasource}"
-          },
-          "expr": "histogram_quantile(0.90, sum(rate(app_web_vitals_lcp_milliseconds_bucket{web_vital_route=~\"$route\"}[$__rate_interval])) by (le))",
-          "legendFormat": "p90",
-          "refId": "C"
-        },
-        {
-          "datasource": {
-            "type": "prometheus",
-            "uid": "${datasource}"
-          },
-          "expr": "histogram_quantile(0.95, sum(rate(app_web_vitals_lcp_milliseconds_bucket{web_vital_route=~\"$route\"}[$__rate_interval])) by (le))",
-          "legendFormat": "p95",
-          "refId": "D"
-        },
-        {
-          "datasource": {
-            "type": "prometheus",
-            "uid": "${datasource}"
-          },
-          "expr": "histogram_quantile(0.99, sum(rate(app_web_vitals_lcp_milliseconds_bucket{web_vital_route=~\"$route\"}[$__rate_interval])) by (le))",
-          "legendFormat": "p99",
-          "refId": "E"
-        }
-      ],
-      "title": "LCP Percentiles Over Time",
-      "description": "Track LCP trends across different percentiles. Focus on p75 as Google recommends.",
-      "type": "timeseries"
-    },
-    {
-      "datasource": {
-        "type": "prometheus",
-        "uid": "${datasource}"
-      },
-      "fieldConfig": {
-        "defaults": {
-          "color": {
-            "mode": "palette-classic"
-          },
-          "custom": {
-            "axisBorderShow": false,
-            "axisCenteredZero": false,
-            "axisColorMode": "text",
-            "axisLabel": "",
-            "axisPlacement": "auto",
-            "barAlignment": 0,
-            "drawStyle": "line",
-            "fillOpacity": 30,
-            "gradientMode": "opacity",
-            "hideFrom": {
-              "legend": false,
-              "tooltip": false,
-              "viz": false
-            },
-            "insertNulls": false,
-            "lineInterpolation": "smooth",
-            "lineWidth": 1,
-            "pointSize": 5,
-            "scaleDistribution": {
-              "type": "linear"
-            },
-            "showPoints": "never",
-            "spanNulls": false,
-            "stacking": {
-              "group": "A",
-              "mode": "percent"
-            },
-            "thresholdsStyle": {
-              "mode": "off"
-            }
-          },
-          "mappings": [],
-          "thresholds": {
-            "mode": "absolute",
-            "steps": [
-              {
-                "color": "green",
-                "value": null
-              }
-            ]
-          },
-          "unit": "percentunit"
-        },
-        "overrides": [
-          {
-            "matcher": {
-              "id": "byName",
-              "options": "Good"
-            },
-            "properties": [
-              {
-                "id": "color",
-                "value": {
-                  "fixedColor": "green",
-                  "mode": "fixed"
-                }
-              }
-            ]
-          },
-          {
-            "matcher": {
-              "id": "byName",
-              "options": "Needs Improvement"
-            },
-            "properties": [
-              {
-                "id": "color",
-                "value": {
-                  "fixedColor": "yellow",
-                  "mode": "fixed"
-                }
-              }
-            ]
-          },
-          {
-            "matcher": {
-              "id": "byName",
-              "options": "Poor"
-            },
-            "properties": [
-              {
-                "id": "color",
-                "value": {
-                  "fixedColor": "red",
-                  "mode": "fixed"
-                }
-              }
-            ]
-          }
-        ]
-      },
-      "gridPos": {
-        "h": 8,
-        "w": 6,
-        "x": 18,
-        "y": 17
-      },
-      "id": 30,
-      "options": {
-        "legend": {
-          "calcs": [
-            "lastNotNull"
-          ],
-          "displayMode": "list",
           "placement": "bottom",
           "showLegend": true
         },
         "tooltip": {
-          "mode": "multi",
+          "mode": "single",
           "sort": "none"
         }
       },
+      "pluginVersion": "10.0.0",
       "targets": [
         {
           "datasource": {
             "type": "prometheus",
-            "uid": "${datasource}"
+            "uid": "prometheus"
           },
-          "expr": "sum(rate(app_web_vitals_lcp_milliseconds_bucket{le=\"2500\",web_vital_route=~\"$route\"}[$__rate_interval]))",
-          "legendFormat": "Good",
+          "editorMode": "code",
+          "expr": "histogram_quantile(0.75, sum(rate(app_web_vitals_lcp_milliseconds_bucket{web_vital_route_template=~\"$route\", web_vital_device=~\"$device\"}[5m])) by (le))",
+          "legendFormat": "LCP p75",
+          "range": true,
           "refId": "A"
-        },
-        {
-          "datasource": {
-            "type": "prometheus",
-            "uid": "${datasource}"
-          },
-          "expr": "sum(rate(app_web_vitals_lcp_milliseconds_bucket{le=\"4000\",web_vital_route=~\"$route\"}[$__rate_interval])) - sum(rate(app_web_vitals_lcp_milliseconds_bucket{le=\"2500\",web_vital_route=~\"$route\"}[$__rate_interval]))",
-          "legendFormat": "Needs Improvement",
-          "refId": "B"
-        },
-        {
-          "datasource": {
-            "type": "prometheus",
-            "uid": "${datasource}"
-          },
-          "expr": "sum(rate(app_web_vitals_lcp_milliseconds_count{web_vital_route=~\"$route\"}[$__rate_interval])) - sum(rate(app_web_vitals_lcp_milliseconds_bucket{le=\"4000\",web_vital_route=~\"$route\"}[$__rate_interval]))",
-          "legendFormat": "Poor",
-          "refId": "C"
         }
       ],
-      "title": "LCP Score Distribution",
-      "description": "Percentage of users experiencing Good/Needs Improvement/Poor LCP",
+      "title": "LCP p75 - Trend",
       "type": "timeseries"
     },
     {
       "datasource": {
         "type": "prometheus",
-        "uid": "${datasource}"
+        "uid": "prometheus"
       },
+      "description": "Percentage of users experiencing Good LCP over time. Target: ≥75%",
       "fieldConfig": {
         "defaults": {
           "color": {
             "mode": "palette-classic"
           },
           "custom": {
-            "axisBorderShow": false,
             "axisCenteredZero": false,
             "axisColorMode": "text",
             "axisLabel": "",
             "axisPlacement": "auto",
             "barAlignment": 0,
             "drawStyle": "line",
-            "fillOpacity": 10,
+            "fillOpacity": 20,
             "gradientMode": "none",
             "hideFrom": {
-              "legend": false,
               "tooltip": false,
-              "viz": false
+              "viz": false,
+              "legend": false
             },
-            "insertNulls": false,
-            "lineInterpolation": "smooth",
-            "lineWidth": 1,
-            "pointSize": 5,
-            "scaleDistribution": {
-              "type": "linear"
-            },
-            "showPoints": "never",
-            "spanNulls": false,
-            "stacking": {
-              "group": "A",
-              "mode": "none"
-            },
-            "thresholdsStyle": {
-              "mode": "off"
-            }
-          },
-          "mappings": [],
-          "thresholds": {
-            "mode": "absolute",
-            "steps": [
-              {
-                "color": "green",
-                "value": null
-              }
-            ]
-          },
-          "unit": "ms"
-        },
-        "overrides": []
-      },
-      "gridPos": {
-        "h": 8,
-        "w": 24,
-        "x": 0,
-        "y": 25
-      },
-      "id": 31,
-      "options": {
-        "legend": {
-          "calcs": [
-            "mean",
-            "max"
-          ],
-          "displayMode": "table",
-          "placement": "right",
-          "showLegend": true,
-          "sortBy": "Mean",
-          "sortDesc": true
-        },
-        "tooltip": {
-          "mode": "multi",
-          "sort": "desc"
-        }
-      },
-      "targets": [
-        {
-          "datasource": {
-            "type": "prometheus",
-            "uid": "${datasource}"
-          },
-          "expr": "histogram_quantile(0.75, sum(rate(app_web_vitals_lcp_milliseconds_bucket[$__rate_interval])) by (le, route))",
-          "legendFormat": "{{route}}",
-          "refId": "A"
-        }
-      ],
-      "title": "LCP by Route (p75)",
-      "description": "Compare LCP performance across different pages/routes",
-      "type": "timeseries"
-    },
-    {
-      "collapsed": false,
-      "gridPos": {
-        "h": 1,
-        "w": 24,
-        "x": 0,
-        "y": 33
-      },
-      "id": 8,
-      "panels": [],
-      "title": "\u26a1 INP - Interaction to Next Paint (Interactivity)",
-      "type": "row"
-    },
-    {
-      "datasource": {
-        "type": "prometheus",
-        "uid": "${datasource}"
-      },
-      "fieldConfig": {
-        "defaults": {
-          "color": {
-            "mode": "palette-classic"
-          },
-          "custom": {
-            "axisBorderShow": false,
-            "axisCenteredZero": false,
-            "axisColorMode": "text",
-            "axisLabel": "",
-            "axisPlacement": "auto",
-            "barAlignment": 0,
-            "drawStyle": "line",
-            "fillOpacity": 10,
-            "gradientMode": "none",
-            "hideFrom": {
-              "legend": false,
-              "tooltip": false,
-              "viz": false
-            },
-            "insertNulls": false,
             "lineInterpolation": "smooth",
             "lineWidth": 2,
             "pointSize": 5,
             "scaleDistribution": {
               "type": "linear"
             },
-            "showPoints": "never",
+            "showPoints": "auto",
             "spanNulls": false,
             "stacking": {
               "group": "A",
               "mode": "none"
             },
             "thresholdsStyle": {
-              "mode": "line+area"
+              "mode": "line"
+            }
+          },
+          "mappings": [],
+          "max": 100,
+          "min": 0,
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "red",
+                "value": null
+              },
+              {
+                "color": "yellow",
+                "value": 50
+              },
+              {
+                "color": "green",
+                "value": 75
+              }
+            ]
+          },
+          "unit": "percent"
+        },
+        "overrides": []
+      },
+      "gridPos": {
+        "h": 8,
+        "w": 12,
+        "x": 12,
+        "y": 23
+      },
+      "id": 302,
+      "options": {
+        "legend": {
+          "calcs": ["mean", "lastNotNull", "min"],
+          "displayMode": "table",
+          "placement": "bottom",
+          "showLegend": true
+        },
+        "tooltip": {
+          "mode": "single",
+          "sort": "none"
+        }
+      },
+      "pluginVersion": "10.0.0",
+      "targets": [
+        {
+          "datasource": {
+            "type": "prometheus",
+            "uid": "prometheus"
+          },
+          "editorMode": "code",
+          "expr": "100 * sum(rate(app_web_vitals_lcp_milliseconds_count{web_vital_rating=\"good\", web_vital_route_template=~\"$route\", web_vital_device=~\"$device\"}[5m])) / sum(rate(app_web_vitals_lcp_milliseconds_count{web_vital_route_template=~\"$route\", web_vital_device=~\"$device\"}[5m]))",
+          "legendFormat": "% Good LCP",
+          "range": true,
+          "refId": "A"
+        }
+      ],
+      "title": "LCP % Good - Trend",
+      "type": "timeseries"
+    },
+    {
+      "datasource": {
+        "type": "prometheus",
+        "uid": "prometheus"
+      },
+      "description": "INP p75 trend over time. Target: ≤200ms",
+      "fieldConfig": {
+        "defaults": {
+          "color": {
+            "mode": "palette-classic"
+          },
+          "custom": {
+            "axisCenteredZero": false,
+            "axisColorMode": "text",
+            "axisLabel": "",
+            "axisPlacement": "auto",
+            "barAlignment": 0,
+            "drawStyle": "line",
+            "fillOpacity": 20,
+            "gradientMode": "none",
+            "hideFrom": {
+              "tooltip": false,
+              "viz": false,
+              "legend": false
+            },
+            "lineInterpolation": "smooth",
+            "lineWidth": 2,
+            "pointSize": 5,
+            "scaleDistribution": {
+              "type": "linear"
+            },
+            "showPoints": "auto",
+            "spanNulls": false,
+            "stacking": {
+              "group": "A",
+              "mode": "none"
+            },
+            "thresholdsStyle": {
+              "mode": "line"
             }
           },
           "mappings": [],
@@ -1275,7 +1126,7 @@
             "mode": "absolute",
             "steps": [
               {
-                "color": "transparent",
+                "color": "green",
                 "value": null
               },
               {
@@ -1294,382 +1145,180 @@
       },
       "gridPos": {
         "h": 8,
-        "w": 18,
+        "w": 12,
         "x": 0,
-        "y": 34
+        "y": 31
       },
-      "id": 9,
+      "id": 303,
       "options": {
         "legend": {
-          "calcs": [
-            "mean",
-            "max",
-            "lastNotNull"
-          ],
+          "calcs": ["mean", "lastNotNull", "max"],
           "displayMode": "table",
-          "placement": "right",
-          "showLegend": true
-        },
-        "tooltip": {
-          "mode": "multi",
-          "sort": "desc"
-        }
-      },
-      "targets": [
-        {
-          "datasource": {
-            "type": "prometheus",
-            "uid": "${datasource}"
-          },
-          "expr": "histogram_quantile(0.50, sum(rate(app_web_vitals_inp_milliseconds_bucket{web_vital_route=~\"$route\"}[$__rate_interval])) by (le))",
-          "legendFormat": "p50 (median)",
-          "refId": "A"
-        },
-        {
-          "datasource": {
-            "type": "prometheus",
-            "uid": "${datasource}"
-          },
-          "expr": "histogram_quantile(0.75, sum(rate(app_web_vitals_inp_milliseconds_bucket{web_vital_route=~\"$route\"}[$__rate_interval])) by (le))",
-          "legendFormat": "p75 (recommended)",
-          "refId": "B"
-        },
-        {
-          "datasource": {
-            "type": "prometheus",
-            "uid": "${datasource}"
-          },
-          "expr": "histogram_quantile(0.90, sum(rate(app_web_vitals_inp_milliseconds_bucket{web_vital_route=~\"$route\"}[$__rate_interval])) by (le))",
-          "legendFormat": "p90",
-          "refId": "C"
-        },
-        {
-          "datasource": {
-            "type": "prometheus",
-            "uid": "${datasource}"
-          },
-          "expr": "histogram_quantile(0.95, sum(rate(app_web_vitals_inp_milliseconds_bucket{web_vital_route=~\"$route\"}[$__rate_interval])) by (le))",
-          "legendFormat": "p95",
-          "refId": "D"
-        },
-        {
-          "datasource": {
-            "type": "prometheus",
-            "uid": "${datasource}"
-          },
-          "expr": "histogram_quantile(0.99, sum(rate(app_web_vitals_inp_milliseconds_bucket{web_vital_route=~\"$route\"}[$__rate_interval])) by (le))",
-          "legendFormat": "p99",
-          "refId": "E"
-        }
-      ],
-      "title": "INP Percentiles Over Time",
-      "description": "Interaction to Next Paint measures responsiveness. Lower is better.",
-      "type": "timeseries"
-    },
-    {
-      "datasource": {
-        "type": "prometheus",
-        "uid": "${datasource}"
-      },
-      "fieldConfig": {
-        "defaults": {
-          "color": {
-            "mode": "palette-classic"
-          },
-          "custom": {
-            "axisBorderShow": false,
-            "axisCenteredZero": false,
-            "axisColorMode": "text",
-            "axisLabel": "",
-            "axisPlacement": "auto",
-            "barAlignment": 0,
-            "drawStyle": "line",
-            "fillOpacity": 30,
-            "gradientMode": "opacity",
-            "hideFrom": {
-              "legend": false,
-              "tooltip": false,
-              "viz": false
-            },
-            "insertNulls": false,
-            "lineInterpolation": "smooth",
-            "lineWidth": 1,
-            "pointSize": 5,
-            "scaleDistribution": {
-              "type": "linear"
-            },
-            "showPoints": "never",
-            "spanNulls": false,
-            "stacking": {
-              "group": "A",
-              "mode": "percent"
-            },
-            "thresholdsStyle": {
-              "mode": "off"
-            }
-          },
-          "mappings": [],
-          "thresholds": {
-            "mode": "absolute",
-            "steps": [
-              {
-                "color": "green",
-                "value": null
-              }
-            ]
-          },
-          "unit": "percentunit"
-        },
-        "overrides": [
-          {
-            "matcher": {
-              "id": "byName",
-              "options": "Good"
-            },
-            "properties": [
-              {
-                "id": "color",
-                "value": {
-                  "fixedColor": "green",
-                  "mode": "fixed"
-                }
-              }
-            ]
-          },
-          {
-            "matcher": {
-              "id": "byName",
-              "options": "Needs Improvement"
-            },
-            "properties": [
-              {
-                "id": "color",
-                "value": {
-                  "fixedColor": "yellow",
-                  "mode": "fixed"
-                }
-              }
-            ]
-          },
-          {
-            "matcher": {
-              "id": "byName",
-              "options": "Poor"
-            },
-            "properties": [
-              {
-                "id": "color",
-                "value": {
-                  "fixedColor": "red",
-                  "mode": "fixed"
-                }
-              }
-            ]
-          }
-        ]
-      },
-      "gridPos": {
-        "h": 8,
-        "w": 6,
-        "x": 18,
-        "y": 34
-      },
-      "id": 32,
-      "options": {
-        "legend": {
-          "calcs": [
-            "lastNotNull"
-          ],
-          "displayMode": "list",
           "placement": "bottom",
           "showLegend": true
         },
         "tooltip": {
-          "mode": "multi",
+          "mode": "single",
           "sort": "none"
         }
       },
+      "pluginVersion": "10.0.0",
       "targets": [
         {
           "datasource": {
             "type": "prometheus",
-            "uid": "${datasource}"
+            "uid": "prometheus"
           },
-          "expr": "sum(rate(app_web_vitals_inp_milliseconds_bucket{le=\"200\",web_vital_route=~\"$route\"}[$__rate_interval]))",
-          "legendFormat": "Good",
+          "editorMode": "code",
+          "expr": "histogram_quantile(0.75, sum(rate(app_web_vitals_inp_milliseconds_bucket{web_vital_route_template=~\"$route\", web_vital_device=~\"$device\"}[5m])) by (le))",
+          "legendFormat": "INP p75",
+          "range": true,
           "refId": "A"
-        },
-        {
-          "datasource": {
-            "type": "prometheus",
-            "uid": "${datasource}"
-          },
-          "expr": "sum(rate(app_web_vitals_inp_milliseconds_bucket{le=\"500\",web_vital_route=~\"$route\"}[$__rate_interval])) - sum(rate(app_web_vitals_inp_milliseconds_bucket{le=\"200\",web_vital_route=~\"$route\"}[$__rate_interval]))",
-          "legendFormat": "Needs Improvement",
-          "refId": "B"
-        },
-        {
-          "datasource": {
-            "type": "prometheus",
-            "uid": "${datasource}"
-          },
-          "expr": "sum(rate(app_web_vitals_inp_milliseconds_count{web_vital_route=~\"$route\"}[$__rate_interval])) - sum(rate(app_web_vitals_inp_milliseconds_bucket{le=\"500\",web_vital_route=~\"$route\"}[$__rate_interval]))",
-          "legendFormat": "Poor",
-          "refId": "C"
         }
       ],
-      "title": "INP Score Distribution",
-      "description": "Percentage of interactions with Good/Needs Improvement/Poor INP",
+      "title": "INP p75 - Trend",
       "type": "timeseries"
     },
     {
       "datasource": {
         "type": "prometheus",
-        "uid": "${datasource}"
+        "uid": "prometheus"
       },
+      "description": "Percentage of users experiencing Good INP over time. Target: ≥75%",
       "fieldConfig": {
         "defaults": {
           "color": {
             "mode": "palette-classic"
           },
           "custom": {
-            "axisBorderShow": false,
             "axisCenteredZero": false,
             "axisColorMode": "text",
             "axisLabel": "",
             "axisPlacement": "auto",
             "barAlignment": 0,
             "drawStyle": "line",
-            "fillOpacity": 10,
+            "fillOpacity": 20,
             "gradientMode": "none",
             "hideFrom": {
-              "legend": false,
               "tooltip": false,
-              "viz": false
+              "viz": false,
+              "legend": false
             },
-            "insertNulls": false,
-            "lineInterpolation": "smooth",
-            "lineWidth": 1,
-            "pointSize": 5,
-            "scaleDistribution": {
-              "type": "linear"
-            },
-            "showPoints": "never",
-            "spanNulls": false,
-            "stacking": {
-              "group": "A",
-              "mode": "none"
-            },
-            "thresholdsStyle": {
-              "mode": "off"
-            }
-          },
-          "mappings": [],
-          "thresholds": {
-            "mode": "absolute",
-            "steps": [
-              {
-                "color": "green",
-                "value": null
-              }
-            ]
-          },
-          "unit": "ms"
-        },
-        "overrides": []
-      },
-      "gridPos": {
-        "h": 8,
-        "w": 24,
-        "x": 0,
-        "y": 42
-      },
-      "id": 33,
-      "options": {
-        "legend": {
-          "calcs": [
-            "mean",
-            "max"
-          ],
-          "displayMode": "table",
-          "placement": "right",
-          "showLegend": true,
-          "sortBy": "Mean",
-          "sortDesc": true
-        },
-        "tooltip": {
-          "mode": "multi",
-          "sort": "desc"
-        }
-      },
-      "targets": [
-        {
-          "datasource": {
-            "type": "prometheus",
-            "uid": "${datasource}"
-          },
-          "expr": "histogram_quantile(0.75, sum(rate(app_web_vitals_inp_milliseconds_bucket[$__rate_interval])) by (le, route))",
-          "legendFormat": "{{route}}",
-          "refId": "A"
-        }
-      ],
-      "title": "INP by Route (p75)",
-      "description": "Compare INP performance across different pages/routes",
-      "type": "timeseries"
-    },
-    {
-      "collapsed": false,
-      "gridPos": {
-        "h": 1,
-        "w": 24,
-        "x": 0,
-        "y": 50
-      },
-      "id": 40,
-      "panels": [],
-      "title": "\ud83c\udfa8 CLS - Cumulative Layout Shift (Visual Stability)",
-      "type": "row"
-    },
-    {
-      "datasource": {
-        "type": "prometheus",
-        "uid": "${datasource}"
-      },
-      "fieldConfig": {
-        "defaults": {
-          "color": {
-            "mode": "palette-classic"
-          },
-          "custom": {
-            "axisBorderShow": false,
-            "axisCenteredZero": false,
-            "axisColorMode": "text",
-            "axisLabel": "",
-            "axisPlacement": "auto",
-            "barAlignment": 0,
-            "drawStyle": "line",
-            "fillOpacity": 10,
-            "gradientMode": "none",
-            "hideFrom": {
-              "legend": false,
-              "tooltip": false,
-              "viz": false
-            },
-            "insertNulls": false,
             "lineInterpolation": "smooth",
             "lineWidth": 2,
             "pointSize": 5,
             "scaleDistribution": {
               "type": "linear"
             },
-            "showPoints": "never",
+            "showPoints": "auto",
             "spanNulls": false,
             "stacking": {
               "group": "A",
               "mode": "none"
             },
             "thresholdsStyle": {
-              "mode": "line+area"
+              "mode": "line"
+            }
+          },
+          "mappings": [],
+          "max": 100,
+          "min": 0,
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "red",
+                "value": null
+              },
+              {
+                "color": "yellow",
+                "value": 50
+              },
+              {
+                "color": "green",
+                "value": 75
+              }
+            ]
+          },
+          "unit": "percent"
+        },
+        "overrides": []
+      },
+      "gridPos": {
+        "h": 8,
+        "w": 12,
+        "x": 12,
+        "y": 31
+      },
+      "id": 304,
+      "options": {
+        "legend": {
+          "calcs": ["mean", "lastNotNull", "min"],
+          "displayMode": "table",
+          "placement": "bottom",
+          "showLegend": true
+        },
+        "tooltip": {
+          "mode": "single",
+          "sort": "none"
+        }
+      },
+      "pluginVersion": "10.0.0",
+      "targets": [
+        {
+          "datasource": {
+            "type": "prometheus",
+            "uid": "prometheus"
+          },
+          "editorMode": "code",
+          "expr": "100 * sum(rate(app_web_vitals_inp_milliseconds_count{web_vital_rating=\"good\", web_vital_route_template=~\"$route\", web_vital_device=~\"$device\"}[5m])) / sum(rate(app_web_vitals_inp_milliseconds_count{web_vital_route_template=~\"$route\", web_vital_device=~\"$device\"}[5m]))",
+          "legendFormat": "% Good INP",
+          "range": true,
+          "refId": "A"
+        }
+      ],
+      "title": "INP % Good - Trend",
+      "type": "timeseries"
+    },
+    {
+      "datasource": {
+        "type": "prometheus",
+        "uid": "prometheus"
+      },
+      "description": "CLS p75 trend over time. Target: ≤0.1",
+      "fieldConfig": {
+        "defaults": {
+          "color": {
+            "mode": "palette-classic"
+          },
+          "custom": {
+            "axisCenteredZero": false,
+            "axisColorMode": "text",
+            "axisLabel": "",
+            "axisPlacement": "auto",
+            "barAlignment": 0,
+            "drawStyle": "line",
+            "fillOpacity": 20,
+            "gradientMode": "none",
+            "hideFrom": {
+              "tooltip": false,
+              "viz": false,
+              "legend": false
+            },
+            "lineInterpolation": "smooth",
+            "lineWidth": 2,
+            "pointSize": 5,
+            "scaleDistribution": {
+              "type": "linear"
+            },
+            "showPoints": "auto",
+            "spanNulls": false,
+            "stacking": {
+              "group": "A",
+              "mode": "none"
+            },
+            "thresholdsStyle": {
+              "mode": "line"
             }
           },
           "decimals": 3,
@@ -1678,7 +1327,7 @@
             "mode": "absolute",
             "steps": [
               {
-                "color": "transparent",
+                "color": "green",
                 "value": null
               },
               {
@@ -1697,115 +1346,190 @@
       },
       "gridPos": {
         "h": 8,
-        "w": 18,
+        "w": 12,
         "x": 0,
-        "y": 51
+        "y": 39
       },
-      "id": 41,
+      "id": 305,
       "options": {
         "legend": {
-          "calcs": [
-            "mean",
-            "max",
-            "lastNotNull"
-          ],
+          "calcs": ["mean", "lastNotNull", "max"],
           "displayMode": "table",
-          "placement": "right",
+          "placement": "bottom",
           "showLegend": true
         },
         "tooltip": {
-          "mode": "multi",
-          "sort": "desc"
+          "mode": "single",
+          "sort": "none"
         }
       },
+      "pluginVersion": "10.0.0",
       "targets": [
         {
           "datasource": {
             "type": "prometheus",
-            "uid": "${datasource}"
+            "uid": "prometheus"
           },
-          "expr": "histogram_quantile(0.50, sum(rate(app_web_vitals_cls_bucket{web_vital_route=~\"$route\"}[$__rate_interval])) by (le))",
-          "legendFormat": "p50 (median)",
+          "editorMode": "code",
+          "expr": "histogram_quantile(0.75, sum(rate(app_web_vitals_cls_bucket{web_vital_route_template=~\"$route\", web_vital_device=~\"$device\"}[5m])) by (le))",
+          "legendFormat": "CLS p75",
+          "range": true,
           "refId": "A"
-        },
-        {
-          "datasource": {
-            "type": "prometheus",
-            "uid": "${datasource}"
-          },
-          "expr": "histogram_quantile(0.75, sum(rate(app_web_vitals_cls_bucket{web_vital_route=~\"$route\"}[$__rate_interval])) by (le))",
-          "legendFormat": "p75 (recommended)",
-          "refId": "B"
-        },
-        {
-          "datasource": {
-            "type": "prometheus",
-            "uid": "${datasource}"
-          },
-          "expr": "histogram_quantile(0.90, sum(rate(app_web_vitals_cls_bucket{web_vital_route=~\"$route\"}[$__rate_interval])) by (le))",
-          "legendFormat": "p90",
-          "refId": "C"
-        },
-        {
-          "datasource": {
-            "type": "prometheus",
-            "uid": "${datasource}"
-          },
-          "expr": "histogram_quantile(0.95, sum(rate(app_web_vitals_cls_bucket{web_vital_route=~\"$route\"}[$__rate_interval])) by (le))",
-          "legendFormat": "p95",
-          "refId": "D"
-        },
-        {
-          "datasource": {
-            "type": "prometheus",
-            "uid": "${datasource}"
-          },
-          "expr": "histogram_quantile(0.99, sum(rate(app_web_vitals_cls_bucket{web_vital_route=~\"$route\"}[$__rate_interval])) by (le))",
-          "legendFormat": "p99",
-          "refId": "E"
         }
       ],
-      "title": "CLS Percentiles Over Time",
-      "description": "Cumulative Layout Shift measures visual stability. Lower is better.",
+      "title": "CLS p75 - Trend",
       "type": "timeseries"
     },
     {
       "datasource": {
         "type": "prometheus",
-        "uid": "${datasource}"
+        "uid": "prometheus"
       },
+      "description": "Percentage of users experiencing Good CLS over time. Target: ≥75%",
       "fieldConfig": {
         "defaults": {
           "color": {
             "mode": "palette-classic"
           },
           "custom": {
-            "axisBorderShow": false,
             "axisCenteredZero": false,
             "axisColorMode": "text",
             "axisLabel": "",
             "axisPlacement": "auto",
             "barAlignment": 0,
             "drawStyle": "line",
-            "fillOpacity": 30,
-            "gradientMode": "opacity",
+            "fillOpacity": 20,
+            "gradientMode": "none",
             "hideFrom": {
-              "legend": false,
               "tooltip": false,
-              "viz": false
+              "viz": false,
+              "legend": false
             },
-            "insertNulls": false,
             "lineInterpolation": "smooth",
-            "lineWidth": 1,
+            "lineWidth": 2,
             "pointSize": 5,
             "scaleDistribution": {
               "type": "linear"
             },
-            "showPoints": "never",
+            "showPoints": "auto",
             "spanNulls": false,
             "stacking": {
               "group": "A",
-              "mode": "percent"
+              "mode": "none"
+            },
+            "thresholdsStyle": {
+              "mode": "line"
+            }
+          },
+          "mappings": [],
+          "max": 100,
+          "min": 0,
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "red",
+                "value": null
+              },
+              {
+                "color": "yellow",
+                "value": 50
+              },
+              {
+                "color": "green",
+                "value": 75
+              }
+            ]
+          },
+          "unit": "percent"
+        },
+        "overrides": []
+      },
+      "gridPos": {
+        "h": 8,
+        "w": 12,
+        "x": 12,
+        "y": 39
+      },
+      "id": 306,
+      "options": {
+        "legend": {
+          "calcs": ["mean", "lastNotNull", "min"],
+          "displayMode": "table",
+          "placement": "bottom",
+          "showLegend": true
+        },
+        "tooltip": {
+          "mode": "single",
+          "sort": "none"
+        }
+      },
+      "pluginVersion": "10.0.0",
+      "targets": [
+        {
+          "datasource": {
+            "type": "prometheus",
+            "uid": "prometheus"
+          },
+          "editorMode": "code",
+          "expr": "100 * sum(rate(app_web_vitals_cls_count{web_vital_rating=\"good\", web_vital_route_template=~\"$route\", web_vital_device=~\"$device\"}[5m])) / sum(rate(app_web_vitals_cls_count{web_vital_route_template=~\"$route\", web_vital_device=~\"$device\"}[5m]))",
+          "legendFormat": "% Good CLS",
+          "range": true,
+          "refId": "A"
+        }
+      ],
+      "title": "CLS % Good - Trend",
+      "type": "timeseries"
+    },
+    {
+      "collapsed": false,
+      "gridPos": {
+        "h": 1,
+        "w": 24,
+        "x": 0,
+        "y": 47
+      },
+      "id": 400,
+      "panels": [],
+      "title": "📊 Percentiles Breakdown (p50, p75, p95)",
+      "type": "row"
+    },
+    {
+      "datasource": {
+        "type": "prometheus",
+        "uid": "prometheus"
+      },
+      "description": "LCP percentiles: p50 (median), p75 (Google signal), p95 (edge cases)",
+      "fieldConfig": {
+        "defaults": {
+          "color": {
+            "mode": "palette-classic"
+          },
+          "custom": {
+            "axisCenteredZero": false,
+            "axisColorMode": "text",
+            "axisLabel": "",
+            "axisPlacement": "auto",
+            "barAlignment": 0,
+            "drawStyle": "line",
+            "fillOpacity": 10,
+            "gradientMode": "none",
+            "hideFrom": {
+              "tooltip": false,
+              "viz": false,
+              "legend": false
+            },
+            "lineInterpolation": "smooth",
+            "lineWidth": 2,
+            "pointSize": 5,
+            "scaleDistribution": {
+              "type": "linear"
+            },
+            "showPoints": "auto",
+            "spanNulls": false,
+            "stacking": {
+              "group": "A",
+              "mode": "none"
             },
             "thresholdsStyle": {
               "mode": "off"
@@ -1821,51 +1545,18 @@
               }
             ]
           },
-          "unit": "percentunit"
+          "unit": "ms"
         },
         "overrides": [
           {
             "matcher": {
               "id": "byName",
-              "options": "Good"
+              "options": "p75"
             },
             "properties": [
               {
-                "id": "color",
-                "value": {
-                  "fixedColor": "green",
-                  "mode": "fixed"
-                }
-              }
-            ]
-          },
-          {
-            "matcher": {
-              "id": "byName",
-              "options": "Needs Improvement"
-            },
-            "properties": [
-              {
-                "id": "color",
-                "value": {
-                  "fixedColor": "yellow",
-                  "mode": "fixed"
-                }
-              }
-            ]
-          },
-          {
-            "matcher": {
-              "id": "byName",
-              "options": "Poor"
-            },
-            "properties": [
-              {
-                "id": "color",
-                "value": {
-                  "fixedColor": "red",
-                  "mode": "fixed"
-                }
+                "id": "custom.lineWidth",
+                "value": 3
               }
             ]
           }
@@ -1873,17 +1564,15 @@
       },
       "gridPos": {
         "h": 8,
-        "w": 6,
-        "x": 18,
-        "y": 51
+        "w": 8,
+        "x": 0,
+        "y": 48
       },
-      "id": 42,
+      "id": 401,
       "options": {
         "legend": {
-          "calcs": [
-            "lastNotNull"
-          ],
-          "displayMode": "list",
+          "calcs": ["lastNotNull"],
+          "displayMode": "table",
           "placement": "bottom",
           "showLegend": true
         },
@@ -1892,51 +1581,59 @@
           "sort": "none"
         }
       },
+      "pluginVersion": "10.0.0",
       "targets": [
         {
           "datasource": {
             "type": "prometheus",
-            "uid": "${datasource}"
+            "uid": "prometheus"
           },
-          "expr": "sum(rate(app_web_vitals_cls_bucket{le=\"0.1\",web_vital_route=~\"$route\"}[$__rate_interval]))",
-          "legendFormat": "Good",
+          "editorMode": "code",
+          "expr": "histogram_quantile(0.50, sum(rate(app_web_vitals_lcp_milliseconds_bucket{web_vital_route_template=~\"$route\", web_vital_device=~\"$device\"}[5m])) by (le))",
+          "legendFormat": "p50 (median)",
+          "range": true,
           "refId": "A"
         },
         {
           "datasource": {
             "type": "prometheus",
-            "uid": "${datasource}"
+            "uid": "prometheus"
           },
-          "expr": "sum(rate(app_web_vitals_cls_bucket{le=\"0.25\",web_vital_route=~\"$route\"}[$__rate_interval])) - sum(rate(app_web_vitals_cls_bucket{le=\"0.1\",web_vital_route=~\"$route\"}[$__rate_interval]))",
-          "legendFormat": "Needs Improvement",
+          "editorMode": "code",
+          "expr": "histogram_quantile(0.75, sum(rate(app_web_vitals_lcp_milliseconds_bucket{web_vital_route_template=~\"$route\", web_vital_device=~\"$device\"}[5m])) by (le))",
+          "hide": false,
+          "legendFormat": "p75 (Google signal)",
+          "range": true,
           "refId": "B"
         },
         {
           "datasource": {
             "type": "prometheus",
-            "uid": "${datasource}"
+            "uid": "prometheus"
           },
-          "expr": "sum(rate(app_web_vitals_cls_count{web_vital_route=~\"$route\"}[$__rate_interval])) - sum(rate(app_web_vitals_cls_bucket{le=\"0.25\",web_vital_route=~\"$route\"}[$__rate_interval]))",
-          "legendFormat": "Poor",
+          "editorMode": "code",
+          "expr": "histogram_quantile(0.95, sum(rate(app_web_vitals_lcp_milliseconds_bucket{web_vital_route_template=~\"$route\", web_vital_device=~\"$device\"}[5m])) by (le))",
+          "hide": false,
+          "legendFormat": "p95 (edge cases)",
+          "range": true,
           "refId": "C"
         }
       ],
-      "title": "CLS Score Distribution",
-      "description": "Percentage of page loads with Good/Needs Improvement/Poor CLS",
+      "title": "LCP - Percentiles",
       "type": "timeseries"
     },
     {
       "datasource": {
         "type": "prometheus",
-        "uid": "${datasource}"
+        "uid": "prometheus"
       },
+      "description": "INP percentiles: p50 (median), p75 (Google signal), p95 (edge cases)",
       "fieldConfig": {
         "defaults": {
           "color": {
             "mode": "palette-classic"
           },
           "custom": {
-            "axisBorderShow": false,
             "axisCenteredZero": false,
             "axisColorMode": "text",
             "axisLabel": "",
@@ -1946,18 +1643,145 @@
             "fillOpacity": 10,
             "gradientMode": "none",
             "hideFrom": {
-              "legend": false,
               "tooltip": false,
-              "viz": false
+              "viz": false,
+              "legend": false
             },
-            "insertNulls": false,
             "lineInterpolation": "smooth",
-            "lineWidth": 1,
+            "lineWidth": 2,
             "pointSize": 5,
             "scaleDistribution": {
               "type": "linear"
             },
-            "showPoints": "never",
+            "showPoints": "auto",
+            "spanNulls": false,
+            "stacking": {
+              "group": "A",
+              "mode": "none"
+            },
+            "thresholdsStyle": {
+              "mode": "off"
+            }
+          },
+          "mappings": [],
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "green",
+                "value": null
+              }
+            ]
+          },
+          "unit": "ms"
+        },
+        "overrides": [
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "p75"
+            },
+            "properties": [
+              {
+                "id": "custom.lineWidth",
+                "value": 3
+              }
+            ]
+          }
+        ]
+      },
+      "gridPos": {
+        "h": 8,
+        "w": 8,
+        "x": 8,
+        "y": 48
+      },
+      "id": 402,
+      "options": {
+        "legend": {
+          "calcs": ["lastNotNull"],
+          "displayMode": "table",
+          "placement": "bottom",
+          "showLegend": true
+        },
+        "tooltip": {
+          "mode": "multi",
+          "sort": "none"
+        }
+      },
+      "pluginVersion": "10.0.0",
+      "targets": [
+        {
+          "datasource": {
+            "type": "prometheus",
+            "uid": "prometheus"
+          },
+          "editorMode": "code",
+          "expr": "histogram_quantile(0.50, sum(rate(app_web_vitals_inp_milliseconds_bucket{web_vital_route_template=~\"$route\", web_vital_device=~\"$device\"}[5m])) by (le))",
+          "legendFormat": "p50 (median)",
+          "range": true,
+          "refId": "A"
+        },
+        {
+          "datasource": {
+            "type": "prometheus",
+            "uid": "prometheus"
+          },
+          "editorMode": "code",
+          "expr": "histogram_quantile(0.75, sum(rate(app_web_vitals_inp_milliseconds_bucket{web_vital_route_template=~\"$route\", web_vital_device=~\"$device\"}[5m])) by (le))",
+          "hide": false,
+          "legendFormat": "p75 (Google signal)",
+          "range": true,
+          "refId": "B"
+        },
+        {
+          "datasource": {
+            "type": "prometheus",
+            "uid": "prometheus"
+          },
+          "editorMode": "code",
+          "expr": "histogram_quantile(0.95, sum(rate(app_web_vitals_inp_milliseconds_bucket{web_vital_route_template=~\"$route\", web_vital_device=~\"$device\"}[5m])) by (le))",
+          "hide": false,
+          "legendFormat": "p95 (edge cases)",
+          "range": true,
+          "refId": "C"
+        }
+      ],
+      "title": "INP - Percentiles",
+      "type": "timeseries"
+    },
+    {
+      "datasource": {
+        "type": "prometheus",
+        "uid": "prometheus"
+      },
+      "description": "CLS percentiles: p50 (median), p75 (Google signal), p95 (edge cases)",
+      "fieldConfig": {
+        "defaults": {
+          "color": {
+            "mode": "palette-classic"
+          },
+          "custom": {
+            "axisCenteredZero": false,
+            "axisColorMode": "text",
+            "axisLabel": "",
+            "axisPlacement": "auto",
+            "barAlignment": 0,
+            "drawStyle": "line",
+            "fillOpacity": 10,
+            "gradientMode": "none",
+            "hideFrom": {
+              "tooltip": false,
+              "viz": false,
+              "legend": false
+            },
+            "lineInterpolation": "smooth",
+            "lineWidth": 2,
+            "pointSize": 5,
+            "scaleDistribution": {
+              "type": "linear"
+            },
+            "showPoints": "auto",
             "spanNulls": false,
             "stacking": {
               "group": "A",
@@ -1980,45 +1804,79 @@
           },
           "unit": "short"
         },
-        "overrides": []
+        "overrides": [
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "p75"
+            },
+            "properties": [
+              {
+                "id": "custom.lineWidth",
+                "value": 3
+              }
+            ]
+          }
+        ]
       },
       "gridPos": {
         "h": 8,
-        "w": 24,
-        "x": 0,
-        "y": 59
+        "w": 8,
+        "x": 16,
+        "y": 48
       },
-      "id": 43,
+      "id": 403,
       "options": {
         "legend": {
-          "calcs": [
-            "mean",
-            "max"
-          ],
+          "calcs": ["lastNotNull"],
           "displayMode": "table",
-          "placement": "right",
-          "showLegend": true,
-          "sortBy": "Mean",
-          "sortDesc": true
+          "placement": "bottom",
+          "showLegend": true
         },
         "tooltip": {
           "mode": "multi",
-          "sort": "desc"
+          "sort": "none"
         }
       },
+      "pluginVersion": "10.0.0",
       "targets": [
         {
           "datasource": {
             "type": "prometheus",
-            "uid": "${datasource}"
+            "uid": "prometheus"
           },
-          "expr": "histogram_quantile(0.75, sum(rate(app_web_vitals_cls_bucket[$__rate_interval])) by (le, route))",
-          "legendFormat": "{{route}}",
+          "editorMode": "code",
+          "expr": "histogram_quantile(0.50, sum(rate(app_web_vitals_cls_bucket{web_vital_route_template=~\"$route\", web_vital_device=~\"$device\"}[5m])) by (le))",
+          "legendFormat": "p50 (median)",
+          "range": true,
           "refId": "A"
+        },
+        {
+          "datasource": {
+            "type": "prometheus",
+            "uid": "prometheus"
+          },
+          "editorMode": "code",
+          "expr": "histogram_quantile(0.75, sum(rate(app_web_vitals_cls_bucket{web_vital_route_template=~\"$route\", web_vital_device=~\"$device\"}[5m])) by (le))",
+          "hide": false,
+          "legendFormat": "p75 (Google signal)",
+          "range": true,
+          "refId": "B"
+        },
+        {
+          "datasource": {
+            "type": "prometheus",
+            "uid": "prometheus"
+          },
+          "editorMode": "code",
+          "expr": "histogram_quantile(0.95, sum(rate(app_web_vitals_cls_bucket{web_vital_route_template=~\"$route\", web_vital_device=~\"$device\"}[5m])) by (le))",
+          "hide": false,
+          "legendFormat": "p95 (edge cases)",
+          "range": true,
+          "refId": "C"
         }
       ],
-      "title": "CLS by Route (p75)",
-      "description": "Compare CLS performance across different pages/routes",
+      "title": "CLS - Percentiles",
       "type": "timeseries"
     },
     {
@@ -2027,53 +1885,52 @@
         "h": 1,
         "w": 24,
         "x": 0,
-        "y": 67
+        "y": 56
       },
-      "id": 50,
+      "id": 500,
       "panels": [],
-      "title": "\ud83c\udfc1 FCP & TTFB - First Contentful Paint & Time to First Byte",
+      "title": "📱 Device Segmentation (Mobile vs Desktop)",
       "type": "row"
     },
     {
       "datasource": {
         "type": "prometheus",
-        "uid": "${datasource}"
+        "uid": "prometheus"
       },
+      "description": "LCP p75 comparison: Mobile vs Desktop",
       "fieldConfig": {
         "defaults": {
           "color": {
             "mode": "palette-classic"
           },
           "custom": {
-            "axisBorderShow": false,
             "axisCenteredZero": false,
             "axisColorMode": "text",
             "axisLabel": "",
             "axisPlacement": "auto",
             "barAlignment": 0,
             "drawStyle": "line",
-            "fillOpacity": 10,
+            "fillOpacity": 20,
             "gradientMode": "none",
             "hideFrom": {
-              "legend": false,
               "tooltip": false,
-              "viz": false
+              "viz": false,
+              "legend": false
             },
-            "insertNulls": false,
             "lineInterpolation": "smooth",
             "lineWidth": 2,
             "pointSize": 5,
             "scaleDistribution": {
               "type": "linear"
             },
-            "showPoints": "never",
+            "showPoints": "auto",
             "spanNulls": false,
             "stacking": {
               "group": "A",
               "mode": "none"
             },
             "thresholdsStyle": {
-              "mode": "line+area"
+              "mode": "line"
             }
           },
           "mappings": [],
@@ -2081,16 +1938,16 @@
             "mode": "absolute",
             "steps": [
               {
-                "color": "transparent",
+                "color": "green",
                 "value": null
               },
               {
                 "color": "yellow",
-                "value": 1800
+                "value": 2500
               },
               {
                 "color": "red",
-                "value": 3000
+                "value": 4000
               }
             ]
           },
@@ -2100,109 +1957,91 @@
       },
       "gridPos": {
         "h": 8,
-        "w": 12,
+        "w": 8,
         "x": 0,
-        "y": 68
+        "y": 57
       },
-      "id": 51,
+      "id": 501,
       "options": {
         "legend": {
-          "calcs": [
-            "mean",
-            "max",
-            "lastNotNull"
-          ],
+          "calcs": ["mean", "lastNotNull", "max"],
           "displayMode": "table",
           "placement": "bottom",
           "showLegend": true
         },
         "tooltip": {
           "mode": "multi",
-          "sort": "desc"
+          "sort": "none"
         }
       },
+      "pluginVersion": "10.0.0",
       "targets": [
         {
           "datasource": {
             "type": "prometheus",
-            "uid": "${datasource}"
+            "uid": "prometheus"
           },
-          "expr": "histogram_quantile(0.50, sum(rate(app_web_vitals_fcp_milliseconds_bucket{web_vital_route=~\"$route\"}[$__rate_interval])) by (le))",
-          "legendFormat": "p50",
+          "editorMode": "code",
+          "expr": "histogram_quantile(0.75, sum(rate(app_web_vitals_lcp_milliseconds_bucket{web_vital_route_template=~\"$route\", web_vital_device=\"mobile\"}[5m])) by (le))",
+          "legendFormat": "Mobile",
+          "range": true,
           "refId": "A"
         },
         {
           "datasource": {
             "type": "prometheus",
-            "uid": "${datasource}"
+            "uid": "prometheus"
           },
-          "expr": "histogram_quantile(0.75, sum(rate(app_web_vitals_fcp_milliseconds_bucket{web_vital_route=~\"$route\"}[$__rate_interval])) by (le))",
-          "legendFormat": "p75",
+          "editorMode": "code",
+          "expr": "histogram_quantile(0.75, sum(rate(app_web_vitals_lcp_milliseconds_bucket{web_vital_route_template=~\"$route\", web_vital_device=\"desktop\"}[5m])) by (le))",
+          "hide": false,
+          "legendFormat": "Desktop",
+          "range": true,
           "refId": "B"
-        },
-        {
-          "datasource": {
-            "type": "prometheus",
-            "uid": "${datasource}"
-          },
-          "expr": "histogram_quantile(0.90, sum(rate(app_web_vitals_fcp_milliseconds_bucket{web_vital_route=~\"$route\"}[$__rate_interval])) by (le))",
-          "legendFormat": "p90",
-          "refId": "C"
-        },
-        {
-          "datasource": {
-            "type": "prometheus",
-            "uid": "${datasource}"
-          },
-          "expr": "histogram_quantile(0.99, sum(rate(app_web_vitals_fcp_milliseconds_bucket{web_vital_route=~\"$route\"}[$__rate_interval])) by (le))",
-          "legendFormat": "p99",
-          "refId": "D"
         }
       ],
-      "title": "FCP - First Contentful Paint",
-      "description": "Time until first text/image is rendered. Good: <1.8s, Poor: >3s",
+      "title": "LCP p75 - Mobile vs Desktop",
       "type": "timeseries"
     },
     {
       "datasource": {
         "type": "prometheus",
-        "uid": "${datasource}"
+        "uid": "prometheus"
       },
+      "description": "INP p75 comparison: Mobile vs Desktop",
       "fieldConfig": {
         "defaults": {
           "color": {
             "mode": "palette-classic"
           },
           "custom": {
-            "axisBorderShow": false,
             "axisCenteredZero": false,
             "axisColorMode": "text",
             "axisLabel": "",
             "axisPlacement": "auto",
             "barAlignment": 0,
             "drawStyle": "line",
-            "fillOpacity": 10,
+            "fillOpacity": 20,
             "gradientMode": "none",
             "hideFrom": {
-              "legend": false,
               "tooltip": false,
-              "viz": false
+              "viz": false,
+              "legend": false
             },
-            "insertNulls": false,
             "lineInterpolation": "smooth",
             "lineWidth": 2,
             "pointSize": 5,
             "scaleDistribution": {
               "type": "linear"
             },
-            "showPoints": "never",
+            "showPoints": "auto",
             "spanNulls": false,
             "stacking": {
               "group": "A",
               "mode": "none"
             },
             "thresholdsStyle": {
-              "mode": "line+area"
+              "mode": "line"
             }
           },
           "mappings": [],
@@ -2210,16 +2049,16 @@
             "mode": "absolute",
             "steps": [
               {
-                "color": "transparent",
+                "color": "green",
                 "value": null
               },
               {
                 "color": "yellow",
-                "value": 800
+                "value": 200
               },
               {
                 "color": "red",
-                "value": 1800
+                "value": 500
               }
             ]
           },
@@ -2229,102 +2068,613 @@
       },
       "gridPos": {
         "h": 8,
-        "w": 12,
-        "x": 12,
-        "y": 68
+        "w": 8,
+        "x": 8,
+        "y": 57
       },
-      "id": 52,
+      "id": 502,
       "options": {
         "legend": {
-          "calcs": [
-            "mean",
-            "max",
-            "lastNotNull"
-          ],
+          "calcs": ["mean", "lastNotNull", "max"],
           "displayMode": "table",
           "placement": "bottom",
           "showLegend": true
         },
         "tooltip": {
           "mode": "multi",
-          "sort": "desc"
+          "sort": "none"
         }
       },
+      "pluginVersion": "10.0.0",
       "targets": [
         {
           "datasource": {
             "type": "prometheus",
-            "uid": "${datasource}"
+            "uid": "prometheus"
           },
-          "expr": "histogram_quantile(0.50, sum(rate(app_web_vitals_ttfb_milliseconds_bucket{web_vital_route=~\"$route\"}[$__rate_interval])) by (le))",
-          "legendFormat": "p50",
+          "editorMode": "code",
+          "expr": "histogram_quantile(0.75, sum(rate(app_web_vitals_inp_milliseconds_bucket{web_vital_route_template=~\"$route\", web_vital_device=\"mobile\"}[5m])) by (le))",
+          "legendFormat": "Mobile",
+          "range": true,
           "refId": "A"
         },
         {
           "datasource": {
             "type": "prometheus",
-            "uid": "${datasource}"
+            "uid": "prometheus"
           },
-          "expr": "histogram_quantile(0.75, sum(rate(app_web_vitals_ttfb_milliseconds_bucket{web_vital_route=~\"$route\"}[$__rate_interval])) by (le))",
-          "legendFormat": "p75",
+          "editorMode": "code",
+          "expr": "histogram_quantile(0.75, sum(rate(app_web_vitals_inp_milliseconds_bucket{web_vital_route_template=~\"$route\", web_vital_device=\"desktop\"}[5m])) by (le))",
+          "hide": false,
+          "legendFormat": "Desktop",
+          "range": true,
           "refId": "B"
-        },
-        {
-          "datasource": {
-            "type": "prometheus",
-            "uid": "${datasource}"
-          },
-          "expr": "histogram_quantile(0.90, sum(rate(app_web_vitals_ttfb_milliseconds_bucket{web_vital_route=~\"$route\"}[$__rate_interval])) by (le))",
-          "legendFormat": "p90",
-          "refId": "C"
-        },
-        {
-          "datasource": {
-            "type": "prometheus",
-            "uid": "${datasource}"
-          },
-          "expr": "histogram_quantile(0.99, sum(rate(app_web_vitals_ttfb_milliseconds_bucket{web_vital_route=~\"$route\"}[$__rate_interval])) by (le))",
-          "legendFormat": "p99",
-          "refId": "D"
         }
       ],
-      "title": "TTFB - Time to First Byte",
-      "description": "Server response time. Good: <800ms, Poor: >1800ms",
+      "title": "INP p75 - Mobile vs Desktop",
       "type": "timeseries"
     },
     {
       "datasource": {
         "type": "prometheus",
-        "uid": "${datasource}"
+        "uid": "prometheus"
       },
+      "description": "CLS p75 comparison: Mobile vs Desktop",
       "fieldConfig": {
         "defaults": {
           "color": {
             "mode": "palette-classic"
           },
           "custom": {
-            "axisBorderShow": false,
             "axisCenteredZero": false,
             "axisColorMode": "text",
             "axisLabel": "",
             "axisPlacement": "auto",
             "barAlignment": 0,
             "drawStyle": "line",
-            "fillOpacity": 10,
+            "fillOpacity": 20,
             "gradientMode": "none",
             "hideFrom": {
-              "legend": false,
               "tooltip": false,
-              "viz": false
+              "viz": false,
+              "legend": false
             },
-            "insertNulls": false,
             "lineInterpolation": "smooth",
-            "lineWidth": 1,
+            "lineWidth": 2,
             "pointSize": 5,
             "scaleDistribution": {
               "type": "linear"
             },
-            "showPoints": "never",
+            "showPoints": "auto",
+            "spanNulls": false,
+            "stacking": {
+              "group": "A",
+              "mode": "none"
+            },
+            "thresholdsStyle": {
+              "mode": "line"
+            }
+          },
+          "decimals": 3,
+          "mappings": [],
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "green",
+                "value": null
+              },
+              {
+                "color": "yellow",
+                "value": 0.1
+              },
+              {
+                "color": "red",
+                "value": 0.25
+              }
+            ]
+          },
+          "unit": "short"
+        },
+        "overrides": []
+      },
+      "gridPos": {
+        "h": 8,
+        "w": 8,
+        "x": 16,
+        "y": 57
+      },
+      "id": 503,
+      "options": {
+        "legend": {
+          "calcs": ["mean", "lastNotNull", "max"],
+          "displayMode": "table",
+          "placement": "bottom",
+          "showLegend": true
+        },
+        "tooltip": {
+          "mode": "multi",
+          "sort": "none"
+        }
+      },
+      "pluginVersion": "10.0.0",
+      "targets": [
+        {
+          "datasource": {
+            "type": "prometheus",
+            "uid": "prometheus"
+          },
+          "editorMode": "code",
+          "expr": "histogram_quantile(0.75, sum(rate(app_web_vitals_cls_bucket{web_vital_route_template=~\"$route\", web_vital_device=\"mobile\"}[5m])) by (le))",
+          "legendFormat": "Mobile",
+          "range": true,
+          "refId": "A"
+        },
+        {
+          "datasource": {
+            "type": "prometheus",
+            "uid": "prometheus"
+          },
+          "editorMode": "code",
+          "expr": "histogram_quantile(0.75, sum(rate(app_web_vitals_cls_bucket{web_vital_route_template=~\"$route\", web_vital_device=\"desktop\"}[5m])) by (le))",
+          "hide": false,
+          "legendFormat": "Desktop",
+          "range": true,
+          "refId": "B"
+        }
+      ],
+      "title": "CLS p75 - Mobile vs Desktop",
+      "type": "timeseries"
+    },
+    {
+      "collapsed": false,
+      "gridPos": {
+        "h": 1,
+        "w": 24,
+        "x": 0,
+        "y": 65
+      },
+      "id": 600,
+      "panels": [],
+      "title": "🔥 Top Problematic Routes (Worst Performers)",
+      "type": "row"
+    },
+    {
+      "datasource": {
+        "type": "prometheus",
+        "uid": "prometheus"
+      },
+      "description": "Top 10 routes with worst LCP p75 performance",
+      "fieldConfig": {
+        "defaults": {
+          "color": {
+            "mode": "thresholds"
+          },
+          "custom": {
+            "align": "auto",
+            "cellOptions": {
+              "type": "auto"
+            },
+            "inspect": false
+          },
+          "mappings": [],
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "green",
+                "value": null
+              },
+              {
+                "color": "yellow",
+                "value": 2500
+              },
+              {
+                "color": "red",
+                "value": 4000
+              }
+            ]
+          },
+          "unit": "ms"
+        },
+        "overrides": [
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "Route"
+            },
+            "properties": [
+              {
+                "id": "custom.width",
+                "value": 400
+              }
+            ]
+          },
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "Value"
+            },
+            "properties": [
+              {
+                "id": "displayName",
+                "value": "LCP p75 (ms)"
+              },
+              {
+                "id": "custom.cellOptions",
+                "value": {
+                  "type": "color-background"
+                }
+              }
+            ]
+          }
+        ]
+      },
+      "gridPos": {
+        "h": 8,
+        "w": 8,
+        "x": 0,
+        "y": 66
+      },
+      "id": 601,
+      "options": {
+        "cellHeight": "sm",
+        "footer": {
+          "countRows": false,
+          "fields": "",
+          "reducer": ["sum"],
+          "show": false
+        },
+        "showHeader": true,
+        "sortBy": [
+          {
+            "desc": true,
+            "displayName": "LCP p75 (ms)"
+          }
+        ]
+      },
+      "pluginVersion": "10.0.0",
+      "targets": [
+        {
+          "datasource": {
+            "type": "prometheus",
+            "uid": "prometheus"
+          },
+          "editorMode": "code",
+          "exemplar": false,
+          "expr": "topk(10, histogram_quantile(0.75, sum(rate(app_web_vitals_lcp_milliseconds_bucket{web_vital_device=~\"$device\"}[5m])) by (le, web_vital_route_template)))",
+          "format": "table",
+          "instant": true,
+          "legendFormat": "__auto",
+          "range": false,
+          "refId": "A"
+        }
+      ],
+      "title": "Top 10 Worst LCP Routes",
+      "transformations": [
+        {
+          "id": "organize",
+          "options": {
+            "excludeByName": {
+              "Time": true,
+              "le": true
+            },
+            "indexByName": {},
+            "renameByName": {
+              "Value": "LCP p75 (ms)",
+              "web_vital_route_template": "Route"
+            }
+          }
+        }
+      ],
+      "type": "table"
+    },
+    {
+      "datasource": {
+        "type": "prometheus",
+        "uid": "prometheus"
+      },
+      "description": "Top 10 routes with worst INP p75 performance",
+      "fieldConfig": {
+        "defaults": {
+          "color": {
+            "mode": "thresholds"
+          },
+          "custom": {
+            "align": "auto",
+            "cellOptions": {
+              "type": "auto"
+            },
+            "inspect": false
+          },
+          "mappings": [],
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "green",
+                "value": null
+              },
+              {
+                "color": "yellow",
+                "value": 200
+              },
+              {
+                "color": "red",
+                "value": 500
+              }
+            ]
+          },
+          "unit": "ms"
+        },
+        "overrides": [
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "Route"
+            },
+            "properties": [
+              {
+                "id": "custom.width",
+                "value": 400
+              }
+            ]
+          },
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "Value"
+            },
+            "properties": [
+              {
+                "id": "displayName",
+                "value": "INP p75 (ms)"
+              },
+              {
+                "id": "custom.cellOptions",
+                "value": {
+                  "type": "color-background"
+                }
+              }
+            ]
+          }
+        ]
+      },
+      "gridPos": {
+        "h": 8,
+        "w": 8,
+        "x": 8,
+        "y": 66
+      },
+      "id": 602,
+      "options": {
+        "cellHeight": "sm",
+        "footer": {
+          "countRows": false,
+          "fields": "",
+          "reducer": ["sum"],
+          "show": false
+        },
+        "showHeader": true,
+        "sortBy": [
+          {
+            "desc": true,
+            "displayName": "INP p75 (ms)"
+          }
+        ]
+      },
+      "pluginVersion": "10.0.0",
+      "targets": [
+        {
+          "datasource": {
+            "type": "prometheus",
+            "uid": "prometheus"
+          },
+          "editorMode": "code",
+          "exemplar": false,
+          "expr": "topk(10, histogram_quantile(0.75, sum(rate(app_web_vitals_inp_milliseconds_bucket{web_vital_device=~\"$device\"}[5m])) by (le, web_vital_route_template)))",
+          "format": "table",
+          "instant": true,
+          "legendFormat": "__auto",
+          "range": false,
+          "refId": "A"
+        }
+      ],
+      "title": "Top 10 Worst INP Routes",
+      "transformations": [
+        {
+          "id": "organize",
+          "options": {
+            "excludeByName": {
+              "Time": true,
+              "le": true
+            },
+            "indexByName": {},
+            "renameByName": {
+              "Value": "INP p75 (ms)",
+              "web_vital_route_template": "Route"
+            }
+          }
+        }
+      ],
+      "type": "table"
+    },
+    {
+      "datasource": {
+        "type": "prometheus",
+        "uid": "prometheus"
+      },
+      "description": "Top 10 routes with worst CLS p75 performance",
+      "fieldConfig": {
+        "defaults": {
+          "color": {
+            "mode": "thresholds"
+          },
+          "custom": {
+            "align": "auto",
+            "cellOptions": {
+              "type": "auto"
+            },
+            "inspect": false
+          },
+          "decimals": 3,
+          "mappings": [],
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "green",
+                "value": null
+              },
+              {
+                "color": "yellow",
+                "value": 0.1
+              },
+              {
+                "color": "red",
+                "value": 0.25
+              }
+            ]
+          },
+          "unit": "short"
+        },
+        "overrides": [
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "Route"
+            },
+            "properties": [
+              {
+                "id": "custom.width",
+                "value": 400
+              }
+            ]
+          },
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "Value"
+            },
+            "properties": [
+              {
+                "id": "displayName",
+                "value": "CLS p75"
+              },
+              {
+                "id": "custom.cellOptions",
+                "value": {
+                  "type": "color-background"
+                }
+              }
+            ]
+          }
+        ]
+      },
+      "gridPos": {
+        "h": 8,
+        "w": 8,
+        "x": 16,
+        "y": 66
+      },
+      "id": 603,
+      "options": {
+        "cellHeight": "sm",
+        "footer": {
+          "countRows": false,
+          "fields": "",
+          "reducer": ["sum"],
+          "show": false
+        },
+        "showHeader": true,
+        "sortBy": [
+          {
+            "desc": true,
+            "displayName": "CLS p75"
+          }
+        ]
+      },
+      "pluginVersion": "10.0.0",
+      "targets": [
+        {
+          "datasource": {
+            "type": "prometheus",
+            "uid": "prometheus"
+          },
+          "editorMode": "code",
+          "exemplar": false,
+          "expr": "topk(10, histogram_quantile(0.75, sum(rate(app_web_vitals_cls_bucket{web_vital_device=~\"$device\"}[5m])) by (le, web_vital_route_template)))",
+          "format": "table",
+          "instant": true,
+          "legendFormat": "__auto",
+          "range": false,
+          "refId": "A"
+        }
+      ],
+      "title": "Top 10 Worst CLS Routes",
+      "transformations": [
+        {
+          "id": "organize",
+          "options": {
+            "excludeByName": {
+              "Time": true,
+              "le": true
+            },
+            "indexByName": {},
+            "renameByName": {
+              "Value": "CLS p75",
+              "web_vital_route_template": "Route"
+            }
+          }
+        }
+      ],
+      "type": "table"
+    },
+    {
+      "collapsed": false,
+      "gridPos": {
+        "h": 1,
+        "w": 24,
+        "x": 0,
+        "y": 74
+      },
+      "id": 700,
+      "panels": [],
+      "title": "📊 Data Volume & Sample Counts",
+      "type": "row"
+    },
+    {
+      "datasource": {
+        "type": "prometheus",
+        "uid": "prometheus"
+      },
+      "description": "Total number of LCP samples collected (events per second)",
+      "fieldConfig": {
+        "defaults": {
+          "color": {
+            "mode": "palette-classic"
+          },
+          "custom": {
+            "axisCenteredZero": false,
+            "axisColorMode": "text",
+            "axisLabel": "",
+            "axisPlacement": "auto",
+            "barAlignment": 0,
+            "drawStyle": "line",
+            "fillOpacity": 20,
+            "gradientMode": "none",
+            "hideFrom": {
+              "tooltip": false,
+              "viz": false,
+              "legend": false
+            },
+            "lineInterpolation": "smooth",
+            "lineWidth": 2,
+            "pointSize": 5,
+            "scaleDistribution": {
+              "type": "linear"
+            },
+            "showPoints": "auto",
             "spanNulls": false,
             "stacking": {
               "group": "A",
@@ -2344,82 +2694,78 @@
               }
             ]
           },
-          "unit": "ms"
+          "unit": "reqps"
         },
         "overrides": []
       },
       "gridPos": {
-        "h": 8,
-        "w": 12,
+        "h": 6,
+        "w": 8,
         "x": 0,
-        "y": 76
+        "y": 75
       },
-      "id": 53,
+      "id": 701,
       "options": {
         "legend": {
-          "calcs": [
-            "mean",
-            "max"
-          ],
+          "calcs": ["mean", "lastNotNull", "max"],
           "displayMode": "table",
           "placement": "bottom",
-          "showLegend": true,
-          "sortBy": "Mean",
-          "sortDesc": true
+          "showLegend": true
         },
         "tooltip": {
-          "mode": "multi",
-          "sort": "desc"
+          "mode": "single",
+          "sort": "none"
         }
       },
+      "pluginVersion": "10.0.0",
       "targets": [
         {
           "datasource": {
             "type": "prometheus",
-            "uid": "${datasource}"
+            "uid": "prometheus"
           },
-          "expr": "histogram_quantile(0.75, sum(rate(app_web_vitals_fcp_milliseconds_bucket[$__rate_interval])) by (le, route))",
-          "legendFormat": "{{route}}",
+          "editorMode": "code",
+          "expr": "sum(rate(app_web_vitals_lcp_milliseconds_count{web_vital_route_template=~\"$route\", web_vital_device=~\"$device\"}[5m]))",
+          "legendFormat": "LCP samples/s",
+          "range": true,
           "refId": "A"
         }
       ],
-      "title": "FCP by Route (p75)",
-      "description": "Compare FCP across different pages",
+      "title": "LCP - Sample Rate",
       "type": "timeseries"
     },
     {
       "datasource": {
         "type": "prometheus",
-        "uid": "${datasource}"
+        "uid": "prometheus"
       },
+      "description": "Total number of INP samples collected (events per second)",
       "fieldConfig": {
         "defaults": {
           "color": {
             "mode": "palette-classic"
           },
           "custom": {
-            "axisBorderShow": false,
             "axisCenteredZero": false,
             "axisColorMode": "text",
             "axisLabel": "",
             "axisPlacement": "auto",
             "barAlignment": 0,
             "drawStyle": "line",
-            "fillOpacity": 10,
+            "fillOpacity": 20,
             "gradientMode": "none",
             "hideFrom": {
-              "legend": false,
               "tooltip": false,
-              "viz": false
+              "viz": false,
+              "legend": false
             },
-            "insertNulls": false,
             "lineInterpolation": "smooth",
-            "lineWidth": 1,
+            "lineWidth": 2,
             "pointSize": 5,
             "scaleDistribution": {
               "type": "linear"
             },
-            "showPoints": "never",
+            "showPoints": "auto",
             "spanNulls": false,
             "stacking": {
               "group": "A",
@@ -2439,97 +2785,190 @@
               }
             ]
           },
-          "unit": "ms"
+          "unit": "reqps"
         },
         "overrides": []
       },
       "gridPos": {
-        "h": 8,
-        "w": 12,
-        "x": 12,
-        "y": 76
+        "h": 6,
+        "w": 8,
+        "x": 8,
+        "y": 75
       },
-      "id": 54,
+      "id": 702,
       "options": {
         "legend": {
-          "calcs": [
-            "mean",
-            "max"
-          ],
+          "calcs": ["mean", "lastNotNull", "max"],
           "displayMode": "table",
           "placement": "bottom",
-          "showLegend": true,
-          "sortBy": "Mean",
-          "sortDesc": true
+          "showLegend": true
         },
         "tooltip": {
-          "mode": "multi",
-          "sort": "desc"
+          "mode": "single",
+          "sort": "none"
         }
       },
+      "pluginVersion": "10.0.0",
       "targets": [
         {
           "datasource": {
             "type": "prometheus",
-            "uid": "${datasource}"
+            "uid": "prometheus"
           },
-          "expr": "histogram_quantile(0.75, sum(rate(app_web_vitals_ttfb_milliseconds_bucket[$__rate_interval])) by (le, route))",
-          "legendFormat": "{{route}}",
+          "editorMode": "code",
+          "expr": "sum(rate(app_web_vitals_inp_milliseconds_count{web_vital_route_template=~\"$route\", web_vital_device=~\"$device\"}[5m]))",
+          "legendFormat": "INP samples/s",
+          "range": true,
           "refId": "A"
         }
       ],
-      "title": "TTFB by Route (p75)",
-      "description": "Compare server response time across different pages",
+      "title": "INP - Sample Rate",
+      "type": "timeseries"
+    },
+    {
+      "datasource": {
+        "type": "prometheus",
+        "uid": "prometheus"
+      },
+      "description": "Total number of CLS samples collected (events per second)",
+      "fieldConfig": {
+        "defaults": {
+          "color": {
+            "mode": "palette-classic"
+          },
+          "custom": {
+            "axisCenteredZero": false,
+            "axisColorMode": "text",
+            "axisLabel": "",
+            "axisPlacement": "auto",
+            "barAlignment": 0,
+            "drawStyle": "line",
+            "fillOpacity": 20,
+            "gradientMode": "none",
+            "hideFrom": {
+              "tooltip": false,
+              "viz": false,
+              "legend": false
+            },
+            "lineInterpolation": "smooth",
+            "lineWidth": 2,
+            "pointSize": 5,
+            "scaleDistribution": {
+              "type": "linear"
+            },
+            "showPoints": "auto",
+            "spanNulls": false,
+            "stacking": {
+              "group": "A",
+              "mode": "none"
+            },
+            "thresholdsStyle": {
+              "mode": "off"
+            }
+          },
+          "mappings": [],
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "green",
+                "value": null
+              }
+            ]
+          },
+          "unit": "reqps"
+        },
+        "overrides": []
+      },
+      "gridPos": {
+        "h": 6,
+        "w": 8,
+        "x": 16,
+        "y": 75
+      },
+      "id": 703,
+      "options": {
+        "legend": {
+          "calcs": ["mean", "lastNotNull", "max"],
+          "displayMode": "table",
+          "placement": "bottom",
+          "showLegend": true
+        },
+        "tooltip": {
+          "mode": "single",
+          "sort": "none"
+        }
+      },
+      "pluginVersion": "10.0.0",
+      "targets": [
+        {
+          "datasource": {
+            "type": "prometheus",
+            "uid": "prometheus"
+          },
+          "editorMode": "code",
+          "expr": "sum(rate(app_web_vitals_cls_count{web_vital_route_template=~\"$route\", web_vital_device=~\"$device\"}[5m]))",
+          "legendFormat": "CLS samples/s",
+          "range": true,
+          "refId": "A"
+        }
+      ],
+      "title": "CLS - Sample Rate",
       "type": "timeseries"
     }
   ],
   "refresh": "30s",
-  "schemaVersion": 39,
-  "tags": [
-    "web-vitals",
-    "frontend",
-    "rum",
-    "performance"
-  ],
+  "schemaVersion": 38,
+  "style": "dark",
+  "tags": ["web-vitals", "performance", "cwv", "production"],
   "templating": {
     "list": [
       {
         "current": {
           "selected": false,
-          "text": "Prometheus",
-          "value": "prometheus"
-        },
-        "hide": 0,
-        "includeAll": false,
-        "label": "Data Source",
-        "multi": false,
-        "name": "datasource",
-        "options": [],
-        "query": "prometheus",
-        "refresh": 1,
-        "regex": "",
-        "skipUrlSync": false,
-        "type": "datasource"
-      },
-      {
-        "current": {
-          "selected": true,
           "text": "All",
           "value": "$__all"
         },
         "datasource": {
           "type": "prometheus",
-          "uid": "${datasource}"
+          "uid": "prometheus"
         },
-        "definition": "label_values(app_web_vitals_lcp_milliseconds_count, web_vital_route)",
+        "definition": "label_values(app_web_vitals_lcp_milliseconds_count, web_vital_route_template)",
         "hide": 0,
         "includeAll": true,
         "label": "Route",
-        "multi": true,
+        "multi": false,
         "name": "route",
         "options": [],
         "query": {
-          "query": "label_values(app_web_vitals_lcp_milliseconds_count, web_vital_route)",
+          "query": "label_values(app_web_vitals_lcp_milliseconds_count, web_vital_route_template)",
+          "refId": "PrometheusVariableQueryEditor-VariableQuery"
+        },
+        "refresh": 2,
+        "regex": "",
+        "skipUrlSync": false,
+        "sort": 1,
+        "type": "query"
+      },
+      {
+        "current": {
+          "selected": false,
+          "text": "All",
+          "value": "$__all"
+        },
+        "datasource": {
+          "type": "prometheus",
+          "uid": "prometheus"
+        },
+        "definition": "label_values(app_web_vitals_lcp_milliseconds_count, web_vital_device)",
+        "hide": 0,
+        "includeAll": true,
+        "label": "Device",
+        "multi": false,
+        "name": "device",
+        "options": [],
+        "query": {
+          "query": "label_values(app_web_vitals_lcp_milliseconds_count, web_vital_device)",
           "refId": "PrometheusVariableQueryEditor-VariableQuery"
         },
         "refresh": 2,
@@ -2544,10 +2983,12 @@
     "from": "now-6h",
     "to": "now"
   },
-  "timepicker": {},
+  "timepicker": {
+    "refresh_intervals": ["30s", "1m", "5m", "15m", "30m"]
+  },
   "timezone": "",
-  "title": "Web Vitals - Enhanced",
+  "title": "Core Web Vitals - Production",
   "uid": "web-vitals",
-  "version": 2,
+  "version": 1,
   "weekStart": ""
 }

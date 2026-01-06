@@ -15,7 +15,7 @@
       }
     ]
   },
-  "description": "GraphQL API Overview - RED Metrics (Rate, Errors, Duration) with per-operation breakdown",
+  "description": "GraphQL API Overview - RED Metrics (Rate, Errors, Duration) with per-operation breakdown. ⚠️ Note: High cardinality - each unique operation = new metric series.",
   "editable": true,
   "fiscalYearStartMonth": 0,
   "graphTooltip": 1,
@@ -752,7 +752,7 @@
           "refId": "A"
         }
       ],
-      "title": "Top 10 Operations by Request Rate",
+      "title": "Top Operations by Request Rate",
       "description": "Most frequently called GraphQL operations",
       "type": "timeseries"
     },
@@ -1252,8 +1252,8 @@
             "type": "prometheus",
             "uid": "${datasource}"
           },
-          "expr": "sum by (graphql_operation_type) (rate(app_calls_total{service_name=~\"$service\", graphql_operation_name!=\"\", graphql_operation_name=~\"$operation\"}[$__rate_interval]))",
-          "legendFormat": "{{graphql_operation_type}}",
+          "expr": "sum by (graphql_operation_name) (rate(app_calls_total{service_name=~\"$service\", graphql_operation_name!=\"\", graphql_operation_name=~\"$operation\"}[$__rate_interval]))",
+          "legendFormat": "{{graphql_operation_name}}",
           "refId": "A"
         }
       ],
@@ -1342,8 +1342,8 @@
             "type": "prometheus",
             "uid": "${datasource}"
           },
-          "expr": "sum by (graphql_operation_type) (rate(app_calls_total{service_name=~\"$service\", graphql_operation_name!=\"\", graphql_operation_name=~\"$operation\"}[$__rate_interval]))",
-          "legendFormat": "{{graphql_operation_type}}",
+          "expr": "sum by (graphql_operation_name) (rate(app_calls_total{service_name=~\"$service\", graphql_operation_name!=\"\", graphql_operation_name=~\"$operation\"}[$__rate_interval]))",
+          "legendFormat": "{{graphql_operation_name}}",
           "refId": "A"
         }
       ],

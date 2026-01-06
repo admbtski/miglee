@@ -48,6 +48,7 @@ export * from './pino';
 export * from './graphql';
 export * from './bullmq';
 export * from './browser';
+export * from './web-vitals-utils';
 
 import { initTracing, shutdownTracing } from './tracing';
 import { initMetrics, shutdownMetrics } from './metrics';

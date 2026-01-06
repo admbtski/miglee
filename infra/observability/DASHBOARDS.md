@@ -162,7 +162,7 @@ curl -X POST http://localhost:4000/graphql \
 
 When you run a GraphQL query:
 
-```graphql
+```graphqlm
 query GetUserProfile {
   me {
     id

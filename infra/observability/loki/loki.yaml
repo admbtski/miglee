@@ -18,7 +18,8 @@ server:
   log_level: warn
 
 common:
-  instance_addr: 127.0.0.1
+  # instance_addr removed - let Loki auto-detect to avoid container loopback issues
+  # 127.0.0.1 in Docker can cause problems with ring/lifecycler
   path_prefix: /loki
   storage:
     filesystem:
@@ -71,7 +72,8 @@ compactor:
   compaction_interval: 10m
   retention_enabled: true
   retention_delete_delay: 2h
-  retention_delete_worker_count: 150
+  # Reduced from 150 to 20 for dev (150 is absurdly high for local with 2h retention)
+  retention_delete_worker_count: 20
   delete_request_store: filesystem
 
 limits_config:

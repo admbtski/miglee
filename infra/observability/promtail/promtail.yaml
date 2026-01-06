@@ -100,13 +100,15 @@ scrape_configs:
                 template: '{{ if eq .Value "10" }}trace{{ else if eq .Value "20" }}debug{{ else if eq .Value "30" }}info{{ else if eq .Value "40" }}warn{{ else if eq .Value "50" }}error{{ else if eq .Value "60" }}fatal{{ else }}{{ .Value }}{{ end }}'
 
             # Set labels from extracted fields
+            # IMPORTANT: trace_id and span_id are NOT labels (high cardinality!)
+            # They remain as parsed fields in log content for correlation via derived fields
             - labels:
                 level:
                 service:
                 env:
-                trace_id:
-                span_id:
-                requestId:
+                # trace_id: REMOVED - high cardinality, use derived fields instead
+                # span_id: REMOVED - high cardinality, use derived fields instead
+                # requestId: REMOVED - high cardinality (unique per request)
 
             # Add timestamp from log
             - timestamp:

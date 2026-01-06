@@ -67,6 +67,9 @@ processors:
         action: delete
       - key: http.request.header.x-api-key
         action: delete
+      # db.statement hash - WARNING: This prevents diagnostics in dev
+      # Consider: delete in prod, but allow (or truncate) in dev for debugging
+      # Hash kills ability to see actual queries, but delete leaks through other attributes
       - key: db.statement
         action: hash
       # Redact potential PII patterns
@@ -83,7 +86,9 @@ processors:
     trace_statements:
       - context: span
         statements:
-          # Ensure service.name exists
+          # Ensure service.name exists (SAFEGUARD - not primary source)
+          # WARNING: If all spans show service.name="unknown", you have instrumentation problems
+          # Enforce service.name at application level via OTEL_SERVICE_NAME environment variable
           - set(resource.attributes["service.name"], "unknown") where resource.attributes["service.name"] == nil
           # Normalize HTTP status codes
           - set(attributes["http.status_code_class"], "2xx") where attributes["http.status_code"] >= 200 and attributes["http.status_code"] < 300
@@ -143,6 +148,9 @@ connectors:
       - name: http.status_code
       - name: http.route
       # GraphQL-specific dimensions
+      # ⚠️ WARNING: graphql.operation.name can cause HIGH CARDINALITY
+      # Each unique operation name = new metric series
+      # Recommendation: Use persisted queries or enforce stable operationName
       - name: graphql.operation.name
       - name: graphql.operation.type
     dimensions_cache_size: 1000
@@ -193,13 +201,15 @@ service:
         - batch
       exporters: [prometheus, debug]
 
-    # Logs pipeline
-    logs:
-      receivers: [otlp]
-      processors:
-        - memory_limiter
-        - resource
-        - attributes/redact
-        - transform
-        - batch
-      exporters: [loki, debug]
+    # Logs pipeline - DISABLED to avoid duplication with Promtail
+    # Decision: Use Promtail (stdout→Loki) as primary logs pipeline
+    # This prevents duplicate logs and label conflicts
+    # logs:
+    #   receivers: [otlp]
+    #   processors:
+    #     - memory_limiter
+    #     - resource
+    #     - attributes/redact
+    #     - transform
+    #     - batch
+    #   exporters: [debug]  # Only debug, no Loki export

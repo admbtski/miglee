@@ -35,7 +35,7 @@ datasources:
       httpMethod: POST
       manageAlerts: true
       prometheusType: Prometheus
-      prometheusVersion: "2.51.0"
+      # prometheusVersion removed - let Grafana auto-detect to avoid version mismatches
       # Exemplar configuration - link metrics to traces
       exemplarTraceIdDestinations:
         - name: trace_id
@@ -71,13 +71,15 @@ datasources:
         datasourceUid: loki
         spanStartTimeShift: '-1h'
         spanEndTimeShift: '1h'
+        # IMPORTANT: Only use labels that actually exist in Loki (low cardinality)
+        # trace_id is NOT a label (removed for cardinality reasons)
+        # Correlation happens via derived fields extracting trace_id from log content
         tags:
           - key: service.name
             value: service
-          - key: trace_id
-            value: trace_id
-        filterByTraceID: true
-        filterBySpanID: true
+        # filterByTraceID uses derived fields, not labels
+        filterByTraceID: false # Changed to false - trace_id is not a Loki label
+        filterBySpanID: false # Changed to false - span_id is not a Loki label
         mapTagNamesEnabled: true
         mappedTags:
           - key: service.name
@@ -128,4 +130,3 @@ datasources:
           url: '$${__value.raw}'
           datasourceUid: tempo
           urlDisplayLabel: View Trace
-

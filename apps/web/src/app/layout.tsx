@@ -4,7 +4,7 @@ import { Toaster } from 'sonner';
 
 import { CookieScriptProvider } from '@/features/cookies';
 import { ThemeProvider } from '@/features/theme/provider/theme-provider';
-import { WebVitals } from '@/lib/config/web-vitals';
+import { ObservabilityProvider } from '@/components/observability/ObservabilityProvider';
 import { InlineThemeScript } from '../features/theme/scripts/inline-theme-script';
 import '../styles/globals.css';
 
@@ -101,14 +101,14 @@ export default function RootLayout({
         suppressHydrationWarning
         className={`${poppinsFont.className} w-full min-h-screen antialiased`}
       >
-        {/* Performance monitoring */}
-        <WebVitals />
+        {/* Observability: Web Vitals, Route Transitions, Runtime Errors */}
+        <ObservabilityProvider>
+          {/* Cookie Consent Banner */}
+          <CookieScriptProvider />
 
-        {/* Cookie Consent Banner */}
-        <CookieScriptProvider />
-
-        {/* Global theme provider - locale and timezone are in [locale]/layout.tsx */}
-        <ThemeProvider>{children}</ThemeProvider>
+          {/* Global theme provider - locale and timezone are in [locale]/layout.tsx */}
+          <ThemeProvider>{children}</ThemeProvider>
+        </ObservabilityProvider>
 
         {/* Toast notifications */}
         <Toaster
