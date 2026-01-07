@@ -19,6 +19,7 @@ services:
   # ===========================================================================
   postgres:
     image: postgis/postgis:16-3.4-alpine
+    container_name: postgres
     restart: unless-stopped
     environment:
       POSTGRES_USER: postgres
@@ -35,12 +36,16 @@ services:
       timeout: 5s
       retries: 5
       start_period: 10s
+    labels:
+      - 'com.appname.service=postgres'
+      - 'com.appname.env=dev'
 
   # ===========================================================================
   # Redis 7
   # ===========================================================================
   redis:
     image: redis:7-alpine
+    container_name: redis
     restart: unless-stopped
     ports:
       - '6379:6379'
@@ -62,12 +67,16 @@ services:
       timeout: 3s
       retries: 10
       start_period: 5s
+    labels:
+      - 'com.appname.service=redis'
+      - 'com.appname.env=dev'
 
   # ===========================================================================
   # Adminer (Profile: tools)
   # ===========================================================================
   adminer:
     image: adminer:latest
+    container_name: adminer
     restart: unless-stopped
     profiles: ['tools', 'all']
     ports:
@@ -78,12 +87,16 @@ services:
     depends_on:
       postgres:
         condition: service_healthy
+    labels:
+      - 'com.appname.service=adminer'
+      - 'com.appname.env=dev'
 
   # ===========================================================================
   # Stripe CLI (Profile: stripe)
   # ===========================================================================
   stripe:
     image: stripe/stripe-cli:latest
+    container_name: stripe
     restart: unless-stopped
     profiles: ['stripe', 'all']
     command:
@@ -99,6 +112,9 @@ services:
       STRIPE_DEVICE_NAME: appname-local
     extra_hosts:
       - 'host.docker.internal:host-gateway'
+    labels:
+      - 'com.appname.service=stripe'
+      - 'com.appname.env=dev'
     # Note: Sprawdź logi aby uzyskać webhook secret (whsec_...)
     # docker compose -f docker/docker-compose.dev.yml --profile stripe logs -f stripe
 

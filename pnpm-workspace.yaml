@@ -1,3 +1,15 @@
 packages:
-  - "apps/*"
-  - "packages/*"
+  - apps/*
+  - packages/*
+
+onlyBuiltDependencies:
+  - '@prisma/engines'
+  - '@tailwindcss/oxide'
+  - '@vaadin/vaadin-usage-statistics'
+  - core-js
+  - esbuild
+  - msgpackr-extract
+  - prisma
+  - protobufjs
+  - sharp
+  - unrs-resolver

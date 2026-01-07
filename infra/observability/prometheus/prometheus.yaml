@@ -65,14 +65,68 @@ scrape_configs:
       - targets: ['grafana:3000']
     scrape_interval: 30s
 
-  # Application API (if exposing /metrics endpoint directly)
+  # ===========================================================================
+  # Infrastructure Exporters
+  # ===========================================================================
+
+  # cAdvisor - Container metrics (CPU/Memory/Network/Disk per container)
+  - job_name: 'cadvisor'
+    static_configs:
+      - targets: ['cadvisor:8080']
+    scrape_interval: 15s
+    metric_relabel_configs:
+      # Add service label from container name for easier filtering
+      - source_labels: [container_label_com_docker_compose_service]
+        target_label: service
+      # Add env label
+      - replacement: 'dev'
+        target_label: env
+
+  # Node Exporter - Host metrics (CPU/Memory/Disk/Network for host)
+  - job_name: 'node-exporter'
+    static_configs:
+      - targets: ['node-exporter:9100']
+    scrape_interval: 15s
+    metric_relabel_configs:
+      # Add env label
+      - replacement: 'dev'
+        target_label: env
+
+  # Postgres Exporter - Database metrics
+  - job_name: 'postgres-exporter'
+    static_configs:
+      - targets: ['postgres-exporter:9187']
+    scrape_interval: 15s
+    metric_relabel_configs:
+      # Add service and env labels
+      - replacement: 'postgres'
+        target_label: service
+      - replacement: 'dev'
+        target_label: env
+
+  # Redis Exporter - Cache metrics
+  - job_name: 'redis-exporter'
+    static_configs:
+      - targets: ['redis-exporter:9121']
+    scrape_interval: 15s
+    metric_relabel_configs:
+      # Add service and env labels
+      - replacement: 'redis'
+        target_label: service
+      - replacement: 'dev'
+        target_label: env
+
+  # ===========================================================================
+  # Application Metrics (if exposing /metrics endpoint directly)
+  # ===========================================================================
+
+  # Application API
   # Uncomment when API exposes Prometheus metrics
   # - job_name: 'appname-api'
   #   static_configs:
   #     - targets: ['host.docker.internal:4000']
   #   scrape_interval: 15s
   #   metrics_path: /metrics
-
 # Remote write configuration (for receiving metrics from OTel Collector)
 # Enabled via --web.enable-remote-write-receiver flag
 

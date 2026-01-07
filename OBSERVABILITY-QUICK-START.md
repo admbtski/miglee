@@ -17,12 +17,14 @@ pnpm obs:up
 ### 2. Configure ENV (1 minute)
 
 **API:** `apps/api/.env.local`
+
 ```bash
 OTEL_EXPORTER_OTLP_ENDPOINT=http://localhost:4318
 OTEL_SERVICE_NAME=appname-api
 ```
 
 **Web:** `apps/web/.env.local`
+
 ```bash
 OTEL_EXPORTER_OTLP_ENDPOINT=http://localhost:4318
 OTEL_SERVICE_NAME=appname-web
@@ -43,13 +45,15 @@ pnpm dev:web:obs
 
 ### 4. Access Dashboards
 
-| Dashboard | URL |
-|-----------|-----|
-| **Grafana** | http://localhost:3001 (admin/admin) |
-| **Core Web Vitals** | http://localhost:3001/d/web-vitals |
+| Dashboard             | URL                                       |
+| --------------------- | ----------------------------------------- |
+| **Grafana**           | http://localhost:3001 (admin/admin)       |
+| **Core Web Vitals**   | http://localhost:3001/d/web-vitals        |
 | **Route Transitions** | http://localhost:3001/d/route-transitions |
-| **API Overview** | http://localhost:3001/d/api-overview |
-| **Logs Explorer** | http://localhost:3001/d/logs-explorer |
+| **API Overview**      | http://localhost:3001/d/api-overview      |
+| **Logs Explorer**     | http://localhost:3001/d/logs-explorer     |
+
+> 💡 **Infrastructure Monitoring:** For production-ready infrastructure dashboards (CPU/Memory/Disk, DB performance, meta-monitoring), see [DASHBOARDS.md - Infrastructure Dashboards](./infra/observability/DASHBOARDS.md#%EF%B8%8F-infrastructure-dashboards-production-ready-recommendations)
 
 ### 5. Verify (30 seconds)
 
@@ -71,12 +75,14 @@ pnpm obs:test
 ### No data in dashboards?
 
 1. **Did you use the `:obs` suffix?**
+
    ```bash
    pnpm dev:web:obs  # ✅ Correct
    pnpm dev          # ❌ Won't send telemetry
    ```
 
 2. **Restart Grafana (cache issue):**
+
    ```bash
    cd infra/observability
    docker compose -f docker-compose.observability.yml restart grafana
@@ -103,9 +109,13 @@ pnpm dev:web:obs
 
 **Everything you need:** [OBSERVABILITY.md](./OBSERVABILITY.md)
 
+**Infrastructure Monitoring (NEW):** [INFRASTRUCTURE-OBSERVABILITY-QUICKSTART.md](./INFRASTRUCTURE-OBSERVABILITY-QUICKSTART.md) - 🆕 **Full infrastructure monitoring with 5 dashboards (69 panels)**
+
 **Technical docs:**
-- [infra/observability/README.md](./infra/observability/README.md) - Infrastructure
-- [infra/observability/DASHBOARDS.md](./infra/observability/DASHBOARDS.md) - Dashboard guide
+
+- [infra/observability/INFRASTRUCTURE-SETUP.md](./infra/observability/INFRASTRUCTURE-SETUP.md) - 🆕 Complete infrastructure setup guide
+- [infra/observability/README.md](./infra/observability/README.md) - Infrastructure overview
+- [infra/observability/DASHBOARDS.md](./infra/observability/DASHBOARDS.md) - Dashboard specifications
 - [infra/observability/ARCHITECTURE-AUDIT.md](./infra/observability/ARCHITECTURE-AUDIT.md) - Architecture (9.2/10)
 
 ---

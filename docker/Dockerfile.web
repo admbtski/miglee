@@ -40,6 +40,7 @@ FROM base AS deps
 # Copy pruned manifests only
 COPY --from=pruner /app/out/json/ ./
 COPY --from=pruner /app/out/pnpm-lock.yaml ./pnpm-lock.yaml
+COPY .npmrc ./
 
 RUN pnpm install --frozen-lockfile
 
@@ -57,10 +58,14 @@ ENV NODE_ENV=development
 ENV PORT=3000
 ENV HOSTNAME="0.0.0.0"
 
+# Health check
+HEALTHCHECK --interval=30s --timeout=10s --retries=3 --start-period=60s \
+  CMD wget -qO- http://localhost:3000/api/health || exit 1
+
 EXPOSE 3000
 
 # Use webpack instead of Turbopack for Docker compatibility
-CMD ["pnpm", "-C", "apps/web", "_dev"]
+CMD ["pnpm", "-C", "apps/web", "dev"]
 
 # -----------------------------------------------------------------------------
 # Builder (build Next.js with standalone output)
@@ -91,8 +96,8 @@ RUN pnpm -C apps/web build
 # -----------------------------------------------------------------------------
 FROM node:24-alpine AS production
 
-# Runtime deps + TLS certs + tini for proper signal handling
-RUN apk add --no-cache libc6-compat ca-certificates tini && \
+# Runtime deps + TLS certs + tini + wget for proper signal handling and healthcheck
+RUN apk add --no-cache libc6-compat ca-certificates tini wget && \
     update-ca-certificates
 
 WORKDIR /app
@@ -116,9 +121,12 @@ ENV NODE_ENV=production
 ENV PORT=3000
 ENV HOSTNAME="0.0.0.0"
 
+# Health check
+HEALTHCHECK --interval=30s --timeout=10s --retries=3 --start-period=60s \
+  CMD wget -qO- http://localhost:3000/api/health || exit 1
+
 EXPOSE 3000
 
 # Use tini as init to properly handle signals and reap zombie processes
-# K8s livenessProbe/readinessProbe handles health checks (no Docker HEALTHCHECK needed)
 ENTRYPOINT ["tini", "--"]
 CMD ["node", "apps/web/server.js"]

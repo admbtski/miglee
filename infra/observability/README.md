@@ -4,7 +4,10 @@ Full observability infrastructure for local development and prod-like testing.
 
 ## 📚 Documentation
 
-- **[Quick Start Guide](../../docs/observability/QUICK-START.md)** - 5-minute setup
+- **[Infrastructure Setup Guide](./INFRASTRUCTURE-SETUP.md)** - 🆕 Infrastructure monitoring setup and dashboards
+- **[Dashboards Guide](./DASHBOARDS.md)** - Complete dashboard specifications and infrastructure monitoring requirements
+- **[Architecture Audit](./ARCHITECTURE-AUDIT.md)** - Architecture review (Score: 9.2/10)
+- **[Quick Start Guide](../../docs/observability/QUICK-START.md)** - 5-minute setup (application observability)
 - **[Phase 2 & 3 Implementation](../../docs/observability/PHASE-2-3-IMPLEMENTATION.md)** - Workers & Frontend integration
 - **[Troubleshooting Guide](../../docs/observability/TROUBLESHOOTING.md)** - Common issues and solutions
 - **[Kubernetes Deployment](../../docs/observability/kubernetes-deployment.md)** - Production deployment options
@@ -72,10 +75,20 @@ pnpm obs:down
 
 ### Available Dashboards
 
+**Application Dashboards (Current):**
 1. **API Overview (RED)** - Request rate, errors, duration
 2. **Workers (BullMQ)** - Job throughput, fail rate, queue depth
 3. **Web Vitals** - LCP, CLS, INP, FCP, TTFB
 4. **Logs Explorer** - Full-text search with trace correlation
+
+**Infrastructure Dashboards (Recommended):**
+5. **Infra Overview** - Platform health at a glance (CPU/Memory/Disk/Network)
+6. **Service Runtime** - Per-service deep dive (API, Worker, Collector)
+7. **Postgres Infra** - Database performance and saturation
+8. **Redis Infra** - Cache performance and memory pressure
+9. **Observability Stack Health** - Meta-monitoring (monitor the monitoring)
+
+> **📖 See [DASHBOARDS.md](./DASHBOARDS.md#%EF%B8%8F-infrastructure-dashboards-production-ready-recommendations)** for full infrastructure dashboard specifications, metrics sources, and implementation guide.
 
 ## 🔧 Configuration
 
@@ -248,7 +261,17 @@ infra/observability/
 
 After setting up the infrastructure:
 
+**Application Observability:**
 1. **Phase 1**: Add OTel SDK to API (`packages/observability`)
 2. **Phase 2**: Instrument workers with trace propagation
 3. **Phase 3**: Enhance web-vitals with route/trace context
 4. **Phase 4**: Add business metrics (events, payments)
+
+**Infrastructure Observability (Recommended):**
+1. **Deploy Exporters**: postgres_exporter, redis_exporter, node_exporter, cAdvisor
+2. **Unify Service Labels**: Decide on label mapping strategy (Docker vs K8s vs OTel)
+3. **Create Dashboards**: Start with Infra Overview, then Service Runtime, DB/Redis, Meta-monitoring
+4. **Configure Alerts**: Set up critical thresholds and runbooks
+5. **Test and Iterate**: Verify dashboards work in dev (Compose) and prod (K8s)
+
+See [DASHBOARDS.md - Infrastructure Dashboards](./DASHBOARDS.md#%EF%B8%8F-infrastructure-dashboards-production-ready-recommendations) for detailed implementation guide.

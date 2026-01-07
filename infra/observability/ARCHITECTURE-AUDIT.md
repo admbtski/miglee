@@ -342,6 +342,8 @@ Add alerts for:
 
 **Priority:** 🟡 Medium (nice-to-have)
 
+**Note:** See comprehensive infrastructure monitoring recommendations in [DASHBOARDS.md](./DASHBOARDS.md) - Infrastructure Dashboards section.
+
 ### 4. GraphQL Operation Name Cardinality
 
 **Current State:**
@@ -606,5 +608,74 @@ Clear boundaries:
 4. ✅ Test alert delivery
 5. ✅ Document production deployment
 6. ✅ Deploy to production
+7. 🟡 **[Recommended]** Implement infrastructure dashboards (see [DASHBOARDS.md](./DASHBOARDS.md))
+   - Infra Overview (NOC dashboard)
+   - Service Runtime (per-service deep dive)
+   - Postgres Infra
+   - Redis Infra
+   - Observability Stack Health (meta-monitoring)
 
 **Congratulations on building a world-class observability stack!** 🎉
+
+---
+
+## 📊 Infrastructure Monitoring Recommendations
+
+**Status:** 🟡 **RECOMMENDED** (not blocking production, but highly valuable)
+
+The current stack focuses on **application observability** (Web Vitals, API metrics, logs, traces). For production-grade **infrastructure observability**, we recommend implementing additional dashboards covering:
+
+### Recommended Dashboard Suite
+
+1. **Infra Overview** - Single-screen platform health ("Is there a fire?")
+   - CPU/Memory/Disk/Network across all services
+   - Top offenders (by CPU, Memory, Restarts)
+   - Quick identification of resource exhaustion
+
+2. **Service Runtime** - Deep dive per service (API, Worker, Collector, etc.)
+   - Node.js event loop lag, heap usage, GC pauses
+   - Dependency saturation (DB connections, Redis pool)
+   - Service-specific SLO metrics
+
+3. **Postgres Infra** - Database-specific monitoring
+   - Connection saturation, query performance
+   - Locks and contention
+   - Vacuum activity and table bloat
+
+4. **Redis Infra** - Cache performance
+   - Memory usage and fragmentation
+   - Hit/miss ratio, evictions
+   - Commands/sec and latency
+
+5. **Observability Stack Health** - Meta-monitoring
+   - OTel Collector drops and failures
+   - Prometheus scrape health and query performance
+   - Loki/Tempo ingestion and query latency
+
+### Implementation Requirements
+
+**Metrics Sources Needed:**
+
+- **Docker Compose (current):**
+  - cAdvisor (container metrics)
+  - node_exporter (host metrics)
+  - postgres_exporter
+  - redis_exporter
+
+- **Kubernetes (future):**
+  - kube-state-metrics (cluster state)
+  - node_exporter (node metrics)
+  - kubelet/cAdvisor (container metrics + throttling)
+  - Same DB/Redis exporters
+
+**Key Benefits:**
+
+- Detect CPU throttling (K8s) vs actual CPU usage
+- Identify IO wait masquerading as application slowness
+- Monitor DB connection pool saturation
+- Detect observability stack failures during incidents
+- Answer "which service is at fault?" in 30-60 seconds
+
+**Complete Implementation Guide:** See [DASHBOARDS.md - Infrastructure Dashboards](./DASHBOARDS.md#%EF%B8%8F-infrastructure-dashboards-production-ready-recommendations)
+
+**Priority:** 🟡 Medium (recommended before scaling to production)

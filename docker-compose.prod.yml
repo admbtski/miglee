@@ -28,6 +28,7 @@ services:
   # ===========================================================================
   postgres:
     image: postgis/postgis:16-3.4-alpine
+    container_name: postgres
     restart: unless-stopped
     environment:
       POSTGRES_USER: ${POSTGRES_USER:-postgres}
@@ -50,12 +51,17 @@ services:
       start_period: 10s
     networks:
       - appname-network
+      - observability
+    labels:
+      - 'com.appname.service=postgres'
+      - 'com.appname.env=prod'
 
   # ===========================================================================
   # Redis 7 (with AOF persistence)
   # ===========================================================================
   redis:
     image: redis:7-alpine
+    container_name: redis
     restart: unless-stopped
     ports:
       - '6379:6379'
@@ -79,6 +85,10 @@ services:
       start_period: 5s
     networks:
       - appname-network
+      - observability
+    labels:
+      - 'com.appname.service=redis'
+      - 'com.appname.env=prod'
 
   # ===========================================================================
   # Migrator (one-off job for DB migrations + optional seed)
@@ -106,6 +116,7 @@ services:
   # ===========================================================================
   api:
     image: appname-api:prod
+    container_name: api
     build:
       context: .
       dockerfile: docker/Dockerfile.api
@@ -113,6 +124,12 @@ services:
     restart: unless-stopped
     ports:
       - '4000:4000'
+    labels:
+      - 'com.appname.service=api'
+      - 'com.appname.env=prod'
+      - 'prometheus.io/scrape=true'
+      - 'prometheus.io/port=4000'
+      - 'prometheus.io/path=/metrics'
     environment:
       NODE_ENV: production
       SERVICE_NAME: ${SERVICE_NAME:-app}
@@ -213,6 +230,7 @@ services:
   # ===========================================================================
   web:
     image: appname-web:prod
+    container_name: web
     build:
       context: .
       dockerfile: docker/Dockerfile.web
@@ -225,6 +243,12 @@ services:
     restart: unless-stopped
     ports:
       - '3000:3000'
+    labels:
+      - 'com.appname.service=web'
+      - 'com.appname.env=prod'
+      - 'prometheus.io/scrape=true'
+      - 'prometheus.io/port=3000'
+      - 'prometheus.io/path=/api/metrics'
     environment:
       NODE_ENV: production
       PORT: '3000'
@@ -257,6 +281,7 @@ services:
   # ===========================================================================
   worker_reminders:
     image: appname-api:prod
+    container_name: worker_reminders
     build:
       context: .
       dockerfile: docker/Dockerfile.api
@@ -264,6 +289,9 @@ services:
     restart: unless-stopped
     profiles: ['workers']
     command: ['node', 'runtime/dist/workers/reminders/worker.mjs']
+    labels:
+      - 'com.appname.service=worker-reminders'
+      - 'com.appname.env=prod'
     environment:
       NODE_ENV: production
       DATABASE_URL: postgresql://${POSTGRES_USER:-postgres}:${POSTGRES_PASSWORD:-postgres}@postgres:5432/${POSTGRES_DB:-app}?schema=public
@@ -293,6 +321,7 @@ services:
 
   worker_feedback:
     image: appname-api:prod
+    container_name: worker_feedback
     build:
       context: .
       dockerfile: docker/Dockerfile.api
@@ -300,6 +329,9 @@ services:
     restart: unless-stopped
     profiles: ['workers']
     command: ['node', 'runtime/dist/workers/feedback/worker.mjs']
+    labels:
+      - 'com.appname.service=worker-feedback'
+      - 'com.appname.env=prod'
     environment:
       NODE_ENV: production
       DATABASE_URL: postgresql://${POSTGRES_USER:-postgres}:${POSTGRES_PASSWORD:-postgres}@postgres:5432/${POSTGRES_DB:-app}?schema=public
@@ -329,6 +361,7 @@ services:
 
   worker_audit:
     image: appname-api:prod
+    container_name: worker_audit
     build:
       context: .
       dockerfile: docker/Dockerfile.api
@@ -336,6 +369,9 @@ services:
     restart: unless-stopped
     profiles: ['workers']
     command: ['node', 'runtime/dist/workers/audit-archive/worker.mjs']
+    labels:
+      - 'com.appname.service=worker-audit'
+      - 'com.appname.env=prod'
     environment:
       NODE_ENV: production
       DATABASE_URL: postgresql://${POSTGRES_USER:-postgres}:${POSTGRES_PASSWORD:-postgres}@postgres:5432/${POSTGRES_DB:-app}?schema=public

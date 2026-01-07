@@ -26,6 +26,7 @@ services:
   # ===========================================================================
   postgres:
     image: postgis/postgis:16-3.4-alpine
+    container_name: postgres
     restart: unless-stopped
     environment:
       POSTGRES_USER: postgres
@@ -44,12 +45,17 @@ services:
       start_period: 10s
     networks:
       - appname-network
+      - observability
+    labels:
+      - 'com.appname.service=postgres'
+      - 'com.appname.env=dev'
 
   # ===========================================================================
   # Redis 7
   # ===========================================================================
   redis:
     image: redis:7-alpine
+    container_name: redis
     restart: unless-stopped
     ports:
       - '6379:6379'
@@ -73,6 +79,10 @@ services:
       start_period: 5s
     networks:
       - appname-network
+      - observability
+    labels:
+      - 'com.appname.service=redis'
+      - 'com.appname.env=dev'
 
   # ===========================================================================
   # Migrator (one-off job for DB migrations + optional seed)
@@ -100,6 +110,7 @@ services:
   # ===========================================================================
   api:
     image: appname-api:dev
+    container_name: api
     build:
       context: .
       dockerfile: docker/Dockerfile.api
@@ -107,6 +118,12 @@ services:
     restart: unless-stopped
     ports:
       - '4000:4000'
+    labels:
+      - 'com.appname.service=api'
+      - 'com.appname.env=dev'
+      - 'prometheus.io/scrape=true'
+      - 'prometheus.io/port=4000'
+      - 'prometheus.io/path=/metrics'
     environment:
       NODE_ENV: development
       SERVICE_NAME: ${SERVICE_NAME:-app}
@@ -195,6 +212,7 @@ services:
   # ===========================================================================
   web:
     image: appname-web:dev
+    container_name: web
     build:
       context: .
       dockerfile: docker/Dockerfile.web
@@ -202,6 +220,12 @@ services:
     restart: unless-stopped
     ports:
       - '3000:3000'
+    labels:
+      - 'com.appname.service=web'
+      - 'com.appname.env=dev'
+      - 'prometheus.io/scrape=true'
+      - 'prometheus.io/port=3000'
+      - 'prometheus.io/path=/api/metrics'
     environment:
       NODE_ENV: development
       PORT: '3000'
@@ -236,6 +260,7 @@ services:
   # ===========================================================================
   worker_reminders:
     image: appname-api:dev
+    container_name: worker_reminders
     build:
       context: .
       dockerfile: docker/Dockerfile.api
@@ -243,6 +268,9 @@ services:
     restart: unless-stopped
     profiles: ['workers', 'all']
     command: ['pnpm', '-C', 'apps/api', 'worker:reminders']
+    labels:
+      - 'com.appname.service=worker-reminders'
+      - 'com.appname.env=dev'
     environment:
       NODE_ENV: development
       DATABASE_URL: postgresql://postgres:postgres@postgres:5432/app?schema=public
@@ -273,6 +301,7 @@ services:
 
   worker_feedback:
     image: appname-api:dev
+    container_name: worker_feedback
     build:
       context: .
       dockerfile: docker/Dockerfile.api
@@ -280,6 +309,9 @@ services:
     restart: unless-stopped
     profiles: ['workers', 'all']
     command: ['pnpm', '-C', 'apps/api', 'worker:feedback']
+    labels:
+      - 'com.appname.service=worker-feedback'
+      - 'com.appname.env=dev'
     environment:
       NODE_ENV: development
       DATABASE_URL: postgresql://postgres:postgres@postgres:5432/app?schema=public
@@ -310,6 +342,7 @@ services:
 
   worker_audit:
     image: appname-api:dev
+    container_name: worker_audit
     build:
       context: .
       dockerfile: docker/Dockerfile.api
@@ -317,6 +350,9 @@ services:
     restart: unless-stopped
     profiles: ['workers', 'all']
     command: ['pnpm', '-C', 'apps/api', 'worker:audit-archive']
+    labels:
+      - 'com.appname.service=worker-audit'
+      - 'com.appname.env=dev'
     environment:
       NODE_ENV: development
       DATABASE_URL: postgresql://postgres:postgres@postgres:5432/app?schema=public
@@ -349,6 +385,7 @@ services:
   # ===========================================================================
   adminer:
     image: adminer:latest
+    container_name: adminer
     restart: unless-stopped
     profiles: ['tools', 'all']
     ports:
@@ -361,12 +398,16 @@ services:
         condition: service_healthy
     networks:
       - appname-network
+    labels:
+      - 'com.appname.service=adminer'
+      - 'com.appname.env=dev'
 
   # ===========================================================================
   # Stripe CLI (Profile: stripe)
   # ===========================================================================
   stripe:
     image: stripe/stripe-cli:latest
+    container_name: stripe
     restart: unless-stopped
     profiles: ['stripe', 'all']
     command:
@@ -385,6 +426,9 @@ services:
         condition: service_healthy
     networks:
       - appname-network
+    labels:
+      - 'com.appname.service=stripe'
+      - 'com.appname.env=dev'
 
 # =============================================================================
 # Networks
