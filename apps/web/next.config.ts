@@ -4,8 +4,14 @@ const nextConfig: NextConfig = {
   reactStrictMode: true,
   // Enable standalone output for optimized Docker production builds
   output: 'standalone',
+  // Disable telemetry
+  telemetry: false,
   experimental: {
     reactCompiler: true,
+    // Turbopack config (for dev mode with --turbopack flag)
+    turbo: {
+      // Add turbopack-specific config here if needed
+    },
   },
   // Moved from experimental.serverComponentsExternalPackages in Next.js 15
   serverExternalPackages: ['require-in-the-middle'],

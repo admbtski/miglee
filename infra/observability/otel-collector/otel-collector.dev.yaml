@@ -12,6 +12,8 @@
 
 receivers:
   # OTLP receiver - primary ingestion point for all telemetry
+  # Note: 0.0.0.0 binding is intentional for Docker dev environment
+  # Allows connections from all containers. Change to 127.0.0.1 in production.
   otlp:
     protocols:
       grpc:

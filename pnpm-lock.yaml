@@ -285,9 +285,6 @@ importers:
       html2canvas:
         specifier: ^1.4.1
         version: 1.4.1
-      import-in-the-middle:
-        specifier: ^2.0.1
-        version: 2.0.1
       jspdf:
         specifier: ^3.0.4
         version: 3.0.4
@@ -5644,9 +5641,6 @@ packages:
 
   import-in-the-middle@1.15.0:
     resolution: {integrity: sha512-bpQy+CrsRmYmoPMAE/0G33iwRqwW4ouqdRg8jgbH3aKuCtOc8lxgmYXg2dMM92CRiGP660EtBcymH/eVUpCSaA==, tarball: https://registry.npmjs.org/import-in-the-middle/-/import-in-the-middle-1.15.0.tgz}
-
-  import-in-the-middle@2.0.1:
-    resolution: {integrity: sha512-bruMpJ7xz+9jwGzrwEhWgvRrlKRYCRDBrfU+ur3FcasYXLJDxTruJ//8g2Noj+QFyRBeqbpj8Bhn4Fbw6HjvhA==, tarball: https://registry.npmjs.org/import-in-the-middle/-/import-in-the-middle-2.0.1.tgz}
 
   import-without-cache@0.2.5:
     resolution: {integrity: sha512-B6Lc2s6yApwnD2/pMzFh/d5AVjdsDXjgkeJ766FmFuJELIGHNycKRj+l3A39yZPM4CchqNCB4RITEAYB1KUM6A==, tarball: https://registry.npmjs.org/import-without-cache/-/import-without-cache-0.2.5.tgz}
@@ -14561,13 +14555,6 @@ snapshots:
   import-from@4.0.0: {}
 
   import-in-the-middle@1.15.0:
-    dependencies:
-      acorn: 8.15.0
-      acorn-import-attributes: 1.9.5(acorn@8.15.0)
-      cjs-module-lexer: 1.4.3
-      module-details-from-path: 1.0.4
-
-  import-in-the-middle@2.0.1:
     dependencies:
       acorn: 8.15.0
       acorn-import-attributes: 1.9.5(acorn@8.15.0)

@@ -104,9 +104,13 @@ services:
       GF_PATHS_PROVISIONING: /etc/grafana/provisioning
       # Logging
       GF_LOG_LEVEL: ${GRAFANA_LOG_LEVEL:-warn}
-      # Alerting
+      # Suppress plugin registration errors (xychart duplicate in Grafana 11.0.0)
+      GF_LOG_FILTERS: 'plugins.registration:error'
+      # Alerting (SMTP notifications disabled for dev - no email config needed)
       GF_UNIFIED_ALERTING_ENABLED: 'true'
       GF_ALERTING_ENABLED: 'false'
+      # Disable email notifications to suppress SMTP errors in dev
+      GF_ALERTING_NOTIFICATION_TIMEOUT_SECONDS: '30'
       # Server settings
       GF_SERVER_DOMAIN: ${GRAFANA_DOMAIN:-localhost}
       GF_SERVER_ROOT_URL: ${GRAFANA_ROOT_URL:-http://localhost:3001}
@@ -315,6 +319,8 @@ services:
       - --collector.filesystem.mount-points-exclude=^/(sys|proc|dev|host|etc)($$|/)
       - --collector.netclass.ignored-devices=^(veth.*|docker.*|br-.*|lo)$$
       - --collector.netdev.device-exclude=^(veth.*|docker.*|br-.*|lo)$$
+      # Disable OS collector on macOS/Docker Desktop (permission issues with /etc/os-release)
+      - --no-collector.os
     volumes:
       # Note: On macOS/Docker Desktop, use 'ro' without 'rslave'
       - /:/host:ro

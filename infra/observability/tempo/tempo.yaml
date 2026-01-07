@@ -57,36 +57,36 @@ storage:
       max_workers: 100
       queue_depth: 10000
 
-# Overrides configuration
+# Overrides configuration (new format)
 overrides:
-  # Fixed: 0s is ambiguous, set explicit limit
-  max_search_duration: 1h
+  defaults:
+    # Maximum duration for trace search queries
+    max_search_duration: 1h
 
-# Metrics generator - DISABLED to avoid duplication with OTel Collector spanmetrics
-# Decision: Use OTel Collector spanmetrics connector as single source of span-derived metrics
-# This prevents duplicate metrics with different labels/names and simplifies architecture
-# 
-# metrics_generator:
-#   registry:
-#     external_labels:
-#       source: tempo
-#   storage:
-#     path: /var/tempo/generator/wal
-#     remote_write:
-#       - url: http://prometheus:9090/api/v1/write
-#         send_exemplars: true
-#   traces_storage:
-#     path: /var/tempo/generator/traces
-#   processor:
-#     span_metrics:
-#       enable_target_info: true
-#       dimensions:
-#         - service.name
-#         - http.method
-#         - http.status_code
-#         # graphql.operation.name - HIGH CARDINALITY, removed
-#         - graphql.operation.type
-#     service_graphs:
-#       enable_client_server_prefix: true
-#       dimensions:
-#         - service.name
+# Metrics generator - Generate metrics from spans (complementary to OTel Collector)
+metrics_generator:
+  registry:
+    external_labels:
+      source: tempo
+      env: dev
+  storage:
+    path: /var/tempo/generator/wal
+    remote_write:
+      - url: http://prometheus:9090/api/v1/write
+        send_exemplars: true
+  traces_storage:
+    path: /var/tempo/generator/traces
+  processor:
+    # Span metrics - request/duration/error metrics derived from spans
+    span_metrics:
+      enable_target_info: true
+      dimensions:
+        - service.name
+        - http.method
+        - http.status_code
+        - graphql.operation.type
+    # Service graphs - visualize service dependencies
+    service_graphs:
+      enable_client_server_prefix: true
+      dimensions:
+        - service.name

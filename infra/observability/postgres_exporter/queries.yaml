@@ -28,56 +28,57 @@ pg_stat_statements:
   cache_seconds: 30
   metrics:
     - queryid:
-        usage: "LABEL"
-        description: "Query ID"
+        usage: 'LABEL'
+        description: 'Query ID'
     - calls:
-        usage: "COUNTER"
-        description: "Number of times executed"
+        usage: 'COUNTER'
+        description: 'Number of times executed'
     - total_exec_time:
-        usage: "COUNTER"
-        description: "Total time spent executing query (ms)"
+        usage: 'COUNTER'
+        description: 'Total time spent executing query (ms)'
     - mean_exec_time:
-        usage: "GAUGE"
-        description: "Mean execution time (ms)"
+        usage: 'GAUGE'
+        description: 'Mean execution time (ms)'
     - stddev_exec_time:
-        usage: "GAUGE"
-        description: "Standard deviation of execution time (ms)"
+        usage: 'GAUGE'
+        description: 'Standard deviation of execution time (ms)'
     - rows:
-        usage: "COUNTER"
-        description: "Total rows retrieved or affected"
+        usage: 'COUNTER'
+        description: 'Total rows retrieved or affected'
 
 # Query: Table bloat estimation
 # Estimates table bloat (dead tuples)
+# Note: Uses quote_ident() to properly handle mixed-case table names (e.g. Prisma's _CategoryToEvent)
 pg_bloat_tables:
   query: |
     SELECT
       schemaname,
       tablename,
-      pg_total_relation_size(schemaname||'.'||tablename)::bigint as total_bytes,
-      pg_relation_size(schemaname||'.'||tablename)::bigint as table_bytes,
-      (pg_total_relation_size(schemaname||'.'||tablename) - pg_relation_size(schemaname||'.'||tablename))::bigint as index_bytes
+      pg_total_relation_size(quote_ident(schemaname)||'.'||quote_ident(tablename))::bigint as total_bytes,
+      pg_relation_size(quote_ident(schemaname)||'.'||quote_ident(tablename))::bigint as table_bytes,
+      (pg_total_relation_size(quote_ident(schemaname)||'.'||quote_ident(tablename)) - pg_relation_size(quote_ident(schemaname)||'.'||quote_ident(tablename)))::bigint as index_bytes
     FROM pg_tables
     WHERE schemaname NOT IN ('pg_catalog', 'information_schema')
-    ORDER BY pg_total_relation_size(schemaname||'.'||tablename) DESC
+    ORDER BY pg_total_relation_size(quote_ident(schemaname)||'.'||quote_ident(tablename)) DESC
     LIMIT 50
   master: true
   cache_seconds: 300
   metrics:
     - schemaname:
-        usage: "LABEL"
-        description: "Schema name"
+        usage: 'LABEL'
+        description: 'Schema name'
     - tablename:
-        usage: "LABEL"
-        description: "Table name"
+        usage: 'LABEL'
+        description: 'Table name'
     - total_bytes:
-        usage: "GAUGE"
-        description: "Total size of table (including indexes)"
+        usage: 'GAUGE'
+        description: 'Total size of table (including indexes)'
     - table_bytes:
-        usage: "GAUGE"
-        description: "Size of table data"
+        usage: 'GAUGE'
+        description: 'Size of table data'
     - index_bytes:
-        usage: "GAUGE"
-        description: "Size of indexes"
+        usage: 'GAUGE'
+        description: 'Size of indexes'
 
 # Query: Replication lag (for standby servers)
 # Only works on standby databases
@@ -90,8 +91,8 @@ pg_replication_lag:
   cache_seconds: 10
   metrics:
     - lag_seconds:
-        usage: "GAUGE"
-        description: "Replication lag in seconds"
+        usage: 'GAUGE'
+        description: 'Replication lag in seconds'
 
 # Query: Long running queries
 pg_long_running_queries:
@@ -106,14 +107,14 @@ pg_long_running_queries:
   cache_seconds: 10
   metrics:
     - active_30s:
-        usage: "GAUGE"
-        description: "Number of queries running longer than 30 seconds"
+        usage: 'GAUGE'
+        description: 'Number of queries running longer than 30 seconds'
     - active_1m:
-        usage: "GAUGE"
-        description: "Number of queries running longer than 1 minute"
+        usage: 'GAUGE'
+        description: 'Number of queries running longer than 1 minute'
     - active_5m:
-        usage: "GAUGE"
-        description: "Number of queries running longer than 5 minutes"
+        usage: 'GAUGE'
+        description: 'Number of queries running longer than 5 minutes'
 
 # Query: Lock contention by type
 pg_locks_by_type:
@@ -127,11 +128,11 @@ pg_locks_by_type:
   cache_seconds: 10
   metrics:
     - mode:
-        usage: "LABEL"
-        description: "Lock mode"
+        usage: 'LABEL'
+        description: 'Lock mode'
     - count:
-        usage: "GAUGE"
-        description: "Number of locks of this type"
+        usage: 'GAUGE'
+        description: 'Number of locks of this type'
 
 # Query: Connection states
 pg_connection_states:
@@ -146,9 +147,8 @@ pg_connection_states:
   cache_seconds: 10
   metrics:
     - state:
-        usage: "LABEL"
-        description: "Connection state"
+        usage: 'LABEL'
+        description: 'Connection state'
     - count:
-        usage: "GAUGE"
-        description: "Number of connections in this state"
-
+        usage: 'GAUGE'
+        description: 'Number of connections in this state'
